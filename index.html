@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kyle & Lindsey Games</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #0f0f1e;
+      color: #eee;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 20px 60px;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 52px;
+    }
+
+    .hero-emoji {
+      font-size: 3.5rem;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .hero h1 {
+      font-size: 2.6rem;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #f0c040, #ff6b35);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px;
+    }
+
+    .hero p {
+      color: #556;
+      font-size: 1rem;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Game grid ── */
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px;
+      width: 100%;
+      max-width: 900px;
+    }
+
+    .game-card {
+      background: #16213e;
+      border-radius: 20px;
+      padding: 32px 28px 28px;
+      text-decoration: none;
+      color: inherit;
+      border: 2px solid transparent;
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .game-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--card-glow);
+      opacity: 0;
+      transition: opacity 0.3s;
+      border-radius: 18px;
+    }
+
+    .game-card:hover {
+      transform: translateY(-6px) scale(1.02);
+      border-color: var(--card-accent);
+      box-shadow: 0 16px 48px rgba(0,0,0,0.5), 0 0 32px var(--card-shadow);
+    }
+
+    .game-card:hover::before { opacity: 1; }
+
+    .game-card:active { transform: translateY(-2px) scale(1.01); }
+
+    /* Per-card accent colors */
+    .card-wheel    { --card-accent: #f0c040; --card-shadow: rgba(240,192,64,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(240,192,64,0.07), transparent 70%); }
+    .card-memory   { --card-accent: #22A6B3; --card-shadow: rgba(34,166,179,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(34,166,179,0.07), transparent 70%); }
+    .card-pinball  { --card-accent: #BE2EDD; --card-shadow: rgba(190,46,221,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(190,46,221,0.07), transparent 70%); }
+    .card-pingpong { --card-accent: #ff6b35; --card-shadow: rgba(255,107,53,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(255,107,53,0.07), transparent 70%); }
+    .card-spelling { --card-accent: #f9c22e; --card-shadow: rgba(249,194,46,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(249,194,46,0.07), transparent 70%); }
+    .card-chinese  { --card-accent: #e53935; --card-shadow: rgba(229,57,53,0.2);   --card-glow: radial-gradient(ellipse at top left, rgba(229,57,53,0.07), transparent 70%); }
+    .card-math     { --card-accent: #3d9eff; --card-shadow: rgba(61,158,255,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(61,158,255,0.07), transparent 70%); }
+
+    .card-icon {
+      font-size: 2.8rem;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .card-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--card-accent);
+      letter-spacing: -0.2px;
+    }
+
+    .card-desc {
+      font-size: 0.88rem;
+      color: #778;
+      line-height: 1.5;
+    }
+
+    .card-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .tag {
+      font-size: 0.7rem;
+      padding: 3px 9px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.06);
+      color: #889;
+      border: 1px solid rgba(255,255,255,0.08);
+      letter-spacing: 0.3px;
+    }
+
+    .card-arrow {
+      position: absolute;
+      bottom: 22px;
+      right: 24px;
+      font-size: 1.2rem;
+      color: var(--card-accent);
+      opacity: 0;
+      transform: translateX(-6px);
+      transition: opacity 0.2s, transform 0.2s;
+    }
+
+    .game-card:hover .card-arrow {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    /* Footer */
+    footer {
+      margin-top: 56px;
+      color: #334;
+      font-size: 0.8rem;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="hero">
+    <span class="hero-emoji">🎮</span>
+    <h1>Kyle & Lindsey Games</h1>
+    <p>Pick a game and play!</p>
+  </div>
+
+  <div class="game-grid">
+
+    <a href="wheel.html" class="game-card card-wheel">
+      <div class="card-icon">🎡</div>
+      <div class="card-title">Wheel Spinner</div>
+      <div class="card-desc">Spin the 3D wheel to randomly pick an activity for Kyle or Lindsey. Tracks spin history.</div>
+      <div class="card-tags">
+        <span class="tag">Kyle</span>
+        <span class="tag">Lindsey</span>
+        <span class="tag">Spinner</span>
+        <span class="tag">History</span>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <a href="memory.html" class="game-card card-memory">
+      <div class="card-icon">🃏</div>
+      <div class="card-title">Memory Match</div>
+      <div class="card-desc">Flip cards to find matching pairs. Kyle vs Lindsey — take turns and score points!</div>
+      <div class="card-tags">
+        <span class="tag">2 Players</span>
+        <span class="tag">Easy / Medium / Hard</span>
+        <span class="tag">Versus</span>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <a href="pinball.html" class="game-card card-pinball">
+      <div class="card-icon">🎰</div>
+      <div class="card-title">Pinball</div>
+      <div class="card-desc">Classic neon pinball with bumpers, slingshots, flippers, and combo scoring. High score saved!</div>
+      <div class="card-tags">
+        <span class="tag">1 Player</span>
+        <span class="tag">Arcade</span>
+        <span class="tag">High Score</span>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <a href="pingpong.html" class="game-card card-pingpong">
+      <div class="card-icon">🏓</div>
+      <div class="card-title">Ping Pong</div>
+      <div class="card-desc">Kyle vs Lindsey (or AI) in a neon table tennis match. First to 7 wins!</div>
+      <div class="card-tags">
+        <span class="tag">2 Players</span>
+        <span class="tag">vs AI</span>
+        <span class="tag">Arcade</span>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <a href="spelling.html" class="game-card card-spelling">
+      <div class="card-icon">🐝</div>
+      <div class="card-title">Spelling Bee</div>
+      <div class="card-desc">Practice 2nd & 3rd grade spelling words with text-to-speech. Solo or Kyle vs Lindsey!</div>
+      <div class="card-tags">
+        <span class="tag">2nd Grade</span>
+        <span class="tag">3rd Grade</span>
+        <span class="tag">vs Mode</span>
+        <span class="tag">TTS</span>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <a href="chinese.html" class="game-card card-chinese">
+      <div class="card-icon">🀄</div>
+      <div class="card-title">Chinese Reading</div>
+      <div class="card-desc">Quiz yourself on 2nd & 3rd grade Chinese words and phrases. Chinese↔English, solo or versus!</div>
+      <div class="card-tags">
+        <span class="tag">2nd Grade</span>
+        <span class="tag">3rd Grade</span>
+        <span class="tag">vs Mode</span>
+        <span class="tag">TTS</span>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <a href="math.html" class="game-card card-math">
+      <div class="card-icon">🔢</div>
+      <div class="card-title">Math Challenge</div>
+      <div class="card-desc">Addition, subtraction & multiplication for grades 3–5. Solo or Kyle vs Lindsey with a countdown timer!</div>
+      <div class="card-tags">
+        <span class="tag">3rd–5th Grade</span>
+        <span class="tag">+  −  ×</span>
+        <span class="tag">vs Mode</span>
+        <span class="tag">Timer</span>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
+  </div>
+
+  <footer>Kyle &amp; Lindsey · 2025</footer>
+
+</body>
+</html>

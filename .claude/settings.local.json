@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(brew install *)",
+      "Bash(pdftotext \"/Users/kevinyang/Documents/IMG_8499.HEIC.pdf\" -)",
+      "Bash(pdftotext \"/Users/kevinyang/Documents/IMG_8499.HEIC.pdf\" /tmp/chinese_words.txt)",
+      "Read(//tmp/**)",
+      "Bash(brew list *)",
+      "Bash(mkdir -p /tmp/chinese_pdf)",
+      "Bash(pdftoppm -r 150 -l 20 \"/Users/kevinyang/Documents/IMG_8499.HEIC.pdf\" /tmp/chinese_pdf/page)",
+      "Bash(pdftoppm -r 120 -f 1 -l 10 \"/Users/kevinyang/Documents/IMG_8499.HEIC.pdf\" /tmp/chinese_pdf/page)",
+      "Read(//private/tmp/chinese_pdf/**)",
+      "Bash(pdfinfo \"/Users/kevinyang/Documents/IMG_8499.HEIC.pdf\")",
+      "Bash(pdftoppm -r 200 -png \"/Users/kevinyang/Documents/IMG_8499.HEIC.pdf\" /tmp/chinese_pdf/page)",
+      "Bash(git -C /Users/kevinyang/dev/WheelSpinner status)",
+      "Bash(gh repo *)",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
+    ]
+  }
+}

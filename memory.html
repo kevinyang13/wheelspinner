@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Memory Match</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px;
+    }
+
+    /* ── Nav ── */
+    nav {
+      width: 100%;
+      max-width: 760px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    nav a {
+      color: #f0c040;
+      text-decoration: none;
+      font-size: 0.9rem;
+      opacity: 0.8;
+      transition: opacity 0.2s;
+    }
+    nav a:hover { opacity: 1; }
+    nav span { font-size: 1rem; font-weight: bold; color: #eee; }
+
+    /* ── Setup screen ── */
+    #setup-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      padding-top: 20px;
+      width: 100%;
+      max-width: 560px;
+    }
+
+    #setup-screen h1 {
+      font-size: 2.4rem;
+      color: #f0c040;
+      letter-spacing: 1px;
+    }
+
+    #setup-screen p {
+      color: #aaa;
+      font-size: 1rem;
+    }
+
+    .diff-selector {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .diff-btn {
+      padding: 16px 28px;
+      border: 2px solid #444;
+      background: #16213e;
+      color: #ccc;
+      border-radius: 14px;
+      font-size: 1rem;
+      cursor: pointer;
+      text-align: center;
+      transition: border-color 0.2s, color 0.2s, transform 0.1s;
+      line-height: 1.5;
+      min-width: 130px;
+    }
+    .diff-btn small { font-size: 0.75rem; color: #777; display: block; }
+    .diff-btn:hover { border-color: #f0c040; color: #f0c040; }
+    .diff-btn:hover small { color: #c8a030; }
+    .diff-btn.active { border-color: #f0c040; color: #f0c040; background: rgba(240,192,64,0.1); }
+    .diff-btn.active small { color: #c8a030; }
+
+    .start-btn {
+      padding: 14px 56px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 32px;
+      background: linear-gradient(135deg, #f0c040, #ff6b35);
+      color: #1a1a2e;
+      cursor: pointer;
+      box-shadow: 0 4px 18px rgba(240,192,64,0.4);
+      transition: transform 0.1s;
+    }
+    .start-btn:hover { transform: scale(1.04); }
+
+    /* Best scores */
+    .best-scores {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .best-score-card {
+      background: #16213e;
+      border-radius: 12px;
+      padding: 12px 20px;
+      text-align: center;
+      min-width: 130px;
+    }
+    .best-score-card .label { font-size: 0.75rem; color: #777; text-transform: uppercase; letter-spacing: 1px; }
+    .best-score-card .val   { font-size: 1.1rem; font-weight: bold; color: #f0c040; margin-top: 4px; }
+
+    /* ── Game screen ── */
+    #game-screen { display: none; flex-direction: column; align-items: center; gap: 18px; width: 100%; }
+
+    /* ── Player scorecards ── */
+    .players-bar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      width: 100%;
+      max-width: 700px;
+    }
+
+    .player-card {
+      flex: 1;
+      background: #16213e;
+      border-radius: 14px;
+      padding: 14px 16px;
+      text-align: center;
+      border: 2px solid #2a3a5a;
+      transition: border-color 0.3s, box-shadow 0.3s, transform 0.25s;
+      position: relative;
+    }
+    .player-card.kyle.active {
+      border-color: #f0c040;
+      box-shadow: 0 0 22px rgba(240,192,64,0.35);
+      transform: scale(1.05);
+    }
+    .player-card.lindsey.active {
+      border-color: #22A6B3;
+      box-shadow: 0 0 22px rgba(34,166,179,0.35);
+      transform: scale(1.05);
+    }
+    .turn-badge {
+      position: absolute;
+      top: -11px; left: 50%; transform: translateX(-50%);
+      font-size: 0.65rem; font-weight: bold;
+      padding: 2px 9px; border-radius: 8px;
+      white-space: nowrap; letter-spacing: 0.5px;
+    }
+    .player-card.kyle   .turn-badge { background: #f0c040; color: #1a1a2e; }
+    .player-card.lindsey .turn-badge { background: #22A6B3; color: #fff; }
+    .player-name { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: #777; margin-bottom: 2px; }
+    .player-score { font-size: 2.4rem; font-weight: bold; line-height: 1; color: #eee; }
+    .player-card.kyle.active    .player-score { color: #f0c040; }
+    .player-card.lindsey.active .player-score { color: #22A6B3; }
+    .player-pairs-label { font-size: 0.65rem; color: #555; margin-top: 2px; }
+
+    .timer-center {
+      flex: 0 0 90px;
+      text-align: center;
+    }
+    .stat-timer { font-size: 1.3rem; font-weight: bold; color: #eee; }
+    .pairs-sub { font-size: 0.72rem; color: #555; margin-top: 4px; }
+
+    /* ── Win overlay – player scores ── */
+    .win-scores {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .win-player {
+      flex: 1;
+      border-radius: 14px;
+      padding: 16px 12px;
+      text-align: center;
+    }
+    .win-player.kyle    { background: rgba(240,192,64,0.12); border: 2px solid #f0c040; }
+    .win-player.lindsey { background: rgba(34,166,179,0.12); border: 2px solid #22A6B3; }
+    .win-player.winner  { transform: scale(1.06); }
+    .win-player-name  { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #aaa; margin-bottom: 4px; }
+    .win-player-score { font-size: 2.4rem; font-weight: bold; }
+    .win-player.kyle    .win-player-score { color: #f0c040; }
+    .win-player.lindsey .win-player-score { color: #22A6B3; }
+    .win-player-label { font-size: 0.7rem; color: #666; margin-top: 2px; }
+    .win-vs { font-size: 1rem; color: #555; font-weight: bold; flex: 0 0 auto; }
+    .win-meta { font-size: 0.85rem; color: #666; margin-bottom: 24px; }
+
+    /* ── Card grid ── */
+    .grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    /* ── Card ── */
+    .card {
+      aspect-ratio: 1;
+      perspective: 700px;
+      cursor: pointer;
+    }
+
+    .card-inner {
+      width: 100%; height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      border-radius: 12px;
+    }
+
+    .card.flipped .card-inner,
+    .card.matched .card-inner {
+      transform: rotateY(180deg);
+    }
+
+    .card-front, .card-back {
+      position: absolute; inset: 0;
+      border-radius: 12px;
+      backface-visibility: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    /* Face-down: dark gradient + pattern */
+    .card-front {
+      background: linear-gradient(145deg, #1e3a5f 0%, #0d1b3e 100%);
+      border: 2px solid #2a4070;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 4px 12px rgba(0,0,0,0.4);
+    }
+    .card-front::before {
+      content: '✦';
+      font-size: 2rem;
+      color: rgba(255,255,255,0.1);
+    }
+    .card-front::after {
+      content: '';
+      position: absolute; inset: 4px;
+      border-radius: 9px;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    /* Face-up */
+    .card-back {
+      transform: rotateY(180deg);
+      border: 2px solid rgba(255,255,255,0.15);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+    .card-back .card-emoji { font-size: 2.2rem; line-height: 1; }
+    .card-back .card-label { font-size: 0.65rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.85; }
+
+    /* Category colors */
+    .cat-food    .card-back { background: linear-gradient(145deg, #ff6348, #c0392b); color: #fff; }
+    .cat-animal  .card-back { background: linear-gradient(145deg, #6AB04C, #1e8449); color: #fff; }
+    .cat-pokemon .card-back { background: linear-gradient(145deg, #f9ca24, #e58e09); color: #1a1a2e; }
+    .cat-thing   .card-back { background: linear-gradient(145deg, #4834D4, #2471a3); color: #fff; }
+
+    /* Matched state */
+    .card.matched .card-back {
+      filter: brightness(0.65) saturate(0.5);
+    }
+    .card.matched::after {
+      content: '✓';
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      color: rgba(255,255,255,0.6);
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    /* Card hover effect */
+    .card:not(.flipped):not(.matched):hover .card-inner {
+      transform: rotateY(8deg) scale(1.05);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+
+    /* ── Game buttons ── */
+    .game-btns {
+      display: flex;
+      gap: 12px;
+    }
+    .game-btn {
+      padding: 10px 28px;
+      border-radius: 24px;
+      border: 2px solid #444;
+      background: transparent;
+      color: #ccc;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .game-btn:hover { border-color: #f0c040; color: #f0c040; }
+
+    /* ── Win overlay ── */
+    #win-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(10, 10, 20, 0.88);
+      backdrop-filter: blur(6px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    #win-overlay.show { display: flex; }
+
+    .win-card {
+      background: #16213e;
+      border-radius: 24px;
+      padding: 40px 48px;
+      text-align: center;
+      border: 2px solid #f0c040;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.7), 0 0 60px rgba(240,192,64,0.15);
+      animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      max-width: 380px;
+      width: 90%;
+    }
+    @keyframes popIn {
+      from { transform: scale(0.7); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+
+    .win-emoji { font-size: 4rem; margin-bottom: 12px; }
+    .win-title { font-size: 2rem; font-weight: bold; color: #f0c040; margin-bottom: 8px; }
+    .win-sub   { color: #aaa; font-size: 0.95rem; margin-bottom: 24px; }
+
+    .win-stars { font-size: 2rem; margin-bottom: 20px; letter-spacing: 4px; }
+
+    .win-stats {
+      display: flex; gap: 24px; justify-content: center;
+      margin-bottom: 28px;
+    }
+    .win-stat { text-align: center; }
+    .win-stat .wlabel { font-size: 0.75rem; color: #777; text-transform: uppercase; letter-spacing: 1px; }
+    .win-stat .wval   { font-size: 1.4rem; font-weight: bold; color: #eee; margin-top: 4px; }
+
+    .win-btns { display: flex; gap: 12px; justify-content: center; }
+    .win-btn-primary {
+      padding: 12px 36px; font-size: 1rem; font-weight: bold;
+      border: none; border-radius: 24px;
+      background: linear-gradient(135deg, #f0c040, #ff6b35);
+      color: #1a1a2e; cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .win-btn-primary:hover { transform: scale(1.04); }
+    .win-btn-secondary {
+      padding: 12px 24px; font-size: 1rem;
+      border: 2px solid #444; background: transparent;
+      color: #ccc; border-radius: 24px; cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .win-btn-secondary:hover { border-color: #f0c040; color: #f0c040; }
+
+    /* Confetti */
+    .confetti-piece {
+      position: fixed;
+      width: 10px; height: 10px;
+      top: -10px;
+      border-radius: 2px;
+      animation: confettiFall linear forwards;
+      z-index: 99;
+      pointer-events: none;
+    }
+    @keyframes confettiFall {
+      to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html">← Home</a>
+    <span>🃏 Memory Match</span>
+  </nav>
+
+  <!-- Setup screen -->
+  <div id="setup-screen">
+    <h1>🃏 Memory Match</h1>
+    <p>Flip cards to find all matching pairs!</p>
+
+    <div class="diff-selector">
+      <button class="diff-btn active" data-diff="easy">
+        Easy
+        <small>4×4 · 8 pairs</small>
+      </button>
+      <button class="diff-btn" data-diff="medium">
+        Medium
+        <small>5×4 · 10 pairs</small>
+      </button>
+      <button class="diff-btn" data-diff="hard">
+        Hard
+        <small>6×6 · 18 pairs</small>
+      </button>
+    </div>
+
+    <button class="start-btn" id="startBtn">Start Game</button>
+
+    <div class="best-scores" id="bestScores"></div>
+  </div>
+
+  <!-- Game screen -->
+  <div id="game-screen">
+    <div class="players-bar">
+      <div class="player-card kyle active" id="kyleCard">
+        <div class="turn-badge" id="kyleBadge">Your Turn ▼</div>
+        <div class="player-name">Kyle</div>
+        <div class="player-score" id="kyleScore">0</div>
+        <div class="player-pairs-label">pairs</div>
+      </div>
+      <div class="timer-center">
+        <div class="stat-timer" id="timerEl">0:00</div>
+        <div class="pairs-sub">Pairs <span id="pairsEl">0</span>/<span id="totalEl">8</span></div>
+      </div>
+      <div class="player-card lindsey" id="lindseyCard">
+        <div class="turn-badge" id="lindseyBadge" style="display:none">Your Turn ▼</div>
+        <div class="player-name">Lindsey</div>
+        <div class="player-score" id="lindseyScore">0</div>
+        <div class="player-pairs-label">pairs</div>
+      </div>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="game-btns">
+      <button class="game-btn" id="restartBtn">Restart</button>
+      <button class="game-btn" id="menuBtn">Menu</button>
+    </div>
+  </div>
+
+  <!-- Win overlay -->
+  <div id="win-overlay">
+    <div class="win-card">
+      <div class="win-emoji" id="winEmoji">🏆</div>
+      <div class="win-title" id="winTitle">Kyle Wins!</div>
+      <div class="win-sub"   id="winSub"></div>
+      <div class="win-scores">
+        <div class="win-player kyle" id="winKyleCard">
+          <div class="win-player-name">Kyle</div>
+          <div class="win-player-score" id="winKyleScore">0</div>
+          <div class="win-player-label">pairs</div>
+        </div>
+        <div class="win-vs">vs</div>
+        <div class="win-player lindsey" id="winLindseyCard">
+          <div class="win-player-name">Lindsey</div>
+          <div class="win-player-score" id="winLindseyScore">0</div>
+          <div class="win-player-label">pairs</div>
+        </div>
+      </div>
+      <div class="win-meta" id="winMeta"></div>
+      <div class="win-btns">
+        <button class="win-btn-primary"   id="winPlayAgain">Play Again</button>
+        <button class="win-btn-secondary" id="winMenu">Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── Card pool ───────────────────────────────────────
+    const CARD_POOL = [
+      // Food
+      { id: 'pizza',      emoji: '🍕', label: 'Pizza',      cat: 'food' },
+      { id: 'burger',     emoji: '🍔', label: 'Burger',     cat: 'food' },
+      { id: 'taco',       emoji: '🌮', label: 'Taco',       cat: 'food' },
+      { id: 'sushi',      emoji: '🍣', label: 'Sushi',      cat: 'food' },
+      { id: 'donut',      emoji: '🍩', label: 'Donut',      cat: 'food' },
+      { id: 'cake',       emoji: '🎂', label: 'Cake',       cat: 'food' },
+      { id: 'ramen',      emoji: '🍜', label: 'Ramen',      cat: 'food' },
+      { id: 'avocado',    emoji: '🥑', label: 'Avocado',    cat: 'food' },
+      { id: 'icecream',   emoji: '🍦', label: 'Ice Cream',  cat: 'food' },
+      // Animals
+      { id: 'dog',        emoji: '🐶', label: 'Dog',        cat: 'animal' },
+      { id: 'cat',        emoji: '🐱', label: 'Cat',        cat: 'animal' },
+      { id: 'bear',       emoji: '🐻', label: 'Bear',       cat: 'animal' },
+      { id: 'fox',        emoji: '🦊', label: 'Fox',        cat: 'animal' },
+      { id: 'panda',      emoji: '🐼', label: 'Panda',      cat: 'animal' },
+      { id: 'lion',       emoji: '🦁', label: 'Lion',       cat: 'animal' },
+      { id: 'frog',       emoji: '🐸', label: 'Frog',       cat: 'animal' },
+      { id: 'butterfly',  emoji: '🦋', label: 'Butterfly',  cat: 'animal' },
+      { id: 'penguin',    emoji: '🐧', label: 'Penguin',    cat: 'animal' },
+      // Pokémon
+      { id: 'pikachu',    emoji: '⚡', label: 'Pikachu',    cat: 'pokemon' },
+      { id: 'charmander', emoji: '🔥', label: 'Charmander', cat: 'pokemon' },
+      { id: 'squirtle',   emoji: '💧', label: 'Squirtle',   cat: 'pokemon' },
+      { id: 'bulbasaur',  emoji: '🌿', label: 'Bulbasaur',  cat: 'pokemon' },
+      { id: 'gengar',     emoji: '👻', label: 'Gengar',     cat: 'pokemon' },
+      { id: 'snorlax',    emoji: '😴', label: 'Snorlax',    cat: 'pokemon' },
+      { id: 'jigglypuff', emoji: '🌸', label: 'Jigglypuff', cat: 'pokemon' },
+      { id: 'mewtwo',     emoji: '🧬', label: 'Mewtwo',     cat: 'pokemon' },
+      { id: 'psyduck',    emoji: '🦆', label: 'Psyduck',    cat: 'pokemon' },
+      // Things
+      { id: 'rocket',     emoji: '🚀', label: 'Rocket',     cat: 'thing' },
+      { id: 'gamepad',    emoji: '🎮', label: 'Gamepad',    cat: 'thing' },
+      { id: 'guitar',     emoji: '🎸', label: 'Guitar',     cat: 'thing' },
+      { id: 'crystal',    emoji: '🔮', label: 'Crystal',    cat: 'thing' },
+      { id: 'target',     emoji: '🎯', label: 'Target',     cat: 'thing' },
+      { id: 'trophy',     emoji: '🏆', label: 'Trophy',     cat: 'thing' },
+      { id: 'palette',    emoji: '🎨', label: 'Palette',    cat: 'thing' },
+      { id: 'star',       emoji: '⭐', label: 'Star',       cat: 'thing' },
+      { id: 'compass',    emoji: '🧭', label: 'Compass',    cat: 'thing' },
+    ];
+
+    // ── Difficulty config ───────────────────────────────
+    const DIFF = {
+      easy:   { cols: 4, rows: 4, pairs: 8,  cardSize: 88  },
+      medium: { cols: 5, rows: 4, pairs: 10, cardSize: 82  },
+      hard:   { cols: 6, rows: 6, pairs: 18, cardSize: 76  },
+    };
+
+    // ── State ───────────────────────────────────────────
+    let diff          = 'easy';
+    let cards         = [];
+    let flipped       = [];
+    let matched       = new Set();
+    let moves         = 0;
+    let totalPairs    = 0;
+    let timerSecs     = 0;
+    let timerHandle   = null;
+    let locked        = false;
+    let currentPlayer = 'Kyle';
+    let scores        = { Kyle: 0, Lindsey: 0 };
+
+    // ── Elements ────────────────────────────────────────
+    const setupScreen = document.getElementById('setup-screen');
+    const gameScreen  = document.getElementById('game-screen');
+    const winOverlay  = document.getElementById('win-overlay');
+    const grid        = document.getElementById('grid');
+    const timerEl     = document.getElementById('timerEl');
+    const pairsEl     = document.getElementById('pairsEl');
+    const totalEl     = document.getElementById('totalEl');
+
+    // ── Difficulty tabs ─────────────────────────────────
+    document.querySelectorAll('.diff-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        diff = btn.dataset.diff;
+        renderBestScores();
+      });
+    });
+
+    document.getElementById('startBtn').addEventListener('click', startGame);
+    document.getElementById('restartBtn').addEventListener('click', startGame);
+    document.getElementById('menuBtn').addEventListener('click', showMenu);
+    document.getElementById('winPlayAgain').addEventListener('click', () => { winOverlay.classList.remove('show'); startGame(); });
+    document.getElementById('winMenu').addEventListener('click', () => { winOverlay.classList.remove('show'); showMenu(); });
+
+    // ── Best scores ─────────────────────────────────────
+    function getBest(d) { return JSON.parse(localStorage.getItem('mm_best_' + d) || 'null'); }
+    function setBest(d, val) { localStorage.setItem('mm_best_' + d, JSON.stringify(val)); }
+
+    function renderBestScores() {
+      const el = document.getElementById('bestScores');
+      const labels = { easy: 'Easy', medium: 'Medium', hard: 'Hard' };
+      const html = Object.keys(labels).map(d => {
+        const b = getBest(d);
+        return `<div class="best-score-card">
+          <div class="label">${labels[d]} Best</div>
+          <div class="val">${b ? fmtTime(b.time) + ' · ' + b.moves + ' mv' : '—'}</div>
+        </div>`;
+      }).join('');
+      el.innerHTML = html;
+    }
+    renderBestScores();
+
+    // ── Timer ────────────────────────────────────────────
+    function fmtTime(s) {
+      return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+    }
+    function startTimer() {
+      clearInterval(timerHandle);
+      timerSecs = 0;
+      timerEl.textContent = '0:00';
+      timerHandle = setInterval(() => {
+        timerSecs++;
+        timerEl.textContent = fmtTime(timerSecs);
+      }, 1000);
+    }
+
+    // ── Shuffle ──────────────────────────────────────────
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    // ── Turn UI ──────────────────────────────────────────
+    function updateTurnUI() {
+      const kyleCard     = document.getElementById('kyleCard');
+      const lindseyCard  = document.getElementById('lindseyCard');
+      const kyleBadge    = document.getElementById('kyleBadge');
+      const lindseyBadge = document.getElementById('lindseyBadge');
+      const isKyle = currentPlayer === 'Kyle';
+      kyleCard.classList.toggle('active', isKyle);
+      lindseyCard.classList.toggle('active', !isKyle);
+      kyleBadge.style.display    = isKyle  ? '' : 'none';
+      lindseyBadge.style.display = !isKyle ? '' : 'none';
+    }
+
+    function updateScoreUI() {
+      document.getElementById('kyleScore').textContent    = scores.Kyle;
+      document.getElementById('lindseyScore').textContent = scores.Lindsey;
+    }
+
+    // ── Build game ───────────────────────────────────────
+    function startGame() {
+      const cfg = DIFF[diff];
+      totalPairs    = cfg.pairs;
+      moves         = 0;
+      matched       = new Set();
+      flipped       = [];
+      locked        = false;
+      currentPlayer = 'Kyle';
+      scores        = { Kyle: 0, Lindsey: 0 };
+      updateTurnUI();
+      updateScoreUI();
+
+      // Pick random cards from pool
+      const pool = shuffle([...CARD_POOL]).slice(0, totalPairs);
+      // Duplicate each card to make pairs
+      const deck = shuffle([...pool, ...pool].map((c, i) => ({ ...c, uid: i })));
+
+      // Build DOM
+      grid.innerHTML = '';
+      grid.style.gridTemplateColumns = `repeat(${cfg.cols}, ${cfg.cardSize}px)`;
+
+      cards = deck.map(c => {
+        const el = document.createElement('div');
+        el.className = `card cat-${c.cat}`;
+        el.dataset.id  = c.uid;
+        el.dataset.pid = c.id;
+        el.innerHTML = `
+          <div class="card-inner">
+            <div class="card-front"></div>
+            <div class="card-back">
+              <span class="card-emoji">${c.emoji}</span>
+              <span class="card-label">${c.label}</span>
+            </div>
+          </div>`;
+        el.style.width  = cfg.cardSize + 'px';
+        el.style.height = cfg.cardSize + 'px';
+        el.addEventListener('click', () => handleClick(el));
+        grid.appendChild(el);
+        return { id: c.uid, pairId: c.id, el };
+      });
+
+      pairsEl.textContent = '0';
+      totalEl.textContent = totalPairs;
+
+      setupScreen.style.display = 'none';
+      gameScreen.style.display  = 'flex';
+      startTimer();
+    }
+
+    // ── Card click ────────────────────────────────────────
+    function handleClick(el) {
+      if (locked) return;
+      if (el.classList.contains('flipped') || el.classList.contains('matched')) return;
+
+      el.classList.add('flipped');
+      flipped.push(el);
+
+      if (flipped.length < 2) return;
+
+      moves++;
+      locked = true;
+
+      const [a, b] = flipped;
+      if (a.dataset.pid === b.dataset.pid) {
+        // Match — player keeps turn
+        a.classList.add('matched');
+        b.classList.add('matched');
+        matched.add(a.dataset.pid);
+        flipped = [];
+        locked  = false;
+        scores[currentPlayer]++;
+        updateScoreUI();
+        pairsEl.textContent = matched.size;
+        if (matched.size === totalPairs) setTimeout(showWin, 500);
+      } else {
+        // No match — switch turn after flip-back
+        setTimeout(() => {
+          a.classList.remove('flipped');
+          b.classList.remove('flipped');
+          flipped = [];
+          locked  = false;
+          currentPlayer = currentPlayer === 'Kyle' ? 'Lindsey' : 'Kyle';
+          updateTurnUI();
+        }, 900);
+      }
+    }
+
+    // ── Win ───────────────────────────────────────────────
+    function showWin() {
+      clearInterval(timerHandle);
+
+      const ks = scores.Kyle, ls = scores.Lindsey;
+      const tie = ks === ls;
+      const winner = tie ? null : (ks > ls ? 'Kyle' : 'Lindsey');
+
+      document.getElementById('winEmoji').textContent = tie ? '🤝' : '🏆';
+      document.getElementById('winTitle').textContent = tie ? "It's a Tie!" : `${winner} Wins!`;
+      document.getElementById('winSub').textContent   = tie ? 'Perfectly matched!' : `${winner} found more pairs!`;
+      document.getElementById('winKyleScore').textContent    = ks;
+      document.getElementById('winLindseyScore').textContent = ls;
+      document.getElementById('winMeta').textContent = `Time: ${fmtTime(timerSecs)} · Moves: ${moves}`;
+
+      const kyleCard    = document.getElementById('winKyleCard');
+      const lindseyCard = document.getElementById('winLindseyCard');
+      kyleCard.classList.toggle('winner',    winner === 'Kyle');
+      lindseyCard.classList.toggle('winner', winner === 'Lindsey');
+
+      winOverlay.classList.add('show');
+      launchConfetti();
+    }
+
+    // ── Menu ──────────────────────────────────────────────
+    function showMenu() {
+      clearInterval(timerHandle);
+      gameScreen.style.display  = 'none';
+      setupScreen.style.display = 'flex';
+      renderBestScores();
+    }
+
+    // ── Confetti ──────────────────────────────────────────
+    function launchConfetti() {
+      const colors = ['#f0c040','#ff6b35','#FF6B6B','#6AB04C','#4834D4','#22A6B3','#BE2EDD'];
+      for (let i = 0; i < 80; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.cssText = `
+          left: ${Math.random() * 100}vw;
+          background: ${colors[Math.floor(Math.random() * colors.length)]};
+          width: ${6 + Math.random() * 8}px;
+          height: ${6 + Math.random() * 8}px;
+          border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
+          animation-duration: ${1.5 + Math.random() * 2}s;
+          animation-delay: ${Math.random() * 0.8}s;
+        `;
+        document.body.appendChild(piece);
+        piece.addEventListener('animationend', () => piece.remove());
+      }
+    }
+  </script>
+</body>
+</html>

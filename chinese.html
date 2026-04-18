@@ -1,0 +1,1736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chinese Reading – Kyle &amp; Lindsey</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #0f0f1e;
+      color: #eee;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 16px 60px;
+    }
+
+    /* ── Nav ── */
+    .topnav {
+      width: 100%; max-width: 780px;
+      display: flex; align-items: center; gap: 12px;
+      padding: 16px 0 0;
+      margin-bottom: 10px;
+    }
+    .topnav a {
+      color: #e53;
+      text-decoration: none;
+      font-size: 0.85rem;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+    .topnav a:hover { opacity: 1; }
+    .topnav h2 {
+      font-size: 1.1rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #e53, #ff9800);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ── Screens ── */
+    .screen { display: none; width: 100%; max-width: 680px; }
+    .screen.active { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+
+    /* ── Setup Screen ── */
+    .setup-title {
+      text-align: center;
+      margin-top: 10px;
+    }
+    .setup-title .big-icon { font-size: 3.2rem; display: block; margin-bottom: 8px; }
+    .setup-title h1 {
+      font-size: 2.1rem; font-weight: 900;
+      background: linear-gradient(135deg, #e53, #ff9800);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .setup-title p { color: #667; font-size: 0.9rem; margin-top: 6px; }
+
+    .option-group { width: 100%; }
+    .voice-select-wrap {
+      width: 100%;
+      background: #16213e;
+      border-radius: 12px;
+      border: 2px solid #2a2a3e;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .voice-select-wrap select {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #ccd;
+      font-size: 0.88rem;
+      outline: none;
+      cursor: pointer;
+    }
+    .voice-select-wrap select option { background: #16213e; color: #eee; }
+    .voice-test-btn {
+      background: rgba(255,150,50,0.12);
+      border: 1px solid rgba(255,150,50,0.3);
+      color: #ff9965;
+      border-radius: 8px;
+      padding: 5px 12px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+    .voice-test-btn:hover { background: rgba(255,150,50,0.25); }
+    .option-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #778;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .option-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .opt-btn {
+      flex: 1; min-width: 100px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 2px solid #2a2a3e;
+      background: #16213e;
+      color: #aab;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+    }
+    .opt-btn:hover { border-color: #e53; color: #eee; }
+    .opt-btn.selected {
+      border-color: #e53;
+      background: rgba(238,85,51,0.15);
+      color: #ff9977;
+    }
+
+    .start-btn {
+      width: 100%;
+      padding: 16px;
+      border-radius: 14px;
+      border: none;
+      background: linear-gradient(135deg, #e53, #ff9800);
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.15s, opacity 0.15s;
+      letter-spacing: 0.3px;
+    }
+    .start-btn:hover { transform: scale(1.02); opacity: 0.92; }
+    .start-btn:active { transform: scale(0.98); }
+
+    /* ── Game Screen ── */
+    .game-header {
+      width: 100%;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px;
+    }
+
+    /* Player cards */
+    .player-cards { display: flex; gap: 10px; width: 100%; }
+    .player-card {
+      flex: 1;
+      background: #16213e;
+      border-radius: 14px;
+      padding: 12px 16px;
+      border: 2px solid transparent;
+      transition: all 0.25s;
+      text-align: center;
+      position: relative;
+    }
+    .player-card.kyle { --pc: #f0c040; }
+    .player-card.lindsey { --pc: #22A6B3; }
+    .player-card.active {
+      border-color: var(--pc);
+      box-shadow: 0 0 20px rgba(var(--pc-rgb), 0.2);
+      background: rgba(var(--pc-rgb), 0.08);
+    }
+    .player-card.kyle.active  { box-shadow: 0 0 18px rgba(240,192,64,0.25); background: rgba(240,192,64,0.08); }
+    .player-card.lindsey.active { box-shadow: 0 0 18px rgba(34,166,179,0.25); background: rgba(34,166,179,0.08); }
+    .pc-name { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px; opacity: 0.6; text-transform: uppercase; }
+    .pc-score { font-size: 1.8rem; font-weight: 900; color: var(--pc); }
+    .turn-badge {
+      position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+      background: var(--pc);
+      color: #111; font-size: 0.6rem; font-weight: 800;
+      padding: 2px 8px; border-radius: 10px;
+      letter-spacing: 0.5px;
+      display: none;
+      white-space: nowrap;
+    }
+    .player-card.active .turn-badge { display: block; }
+
+    /* Progress */
+    .progress-wrap { width: 100%; }
+    .progress-info { display: flex; justify-content: space-between; font-size: 0.75rem; color: #667; margin-bottom: 5px; }
+    .progress-bar { width: 100%; height: 6px; background: #1e1e30; border-radius: 3px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #e53, #ff9800); border-radius: 3px; transition: width 0.4s ease; }
+
+    /* Question card */
+    .question-card {
+      width: 100%;
+      background: #16213e;
+      border-radius: 20px;
+      padding: 32px 24px 28px;
+      text-align: center;
+      border: 2px solid #1e2a44;
+      position: relative;
+    }
+    .question-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #556;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    .chinese-char {
+      font-size: 3.8rem;
+      line-height: 1.1;
+      font-weight: 900;
+      color: #fff;
+      text-shadow: 0 0 30px rgba(255,150,80,0.3);
+      letter-spacing: 4px;
+    }
+    .pinyin {
+      font-size: 1.1rem;
+      color: #ff9965;
+      margin-top: 8px;
+      font-style: italic;
+      letter-spacing: 1px;
+    }
+    .english-prompt {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #eef;
+      line-height: 1.3;
+    }
+
+    .speak-row {
+      display: flex; justify-content: center; gap: 10px;
+      margin-top: 14px;
+    }
+    .speak-btn {
+      background: rgba(255,150,50,0.12);
+      border: 1px solid rgba(255,150,50,0.25);
+      color: #ff9965;
+      border-radius: 8px;
+      padding: 7px 16px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .speak-btn:hover { background: rgba(255,150,50,0.22); }
+
+    /* Timer */
+    .timer-wrap {
+      display: flex; align-items: center; justify-content: center;
+      width: 100%; gap: 14px;
+    }
+    .pause-btn {
+      background: rgba(255,255,255,0.06);
+      border: 2px solid #2a2a3e;
+      color: #aab;
+      border-radius: 10px;
+      width: 42px; height: 42px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.15s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .pause-btn:hover { border-color: #f9c22e; color: #f9c22e; }
+    .pause-btn.paused { border-color: #2ecc71; color: #2ecc71; background: rgba(46,204,113,0.1); }
+
+    /* Paused overlay — covers choices only, not the question card */
+    .choices-wrap { position: relative; width: 100%; }
+    .game-paused-overlay {
+      display: none;
+      position: absolute; inset: 0;
+      background: rgba(10,10,20,0.88);
+      border-radius: 14px;
+      z-index: 10;
+      align-items: center; justify-content: center;
+      flex-direction: column; gap: 8px;
+      font-size: 1.4rem; font-weight: 900; color: #f9c22e;
+      letter-spacing: 1px;
+    }
+    .game-paused-overlay.show { display: flex; }
+    #pausableArea { width: 100%; display: flex; flex-direction: column; gap: 18px; }
+    .timer-ring {
+      position: relative; width: 64px; height: 64px; flex-shrink: 0;
+    }
+    .timer-ring svg { transform: rotate(-90deg); }
+    .timer-track { fill: none; stroke: #1e2a44; stroke-width: 5; }
+    .timer-fill  { fill: none; stroke-width: 5; stroke-linecap: round;
+                   transition: stroke 0.4s; }
+    .timer-num {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.15rem; font-weight: 900; color: #eee;
+    }
+    .timer-bar-wrap {
+      flex: 1; height: 8px; background: #1e2a44; border-radius: 4px; overflow: hidden;
+    }
+    .timer-bar {
+      height: 100%; border-radius: 4px;
+      transition: background 0.4s;
+    }
+
+    /* Answer choices */
+    .choices-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      width: 100%;
+    }
+    .choice-btn {
+      padding: 18px 14px;
+      border-radius: 14px;
+      border: 2px solid #2a2a3e;
+      background: #16213e;
+      color: #ccd;
+      font-size: 1.05rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      line-height: 1.3;
+      text-align: center;
+    }
+    .choice-btn .choice-zh { font-size: 1.5rem; display: block; margin-bottom: 4px; color: #fff; }
+    .choice-btn .choice-py { font-size: 0.72rem; color: #ff9965; font-style: italic; display: block; margin-bottom: 2px; }
+    .choice-btn:hover:not(:disabled) { border-color: #e53; color: #fff; background: rgba(238,85,51,0.1); }
+    .choice-btn:disabled { cursor: default; }
+    .choice-btn.correct { border-color: #2ecc71 !important; background: rgba(46,204,113,0.15) !important; color: #2ecc71 !important; }
+    .choice-btn.wrong   { border-color: #e74c3c !important; background: rgba(231,76,60,0.15)  !important; color: #e74c3c  !important; }
+    .choice-btn.reveal  { border-color: #2ecc71 !important; background: rgba(46,204,113,0.08) !important; }
+
+    /* Streak */
+    .streak-display {
+      font-size: 0.9rem;
+      color: #ff9965;
+      font-weight: 700;
+      min-height: 24px;
+      text-align: center;
+    }
+
+    /* Feedback toast */
+    .feedback-toast {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.8);
+      background: #1e2a44;
+      border-radius: 16px;
+      padding: 20px 40px;
+      font-size: 1.5rem;
+      font-weight: 800;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s, transform 0.15s;
+      z-index: 100;
+      text-align: center;
+      border: 2px solid transparent;
+    }
+    .feedback-toast.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    .feedback-toast.correct { border-color: #2ecc71; color: #2ecc71; }
+    .feedback-toast.wrong   { border-color: #e74c3c; color: #e74c3c; }
+
+    /* ── Results ── */
+    .results-header { text-align: center; }
+    .results-header .big-icon { font-size: 3rem; display: block; margin-bottom: 8px; }
+    .results-header h2 {
+      font-size: 1.9rem; font-weight: 900;
+      background: linear-gradient(135deg, #e53, #ff9800);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .result-scorecards {
+      display: flex; gap: 14px; width: 100%; justify-content: center;
+    }
+    .result-scorecard {
+      flex: 1; max-width: 200px;
+      background: #16213e;
+      border-radius: 16px;
+      padding: 20px 16px;
+      text-align: center;
+      border: 2px solid #1e2a44;
+      transition: transform 0.3s;
+    }
+    .result-scorecard.winner {
+      transform: scale(1.06);
+      border-color: var(--pc);
+    }
+    .result-scorecard.kyle { --pc: #f0c040; }
+    .result-scorecard.lindsey { --pc: #22A6B3; }
+    .result-scorecard .rs-name { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px; opacity: 0.6; text-transform: uppercase; margin-bottom: 6px; }
+    .result-scorecard .rs-score { font-size: 2.4rem; font-weight: 900; color: var(--pc); }
+    .result-scorecard .rs-pct { font-size: 0.85rem; color: #667; margin-top: 2px; }
+    .result-scorecard .rs-crown { font-size: 1.4rem; margin-bottom: 4px; display: none; }
+    .result-scorecard.winner .rs-crown { display: block; }
+
+    .results-list { width: 100%; }
+    .results-list-title {
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 1px;
+      color: #556; text-transform: uppercase; margin-bottom: 10px;
+    }
+    .result-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 14px;
+      background: #16213e;
+      border-radius: 10px;
+      margin-bottom: 7px;
+      font-size: 0.88rem;
+    }
+    .result-row .rr-icon { font-size: 1.1rem; flex-shrink: 0; }
+    .result-row .rr-zh { font-size: 1.2rem; font-weight: 700; color: #fff; flex-shrink: 0; min-width: 60px; }
+    .result-row .rr-py { font-size: 0.7rem; color: #ff9965; font-style: italic; }
+    .result-row .rr-en { flex: 1; color: #aab; }
+    .result-row .rr-who { font-size: 0.72rem; color: #556; flex-shrink: 0; }
+    .result-row.correct-row { border-left: 3px solid #2ecc71; }
+    .result-row.wrong-row   { border-left: 3px solid #e74c3c; }
+    .rr-speak {
+      background: none; border: 1px solid rgba(255,150,50,0.3);
+      color: #ff9965; border-radius: 6px;
+      padding: 4px 8px; font-size: 0.8rem;
+      cursor: pointer; flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .rr-speak:hover { background: rgba(255,150,50,0.2); }
+
+    .play-again-btn {
+      width: 100%;
+      padding: 15px;
+      border-radius: 14px;
+      border: none;
+      background: linear-gradient(135deg, #e53, #ff9800);
+      color: #fff;
+      font-size: 1.05rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.15s, opacity 0.15s;
+    }
+    .play-again-btn:hover { transform: scale(1.02); opacity: 0.92; }
+
+    /* Confetti */
+    .confetti-piece {
+      position: fixed;
+      width: 10px; height: 10px;
+      border-radius: 2px;
+      pointer-events: none;
+      animation: confettiFall linear forwards;
+      z-index: 999;
+    }
+    @keyframes confettiFall {
+      0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topnav">
+    <a href="index.html">← Home</a>
+    <span style="color:#334">|</span>
+    <h2>🀄 Chinese Reading</h2>
+  </div>
+
+  <!-- ═══════════════════════ SETUP SCREEN ═══════════════════════ -->
+  <div id="setupScreen" class="screen active">
+
+    <div class="setup-title">
+      <span class="big-icon">🀄</span>
+      <h1>Chinese Reading</h1>
+      <p>Test your Chinese words &amp; phrases!</p>
+    </div>
+
+    <div class="option-group" style="width:100%">
+      <div class="option-label">Grade Level</div>
+      <div class="option-row">
+        <button class="opt-btn selected" data-group="grade" data-val="2">2nd</button>
+        <button class="opt-btn" data-group="grade" data-val="3">3rd</button>
+        <button class="opt-btn" data-group="grade" data-val="4">4th</button>
+        <button class="opt-btn" data-group="grade" data-val="5">5th</button>
+        <button class="opt-btn" data-group="grade" data-val="kyle">🏆 Kyle</button>
+        <button class="opt-btn" data-group="grade" data-val="lindsey">📚 Lindsey</button>
+        <button class="opt-btn" data-group="grade" data-val="split">🆚 各自</button>
+        <button class="opt-btn" data-group="grade" data-val="all">All</button>
+      </div>
+    </div>
+
+    <div class="option-group" style="width:100%">
+      <div class="option-label">Quiz Direction</div>
+      <div class="option-row">
+        <button class="opt-btn selected" data-group="dir" data-val="zh2en">Chinese → English</button>
+        <button class="opt-btn" data-group="dir" data-val="en2zh">English → Chinese</button>
+      </div>
+    </div>
+
+    <div class="option-group" style="width:100%">
+      <div class="option-label">Mode</div>
+      <div class="option-row">
+        <button class="opt-btn selected" data-group="mode" data-val="solo">Solo</button>
+        <button class="opt-btn" data-group="mode" data-val="versus">Kyle vs Lindsey</button>
+      </div>
+    </div>
+
+    <div class="option-group" style="width:100%">
+      <div class="option-label">Questions</div>
+      <div class="option-row">
+        <button class="opt-btn" data-group="count" data-val="8">8</button>
+        <button class="opt-btn" data-group="count" data-val="12">12</button>
+        <button class="opt-btn selected" data-group="count" data-val="20">20</button>
+      </div>
+    </div>
+
+    <div class="option-group" style="width:100%">
+      <div class="option-label">Timer ⏱</div>
+      <div class="option-row">
+        <button class="opt-btn selected" data-group="timer" data-val="3">3 sec</button>
+        <button class="opt-btn" data-group="timer" data-val="5">5 sec</button>
+        <button class="opt-btn" data-group="timer" data-val="15">15 sec</button>
+        <button class="opt-btn" data-group="timer" data-val="30">30 sec</button>
+      </div>
+    </div>
+
+    <div class="option-group" style="width:100%">
+      <div class="option-label">Voice 🔊</div>
+      <div class="voice-select-wrap">
+        <span style="font-size:1.1rem">🗣️</span>
+        <select id="voiceSelect"><option value="">Loading voices…</option></select>
+        <button class="voice-test-btn" id="voiceTestBtn">Test</button>
+      </div>
+    </div>
+
+    <button class="start-btn" id="startBtn">Start Game 🚀</button>
+  </div>
+
+  <!-- ═══════════════════════ GAME SCREEN ═══════════════════════ -->
+  <div id="gameScreen" class="screen">
+
+    <!-- Player cards (versus) -->
+    <div class="player-cards" id="playerCards" style="display:none">
+      <div class="player-card kyle active" id="kyleCard">
+        <div class="turn-badge">YOUR TURN</div>
+        <div class="pc-name">Kyle</div>
+        <div class="pc-score" id="kyleScore">0</div>
+      </div>
+      <div class="player-card lindsey" id="lindseyCard">
+        <div class="turn-badge">YOUR TURN</div>
+        <div class="pc-name">Lindsey</div>
+        <div class="pc-score" id="lindseyScore">0</div>
+      </div>
+    </div>
+
+    <!-- Solo score -->
+    <div id="soloScore" style="width:100%;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:0.85rem;color:#667">Score</span>
+      <span style="font-size:1.3rem;font-weight:800;color:#ff9965" id="soloScoreVal">0</span>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-wrap" style="width:100%">
+      <div class="progress-info">
+        <span id="progressLabel">Question 1 of 12</span>
+        <span id="streakDisplay" class="streak-display"></span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    </div>
+
+    <!-- Timer -->
+    <div class="timer-wrap" style="width:100%">
+      <div class="timer-ring">
+        <svg width="64" height="64" viewBox="0 0 64 64">
+          <circle class="timer-track" cx="32" cy="32" r="27"/>
+          <circle class="timer-fill" id="timerCircle" cx="32" cy="32" r="27"
+            stroke-dasharray="169.6" stroke-dashoffset="0" stroke="#e53"/>
+        </svg>
+        <div class="timer-num" id="timerNum">60</div>
+      </div>
+      <div class="timer-bar-wrap">
+        <div class="timer-bar" id="timerBar" style="width:100%;background:#e53"></div>
+      </div>
+      <button class="pause-btn" id="pauseBtn" title="Pause">⏸</button>
+    </div>
+
+    <!-- Question card + choices -->
+    <div id="pausableArea">
+
+      <div class="question-card" style="width:100%">
+        <div class="question-label" id="questionLabel">What does this mean?</div>
+        <div id="questionContent"></div>
+        <div class="speak-row" id="speakRow">
+          <button class="speak-btn" id="speakNormal">🔊 Hear it</button>
+          <button class="speak-btn" id="speakSlow">🐢 Slow</button>
+        </div>
+      </div>
+
+      <!-- Overlay only covers the choices so speak buttons stay usable -->
+      <div class="choices-wrap">
+        <div class="game-paused-overlay" id="pausedOverlay">
+          <span>⏸</span>
+          <span style="font-size:0.95rem;color:#aab;font-weight:600">Paused — choices hidden</span>
+          <span style="font-size:0.72rem;color:#667;font-weight:400">Tap ▶ to resume</span>
+        </div>
+        <div class="choices-grid" id="choicesGrid"></div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════ RESULTS SCREEN ═══════════════════════ -->
+  <div id="resultsScreen" class="screen">
+    <div class="results-header">
+      <span class="big-icon" id="resultIcon">🎉</span>
+      <h2 id="resultTitle">Great Job!</h2>
+      <p style="color:#667;font-size:0.88rem;margin-top:6px" id="resultSubtitle"></p>
+    </div>
+
+    <div class="result-scorecards" id="resultScorecards"></div>
+
+    <div class="results-list" id="resultsList">
+      <div class="results-list-title">Answer Review</div>
+      <div id="resultsRows"></div>
+    </div>
+
+    <button class="play-again-btn" id="playAgainBtn">Play Again 🔄</button>
+  </div>
+
+  <!-- Feedback toast -->
+  <div class="feedback-toast" id="feedbackToast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  WORD BANKS
+// ═══════════════════════════════════════════════════════
+const WORDS = {
+  2: [
+    // Greetings & Basics
+    { zh: '你好',   py: 'nǐ hǎo',        en: 'Hello' },
+    { zh: '再見',   py: 'zài jiàn',       en: 'Goodbye' },
+    { zh: '謝謝',   py: 'xiè xiè',        en: 'Thank you' },
+    { zh: '對不起', py: 'duì bù qǐ',      en: 'Sorry' },
+    { zh: '沒關係', py: 'méi guān xi',     en: "It's okay" },
+    { zh: '是',     py: 'shì',            en: 'Yes / Is' },
+    { zh: '不是',   py: 'bú shì',         en: 'No / Is not' },
+    // Family
+    { zh: '爸爸',   py: 'bà ba',          en: 'Dad' },
+    { zh: '媽媽',   py: 'mā ma',          en: 'Mom' },
+    { zh: '哥哥',   py: 'gē ge',          en: 'Older brother' },
+    { zh: '姐姐',   py: 'jiě jie',        en: 'Older sister' },
+    { zh: '弟弟',   py: 'dì di',          en: 'Younger brother' },
+    { zh: '妹妹',   py: 'mèi mei',        en: 'Younger sister' },
+    { zh: '家',     py: 'jiā',            en: 'Home / Family' },
+    // Numbers
+    { zh: '一',     py: 'yī',             en: 'One' },
+    { zh: '二',     py: 'èr',             en: 'Two' },
+    { zh: '三',     py: 'sān',            en: 'Three' },
+    { zh: '四',     py: 'sì',             en: 'Four' },
+    { zh: '五',     py: 'wǔ',             en: 'Five' },
+    { zh: '六',     py: 'liù',            en: 'Six' },
+    { zh: '七',     py: 'qī',             en: 'Seven' },
+    { zh: '八',     py: 'bā',             en: 'Eight' },
+    { zh: '九',     py: 'jiǔ',            en: 'Nine' },
+    { zh: '十',     py: 'shí',            en: 'Ten' },
+    // Colors
+    { zh: '紅色',   py: 'hóng sè',        en: 'Red' },
+    { zh: '藍色',   py: 'lán sè',         en: 'Blue' },
+    { zh: '黃色',   py: 'huáng sè',       en: 'Yellow' },
+    { zh: '綠色',   py: 'lǜ sè',          en: 'Green' },
+    { zh: '白色',   py: 'bái sè',         en: 'White' },
+    { zh: '黑色',   py: 'hēi sè',         en: 'Black' },
+    // Animals
+    { zh: '貓',     py: 'māo',            en: 'Cat' },
+    { zh: '狗',     py: 'gǒu',            en: 'Dog' },
+    { zh: '魚',     py: 'yú',             en: 'Fish' },
+    { zh: '鳥',     py: 'niǎo',           en: 'Bird' },
+    { zh: '馬',     py: 'mǎ',             en: 'Horse' },
+    { zh: '豬',     py: 'zhū',            en: 'Pig' },
+    // Food & Drink
+    { zh: '水',     py: 'shuǐ',           en: 'Water' },
+    { zh: '飯',     py: 'fàn',            en: 'Rice / Meal' },
+    { zh: '蘋果',   py: 'píng guǒ',       en: 'Apple' },
+    { zh: '香蕉',   py: 'xiāng jiāo',     en: 'Banana' },
+    { zh: '牛奶',   py: 'niú nǎi',        en: 'Milk' },
+    { zh: '麵條',   py: 'miàn tiáo',      en: 'Noodles' },
+    // Size & Feel
+    { zh: '大',     py: 'dà',             en: 'Big' },
+    { zh: '小',     py: 'xiǎo',           en: 'Small' },
+    { zh: '好',     py: 'hǎo',            en: 'Good' },
+    { zh: '不好',   py: 'bù hǎo',         en: 'Not good' },
+    { zh: '多',     py: 'duō',            en: 'Many / Much' },
+    { zh: '少',     py: 'shǎo',           en: 'Few / Less' },
+    // Basic Verbs
+    { zh: '吃',     py: 'chī',            en: 'Eat' },
+    { zh: '喝',     py: 'hē',             en: 'Drink' },
+    { zh: '看',     py: 'kàn',            en: 'Look / Watch' },
+    { zh: '走',     py: 'zǒu',            en: 'Walk / Go' },
+    { zh: '來',     py: 'lái',            en: 'Come' },
+    { zh: '去',     py: 'qù',             en: 'Go (away)' },
+    { zh: '有',     py: 'yǒu',            en: 'Have / There is' },
+    // Time
+    { zh: '今天',   py: 'jīn tiān',       en: 'Today' },
+    { zh: '明天',   py: 'míng tiān',      en: 'Tomorrow' },
+    { zh: '昨天',   py: 'zuó tiān',       en: 'Yesterday' },
+    // School
+    { zh: '書',     py: 'shū',            en: 'Book' },
+    { zh: '老師',   py: 'lǎo shī',        en: 'Teacher' },
+    { zh: '學生',   py: 'xué shēng',      en: 'Student' },
+    { zh: '學校',   py: 'xué xiào',       en: 'School' },
+    // Pronouns
+    { zh: '我',     py: 'wǒ',             en: 'I / Me' },
+    { zh: '你',     py: 'nǐ',             en: 'You' },
+    { zh: '他',     py: 'tā',             en: 'He / Him' },
+    { zh: '她',     py: 'tā',             en: 'She / Her' },
+    { zh: '我們',   py: 'wǒ men',         en: 'We / Us' },
+  ],
+  3: [
+    // Phrases
+    { zh: '你好嗎',      py: 'nǐ hǎo ma',       en: 'How are you?' },
+    { zh: '我很好',      py: 'wǒ hěn hǎo',       en: "I'm doing well" },
+    { zh: '我愛你',      py: 'wǒ ài nǐ',          en: 'I love you' },
+    { zh: '早上好',      py: 'zǎo shàng hǎo',     en: 'Good morning' },
+    { zh: '晚上好',      py: 'wǎn shàng hǎo',     en: 'Good evening' },
+    { zh: '請問',        py: 'qǐng wèn',           en: 'Excuse me / May I ask' },
+    { zh: '不客氣',      py: 'bú kè qì',           en: "You're welcome" },
+    // Feelings
+    { zh: '高興',        py: 'gāo xìng',           en: 'Happy' },
+    { zh: '難過',        py: 'nán guò',             en: 'Sad' },
+    { zh: '生氣',        py: 'shēng qì',            en: 'Angry' },
+    { zh: '害怕',        py: 'hài pà',              en: 'Scared' },
+    { zh: '累',          py: 'lèi',                 en: 'Tired' },
+    // People & Places
+    { zh: '朋友',        py: 'péng yǒu',            en: 'Friend' },
+    { zh: '中國',        py: 'zhōng guó',           en: 'China' },
+    { zh: '美國',        py: 'měi guó',             en: 'America / USA' },
+    { zh: '中文',        py: 'zhōng wén',           en: 'Chinese language' },
+    { zh: '英文',        py: 'yīng wén',            en: 'English language' },
+    { zh: '漢字',        py: 'hàn zì',              en: 'Chinese characters' },
+    // Actions & Verbs
+    { zh: '喜歡',        py: 'xǐ huān',             en: 'Like' },
+    { zh: '不喜歡',      py: 'bù xǐ huān',          en: 'Dislike' },
+    { zh: '學習',        py: 'xué xí',              en: 'Study / Learn' },
+    { zh: '玩',          py: 'wán',                 en: 'Play' },
+    { zh: '工作',        py: 'gōng zuò',            en: 'Work' },
+    { zh: '唱歌',        py: 'chàng gē',            en: 'Sing' },
+    { zh: '跳舞',        py: 'tiào wǔ',             en: 'Dance' },
+    { zh: '畫畫',        py: 'huà huà',             en: 'Draw / Paint' },
+    { zh: '睡覺',        py: 'shuì jiào',           en: 'Sleep' },
+    { zh: '起床',        py: 'qǐ chuáng',           en: 'Get up / Wake up' },
+    { zh: '刷牙',        py: 'shuā yá',             en: 'Brush teeth' },
+    { zh: '洗手',        py: 'xǐ shǒu',             en: 'Wash hands' },
+    { zh: '穿衣服',      py: 'chuān yī fu',         en: 'Put on clothes' },
+    { zh: '看書',        py: 'kàn shū',             en: 'Read a book' },
+    { zh: '上學',        py: 'shàng xué',           en: 'Go to school' },
+    { zh: '回家',        py: 'huí jiā',             en: 'Go home' },
+    { zh: '吃飯',        py: 'chī fàn',             en: 'Eat a meal' },
+    { zh: '喝水',        py: 'hē shuǐ',             en: 'Drink water' },
+    // Weather
+    { zh: '天氣',        py: 'tiān qì',             en: 'Weather' },
+    { zh: '晴天',        py: 'qíng tiān',           en: 'Sunny day' },
+    { zh: '下雨',        py: 'xià yǔ',              en: 'Raining' },
+    { zh: '下雪',        py: 'xià xuě',             en: 'Snowing' },
+    { zh: '風',          py: 'fēng',                en: 'Wind' },
+    // School subjects
+    { zh: '數學',        py: 'shù xué',             en: 'Math' },
+    { zh: '音樂',        py: 'yīn yuè',             en: 'Music' },
+    { zh: '體育',        py: 'tǐ yù',               en: 'Physical education' },
+    { zh: '科學',        py: 'kē xué',              en: 'Science' },
+    // Adjectives
+    { zh: '漂亮',        py: 'piào liàng',           en: 'Beautiful / Pretty' },
+    { zh: '帥',          py: 'shuài',               en: 'Handsome' },
+    { zh: '聰明',        py: 'cōng míng',           en: 'Smart / Clever' },
+    { zh: '努力',        py: 'nǔ lì',               en: 'Hard-working' },
+    { zh: '快',          py: 'kuài',                en: 'Fast / Quick' },
+    { zh: '慢',          py: 'màn',                 en: 'Slow' },
+    { zh: '熱',          py: 'rè',                  en: 'Hot' },
+    { zh: '冷',          py: 'lěng',                en: 'Cold' },
+    // Time & Calendar
+    { zh: '星期一',      py: 'xīng qī yī',          en: 'Monday' },
+    { zh: '星期五',      py: 'xīng qī wǔ',          en: 'Friday' },
+    { zh: '週末',        py: 'zhōu mò',             en: 'Weekend' },
+    { zh: '生日',        py: 'shēng rì',            en: 'Birthday' },
+    { zh: '年',          py: 'nián',                en: 'Year' },
+    { zh: '月',          py: 'yuè',                 en: 'Month / Moon' },
+    { zh: '天',          py: 'tiān',                en: 'Day / Sky' },
+  ],
+  4: [
+    // Body parts
+    { zh: '頭',       py: 'tóu',           en: 'Head' },
+    { zh: '眼睛',     py: 'yǎn jīng',      en: 'Eyes' },
+    { zh: '鼻子',     py: 'bí zi',          en: 'Nose' },
+    { zh: '耳朵',     py: 'ěr duo',         en: 'Ears' },
+    { zh: '嘴巴',     py: 'zuǐ ba',         en: 'Mouth' },
+    { zh: '手',       py: 'shǒu',           en: 'Hand' },
+    { zh: '腳',       py: 'jiǎo',           en: 'Foot / Leg' },
+    { zh: '心',       py: 'xīn',            en: 'Heart' },
+    { zh: '臉',       py: 'liǎn',           en: 'Face' },
+    { zh: '頭髮',     py: 'tóu fà',         en: 'Hair' },
+    // Transportation
+    { zh: '車',       py: 'chē',            en: 'Car / Vehicle' },
+    { zh: '公車',     py: 'gōng chē',       en: 'Bus' },
+    { zh: '火車',     py: 'huǒ chē',        en: 'Train' },
+    { zh: '飛機',     py: 'fēi jī',         en: 'Airplane' },
+    { zh: '腳踏車',   py: 'jiǎo tà chē',    en: 'Bicycle' },
+    { zh: '船',       py: 'chuán',          en: 'Boat / Ship' },
+    { zh: '捷運',     py: 'jié yùn',        en: 'MRT / Subway' },
+    // Places
+    { zh: '公園',     py: 'gōng yuán',      en: 'Park' },
+    { zh: '醫院',     py: 'yī yuàn',        en: 'Hospital' },
+    { zh: '圖書館',   py: 'tú shū guǎn',    en: 'Library' },
+    { zh: '超市',     py: 'chāo shì',       en: 'Supermarket' },
+    { zh: '餐廳',     py: 'cān tīng',       en: 'Restaurant' },
+    { zh: '郵局',     py: 'yóu jú',         en: 'Post office' },
+    { zh: '銀行',     py: 'yín háng',       en: 'Bank' },
+    // Verbs
+    { zh: '說',       py: 'shuō',           en: 'Speak / Say' },
+    { zh: '聽',       py: 'tīng',           en: 'Listen' },
+    { zh: '寫',       py: 'xiě',            en: 'Write' },
+    { zh: '讀',       py: 'dú',             en: 'Read (aloud)' },
+    { zh: '想',       py: 'xiǎng',          en: 'Think / Want' },
+    { zh: '知道',     py: 'zhī dào',        en: 'Know' },
+    { zh: '覺得',     py: 'jué de',         en: 'Feel / Think' },
+    { zh: '幫助',     py: 'bāng zhù',       en: 'Help' },
+    { zh: '分享',     py: 'fēn xiǎng',      en: 'Share' },
+    { zh: '練習',     py: 'liàn xí',        en: 'Practice' },
+    { zh: '準備',     py: 'zhǔn bèi',       en: 'Prepare / Ready' },
+    { zh: '決定',     py: 'jué dìng',       en: 'Decide' },
+    // Adjectives
+    { zh: '乾淨',     py: 'gān jìng',       en: 'Clean' },
+    { zh: '髒',       py: 'zāng',           en: 'Dirty' },
+    { zh: '重要',     py: 'zhòng yào',      en: 'Important' },
+    { zh: '有趣',     py: 'yǒu qù',         en: 'Interesting / Fun' },
+    { zh: '容易',     py: 'róng yì',        en: 'Easy' },
+    { zh: '困難',     py: 'kùn nán',        en: 'Difficult' },
+    { zh: '安全',     py: 'ān quán',        en: 'Safe' },
+    { zh: '危險',     py: 'wēi xiǎn',       en: 'Dangerous' },
+    { zh: '健康',     py: 'jiàn kāng',      en: 'Healthy' },
+    // Useful phrases
+    { zh: '沒問題',   py: 'méi wèn tí',     en: 'No problem' },
+    { zh: '加油',     py: 'jiā yóu',        en: 'Go for it! / Cheer up!' },
+    { zh: '小心',     py: 'xiǎo xīn',       en: 'Be careful' },
+    { zh: '等一下',   py: 'děng yī xià',    en: 'Wait a moment' },
+    { zh: '為什麼',   py: 'wèi shén me',    en: 'Why' },
+    { zh: '怎麼了',   py: 'zěn me le',      en: "What's wrong?" },
+    { zh: '當然',     py: 'dāng rán',       en: 'Of course' },
+    { zh: '一起',     py: 'yī qǐ',          en: 'Together' },
+    { zh: '已經',     py: 'yǐ jīng',        en: 'Already' },
+    { zh: '還是',     py: 'hái shì',        en: 'Or / Still' },
+    // Nature & Animals
+    { zh: '花',       py: 'huā',            en: 'Flower' },
+    { zh: '樹',       py: 'shù',            en: 'Tree' },
+    { zh: '山',       py: 'shān',           en: 'Mountain' },
+    { zh: '海',       py: 'hǎi',            en: 'Sea / Ocean' },
+    { zh: '河',       py: 'hé',             en: 'River' },
+  ],
+  5: [
+    // Abstract & academic
+    { zh: '自由',     py: 'zì yóu',         en: 'Freedom' },
+    { zh: '責任',     py: 'zé rèn',         en: 'Responsibility' },
+    { zh: '友誼',     py: 'yǒu yì',         en: 'Friendship' },
+    { zh: '勇氣',     py: 'yǒng qì',        en: 'Courage' },
+    { zh: '希望',     py: 'xī wàng',        en: 'Hope' },
+    { zh: '夢想',     py: 'mèng xiǎng',     en: 'Dream' },
+    { zh: '信心',     py: 'xìn xīn',        en: 'Confidence' },
+    { zh: '耐心',     py: 'nài xīn',        en: 'Patience' },
+    { zh: '誠實',     py: 'chéng shí',      en: 'Honest' },
+    { zh: '公平',     py: 'gōng píng',      en: 'Fair' },
+    // Environment & Society
+    { zh: '環境',     py: 'huán jìng',      en: 'Environment' },
+    { zh: '自然',     py: 'zì rán',         en: 'Nature' },
+    { zh: '地球',     py: 'dì qiú',         en: 'Earth / Globe' },
+    { zh: '社會',     py: 'shè huì',        en: 'Society' },
+    { zh: '文化',     py: 'wén huà',        en: 'Culture' },
+    { zh: '歷史',     py: 'lì shǐ',         en: 'History' },
+    { zh: '傳統',     py: 'chuán tǒng',     en: 'Tradition' },
+    { zh: '政府',     py: 'zhèng fǔ',       en: 'Government' },
+    // Technology
+    { zh: '電腦',     py: 'diàn nǎo',       en: 'Computer' },
+    { zh: '手機',     py: 'shǒu jī',        en: 'Cell phone' },
+    { zh: '網路',     py: 'wǎng lù',        en: 'Internet' },
+    { zh: '科技',     py: 'kē jì',          en: 'Technology' },
+    { zh: '電視',     py: 'diàn shì',       en: 'Television' },
+    // Complex verbs & expressions
+    { zh: '了解',     py: 'liǎo jiě',       en: 'Understand / Know well' },
+    { zh: '影響',     py: 'yǐng xiǎng',     en: 'Influence / Affect' },
+    { zh: '保護',     py: 'bǎo hù',         en: 'Protect' },
+    { zh: '解決',     py: 'jiě jué',        en: 'Solve / Resolve' },
+    { zh: '發現',     py: 'fā xiàn',        en: 'Discover / Find' },
+    { zh: '認為',     py: 'rèn wéi',        en: 'Believe / Think that' },
+    { zh: '表示',     py: 'biǎo shì',       en: 'Express / Mean' },
+    { zh: '比較',     py: 'bǐ jiào',        en: 'Compare / Relatively' },
+    { zh: '提高',     py: 'tí gāo',         en: 'Improve / Raise' },
+    { zh: '參加',     py: 'cān jiā',        en: 'Participate / Join' },
+    // Phrases & connectors
+    { zh: '雖然',     py: 'suī rán',        en: 'Although' },
+    { zh: '但是',     py: 'dàn shì',        en: 'But / However' },
+    { zh: '因為',     py: 'yīn wèi',        en: 'Because' },
+    { zh: '所以',     py: 'suǒ yǐ',         en: 'Therefore / So' },
+    { zh: '如果',     py: 'rú guǒ',         en: 'If' },
+    { zh: '不但',     py: 'bù dàn',         en: 'Not only' },
+    { zh: '而且',     py: 'ér qiě',         en: 'Moreover / And also' },
+    { zh: '除了',     py: 'chú le',         en: 'Besides / Except' },
+    // 4-character idioms (成語)
+    { zh: '一石二鳥', py: 'yī shí èr niǎo', en: 'Kill two birds with one stone' },
+    { zh: '半途而廢', py: 'bàn tú ér fèi',  en: 'Give up halfway' },
+    { zh: '馬到成功', py: 'mǎ dào chéng gōng', en: 'Immediate success' },
+    { zh: '自作自受', py: 'zì zuò zì shòu', en: 'Reap what you sow' },
+    { zh: '異口同聲', py: 'yì kǒu tóng shēng', en: 'Speak with one voice' },
+    { zh: '三心二意', py: 'sān xīn èr yì',  en: 'Indecisive / Half-hearted' },
+    { zh: '對牛彈琴', py: 'duì niú tán qín', en: 'Wasted effort on the wrong audience' },
+    { zh: '一鳴驚人', py: 'yī míng jīng rén', en: 'Amaze everyone with one act' },
+    { zh: '守株待兔', py: 'shǒu zhū dài tù', en: 'Wait passively for a windfall' },
+    { zh: '畫蛇添足', py: 'huà shé tiān zú', en: 'Ruin by adding too much' },
+  ],
+  kyle: [
+    // 第一課
+    { zh: '王先生',   py: 'wáng xiān shēng',  en: 'Mr. Wang' },
+    { zh: '王冠',     py: 'wáng guān',         en: 'Crown' },
+    { zh: '中文',     py: 'zhōng wén',         en: 'Chinese language' },
+    { zh: '文字',     py: 'wén zì',            en: 'Writing / Characters' },
+    { zh: '許多',     py: 'xǔ duō',            en: 'Many / A lot' },
+    { zh: '也許',     py: 'yě xǔ',             en: 'Perhaps / Maybe' },
+    { zh: '河川',     py: 'hé chuān',          en: 'Rivers / Waterways' },
+    { zh: '山川',     py: 'shān chuān',        en: 'Mountains and rivers' },
+    { zh: '半天',     py: 'bàn tiān',          en: 'Half a day / A long time' },
+    { zh: '一半',     py: 'yī bàn',            en: 'Half' },
+    { zh: '站著',     py: 'zhàn zhe',          en: 'Standing' },
+    { zh: '車站',     py: 'chē zhàn',          en: 'Bus / Train station' },
+    { zh: '寫字',     py: 'xiě zì',            en: 'Write characters' },
+    { zh: '寫信',     py: 'xiě xìn',           en: 'Write a letter' },
+    { zh: '咬一口',   py: 'yǎo yī kǒu',        en: 'Take a bite' },
+    { zh: '表哥',     py: 'biǎo gē',           en: 'Older male cousin' },
+    { zh: '表演',     py: 'biǎo yǎn',          en: 'Perform / Performance' },
+    { zh: '表示',     py: 'biǎo shì',          en: 'Express / Indicate' },
+    { zh: '收到',     py: 'shōu dào',          en: 'Received' },
+    { zh: '五點半',   py: 'wǔ diǎn bàn',       en: 'Five-thirty' },
+    { zh: '事情',     py: 'shì qíng',          en: 'Matter / Affair' },
+    { zh: '回收',     py: 'huí shōu',          en: 'Recycle' },
+    { zh: '點心',     py: 'diǎn xīn',          en: 'Snack / Dim sum' },
+    { zh: '故事',     py: 'gù shì',            en: 'Story' },
+    // 第三課
+    { zh: '老公公',   py: 'lǎo gōng gong',     en: 'Old man / Grandpa' },
+    { zh: '玉米',     py: 'yù mǐ',             en: 'Corn' },
+    { zh: '種花',     py: 'zhòng huā',         en: 'Plant flowers' },
+    { zh: '收成',     py: 'shōu chéng',        en: 'Harvest' },
+    { zh: '黃豆',     py: 'huáng dòu',         en: 'Soybean' },
+    { zh: '等一下',   py: 'děng yī xià',       en: 'Wait a moment' },
+    { zh: '東西',     py: 'dōng xī',           en: 'Thing / Stuff' },
+    { zh: '西方',     py: 'xī fāng',           en: 'West / Western' },
+    { zh: '哈密瓜',   py: 'hā mì guā',         en: 'Cantaloupe / Hami melon' },
+    { zh: '南瓜',     py: 'nán guā',           en: 'Pumpkin' },
+    { zh: '一直',     py: 'yī zhí',            en: 'Always / Continuously' },
+    { zh: '現在',     py: 'xiàn zài',          en: 'Now / Currently' },
+    { zh: '空位',     py: 'kōng wèi',          en: 'Empty seat / Vacancy' },
+    { zh: '公園',     py: 'gōng yuán',         en: 'Park' },
+    { zh: '玉鐲',     py: 'yù zhuó',           en: 'Jade bracelet' },
+    { zh: '種子',     py: 'zhǒng zǐ',          en: 'Seed' },
+    { zh: '成功',     py: 'chéng gōng',        en: 'Success / Succeed' },
+    { zh: '豆腐',     py: 'dòu fu',            en: 'Tofu' },
+    { zh: '等於',     py: 'děng yú',           en: 'Equal to' },
+    { zh: '東方',     py: 'dōng fāng',         en: 'East / Eastern' },
+    { zh: '西裝',     py: 'xī zhuāng',         en: 'Suit (clothing)' },
+    { zh: '傻瓜',     py: 'shǎ guā',           en: 'Fool / Silly person' },
+    { zh: '南極',     py: 'nán jí',            en: 'South Pole' },
+    { zh: '直線',     py: 'zhí xiàn',          en: 'Straight line' },
+    { zh: '界線',     py: 'jiè xiàn',          en: 'Boundary line' },
+    { zh: '現金',     py: 'xiàn jīn',          en: 'Cash' },
+    { zh: '太空人',   py: 'tài kōng rén',      en: 'Astronaut' },
+    // 第四課
+    { zh: '日期',     py: 'rì qī',             en: 'Date' },
+    { zh: '海邊',     py: 'hǎi biān',          en: 'Seaside / Beach' },
+    { zh: '非常',     py: 'fēi cháng',         en: 'Very / Extremely' },
+    { zh: '常常',     py: 'cháng cháng',       en: 'Often / Frequently' },
+    { zh: '家具',     py: 'jiā jù',            en: 'Furniture' },
+    { zh: '運動',     py: 'yùn dòng',          en: 'Exercise / Sports' },
+    { zh: '非洲',     py: 'fēi zhōu',          en: 'Africa' },
+    { zh: '禮物',     py: 'lǐ wù',             en: 'Gift / Present' },
+    { zh: '海洋',     py: 'hǎi yáng',          en: 'Ocean' },
+    { zh: '世界',     py: 'shì jiè',           en: 'World' },
+    { zh: '忘記',     py: 'wàng jì',           en: 'Forget' },
+    { zh: '原來',     py: 'yuán lái',          en: 'Originally / It turns out' },
+    { zh: '食物',     py: 'shí wù',            en: 'Food' },
+    { zh: '星期',     py: 'xīng qī',           en: 'Week' },
+    { zh: '北邊',     py: 'běi biān',          en: 'North side' },
+    { zh: '時常',     py: 'shí cháng',         en: 'Often / From time to time' },
+    { zh: '工具',     py: 'gōng jù',           en: 'Tool' },
+    { zh: '動物園',   py: 'dòng wù yuán',      en: 'Zoo' },
+    { zh: '生物',     py: 'shēng wù',          en: 'Living things / Biology' },
+    { zh: '世紀',     py: 'shì jì',            en: 'Century' },
+    { zh: '邊界',     py: 'biān jiè',          en: 'Border / Boundary' },
+    { zh: '美術',     py: 'měi shù',           en: 'Fine arts / Art' },
+    { zh: '原諒',     py: 'yuán liàng',        en: 'Forgive' },
+    { zh: '食譜',     py: 'shí pǔ',            en: 'Recipe' },
+    // 第六課
+    { zh: '路邊',     py: 'lù biān',           en: 'Roadside' },
+    { zh: '身體',     py: 'shēn tǐ',           en: 'Body' },
+    { zh: '穿衣',     py: 'chuān yī',          en: 'Put on clothes' },
+    { zh: '比比看',   py: 'bǐ bǐ kàn',         en: "Let's compare" },
+    { zh: '答對了',   py: 'dá duì le',         en: 'Got it right!' },
+    { zh: '可能',     py: 'kě néng',           en: 'Possible / Maybe' },
+    { zh: '陽台',     py: 'yáng tái',          en: 'Balcony' },
+    { zh: '吹風機',   py: 'chuī fēng jī',      en: 'Hair dryer' },
+    { zh: '於是',     py: 'yú shì',            en: 'Therefore / So then' },
+    { zh: '冷水',     py: 'lěng shuǐ',         en: 'Cold water' },
+    { zh: '很熱',     py: 'hěn rè',            en: 'Very hot' },
+    { zh: '很累',     py: 'hěn lèi',           en: 'Very tired' },
+    { zh: '自來水',   py: 'zì lái shuǐ',       en: 'Tap water' },
+    { zh: '自己',     py: 'zì jǐ',             en: 'Oneself / Self' },
+    { zh: '馬路',     py: 'mǎ lù',             en: 'Road / Street' },
+    { zh: '身高',     py: 'shēn gāo',          en: 'Height (of a person)' },
+    { zh: '穿鞋',     py: 'chuān xié',         en: 'Put on shoes' },
+    { zh: '比賽',     py: 'bǐ sài',            en: 'Competition / Contest' },
+    { zh: '對不起',   py: 'duì bù qǐ',         en: 'Sorry' },
+    { zh: '不能',     py: 'bù néng',           en: 'Cannot' },
+    { zh: '太陽眼鏡', py: 'tài yáng yǎn jìng', en: 'Sunglasses' },
+    { zh: '吹口哨',   py: 'chuī kǒu shào',     en: 'Blow a whistle' },
+    { zh: '終於',     py: 'zhōng yú',          en: 'Finally' },
+    { zh: '很冷',     py: 'hěn lěng',          en: 'Very cold' },
+    { zh: '熱鬧',     py: 'rè nào',            en: 'Lively / Bustling' },
+  ],
+  lindsey: [
+    // 第一課
+    { zh: '牛肉',     py: 'niú ròu',           en: 'Beef' },
+    { zh: '馬路',     py: 'mǎ lù',             en: 'Road / Street' },
+    { zh: '小鳥',     py: 'xiǎo niǎo',         en: 'Small bird' },
+    { zh: '國字',     py: 'guó zì',            en: 'Chinese characters' },
+    { zh: '兒子',     py: 'ér zi',             en: 'Son' },
+    { zh: '分數',     py: 'fēn shù',           en: 'Score / Grade' },
+    { zh: '門把',     py: 'mén bǎ',            en: 'Door handle' },
+    { zh: '合作',     py: 'hé zuò',            en: 'Cooperate' },
+    { zh: '馬桶',     py: 'mǎ tǒng',           en: 'Toilet' },
+    { zh: '鳥巢',     py: 'niǎo cháo',         en: "Bird's nest" },
+    { zh: '釣魚',     py: 'diào yú',           en: 'Fishing' },
+    { zh: '有名',     py: 'yǒu míng',          en: 'Famous' },
+    { zh: '寫字',     py: 'xiě zì',            en: 'Write characters' },
+    { zh: '分開',     py: 'fēn kāi',           en: 'Separate / Apart' },
+    { zh: '把手',     py: 'bǎ shǒu',           en: 'Handle / Knob' },
+    // 第二課
+    { zh: '想要',     py: 'xiǎng yào',         en: 'Want' },
+    { zh: '不要',     py: 'bù yào',            en: "Don't want" },
+    { zh: '青菜',     py: 'qīng cài',          en: 'Green vegetables' },
+    { zh: '吃飯',     py: 'chī fàn',           en: 'Eat a meal' },
+    { zh: '語言',     py: 'yǔ yán',            en: 'Language' },
+    { zh: '請坐',     py: 'qǐng zuò',          en: 'Please sit down' },
+    { zh: '黃色',     py: 'huáng sè',          en: 'Yellow' },
+    { zh: '就是',     py: 'jiù shì',           en: 'Exactly / Is' },
+    { zh: '說話',     py: 'shuō huà',          en: 'Speak / Talk' },
+    { zh: '耳朵',     py: 'ěr duo',            en: 'Ears' },
+    { zh: '重要',     py: 'zhòng yào',         en: 'Important' },
+    { zh: '青椒',     py: 'qīng jiāo',         en: 'Green pepper' },
+    { zh: '綿羊',     py: 'mián yáng',         en: 'Sheep' },
+    { zh: '方言',     py: 'fāng yán',          en: 'Dialect' },
+    { zh: '請假',     py: 'qǐng jiǎ',          en: 'Ask for leave' },
+    { zh: '找到',     py: 'zhǎo dào',          en: 'Found / Located' },
+    { zh: '蛋黃',     py: 'dàn huáng',         en: 'Egg yolk' },
+    { zh: '說謊',     py: 'shuō huǎng',        en: 'Tell a lie' },
+    // 第三課
+    { zh: '爸爸',     py: 'bà ba',             en: 'Dad' },
+    { zh: '可以',     py: 'kě yǐ',             en: 'Can / May' },
+    { zh: '以前',     py: 'yǐ qián',           en: 'Before / Previously' },
+    { zh: '可怕',     py: 'kě pà',             en: 'Scary / Terrible' },
+    { zh: '中午',     py: 'zhōng wǔ',          en: 'Noon' },
+    { zh: '很好',     py: 'hěn hǎo',           en: 'Very good' },
+    { zh: '太大',     py: 'tài dà',            en: 'Too big' },
+    { zh: '牛奶',     py: 'niú nǎi',           en: 'Milk' },
+    { zh: '還沒來',   py: 'hái méi lái',       en: "Hasn't come yet" },
+    { zh: '包子',     py: 'bāo zi',            en: 'Steamed bun' },
+    { zh: '真的',     py: 'zhēn de',           en: 'Really / Truly' },
+    { zh: '一個',     py: 'yī gè',             en: 'One (thing)' },
+    { zh: '可是',     py: 'kě shì',            en: 'But' },
+    { zh: '以為',     py: 'yǐ wéi',            en: 'Thought / Assumed' },
+    { zh: '害怕',     py: 'hài pà',            en: 'Scared' },
+    { zh: '年飯',     py: 'nián fàn',          en: "New Year's Eve dinner" },
+    { zh: '很大',     py: 'hěn dà',            en: 'Very big' },
+    { zh: '太太',     py: 'tài tai',           en: 'Wife / Mrs.' },
+    { zh: '奶奶',     py: 'nǎi nai',           en: 'Grandma (paternal)' },
+    { zh: '還給',     py: 'huán gěi',          en: 'Return / Give back' },
+    { zh: '書包',     py: 'shū bāo',           en: 'School bag / Backpack' },
+    // 第四課
+    { zh: '前天',     py: 'qián tiān',         en: 'Day before yesterday' },
+    { zh: '開門',     py: 'kāi mén',           en: 'Open the door' },
+    { zh: '猜猜看',   py: 'cāi cāi kàn',       en: 'Guess!' },
+    { zh: '兩個',     py: 'liǎng gè',          en: 'Two (of something)' },
+    { zh: '你們',     py: 'nǐ men',            en: 'You all' },
+    { zh: '都有',     py: 'dōu yǒu',           en: 'All have' },
+    { zh: '誰的',     py: 'shéi de',           en: 'Whose' },
+    { zh: '老人',     py: 'lǎo rén',           en: 'Elderly person' },
+    { zh: '哥哥',     py: 'gē ge',             en: 'Older brother' },
+    { zh: '弟弟',     py: 'dì di',             en: 'Younger brother' },
+    { zh: '請問',     py: 'qǐng wèn',          en: 'Excuse me / May I ask' },
+    { zh: '每天',     py: 'měi tiān',          en: 'Every day' },
+    { zh: '前面',     py: 'qián miàn',         en: 'In front' },
+    { zh: '門鈴',     py: 'mén líng',          en: 'Doorbell' },
+    { zh: '猜拳',     py: 'cāi quán',          en: 'Rock paper scissors' },
+    { zh: '我們',     py: 'wǒ men',            en: 'We / Us' },
+    { zh: '首都',     py: 'shǒu dū',           en: 'Capital city' },
+    { zh: '誰來了',   py: 'shéi lái le',       en: 'Who came?' },
+    { zh: '老鼠',     py: 'lǎo shǔ',           en: 'Mouse / Rat' },
+    { zh: '問題',     py: 'wèn tí',            en: 'Question / Problem' },
+    { zh: '每次',     py: 'měi cì',            en: 'Every time' },
+    // 第五課
+    { zh: '給你',     py: 'gěi nǐ',            en: 'For you / Here you go' },
+    { zh: '過來',     py: 'guò lái',           en: 'Come over' },
+    { zh: '送給',     py: 'sòng gěi',          en: 'Give as a gift' },
+    { zh: '回家',     py: 'huí jiā',           en: 'Go home' },
+    { zh: '家長',     py: 'jiā zhǎng',         en: 'Parent / Guardian' },
+    { zh: '高興',     py: 'gāo xìng',          en: 'Happy' },
+    { zh: '過生日',   py: 'guò shēng rì',      en: 'Celebrate birthday' },
+    { zh: '圖書館',   py: 'tú shū guǎn',       en: 'Library' },
+    { zh: '快樂',     py: 'kuài lè',           en: 'Joyful / Happy' },
+    { zh: '水果',     py: 'shuǐ guǒ',          en: 'Fruit' },
+    { zh: '開車',     py: 'kāi chē',           en: 'Drive a car' },
+    { zh: '信封',     py: 'xìn fēng',          en: 'Envelope' },
+    { zh: '拿給',     py: 'ná gěi',            en: 'Bring to / Hand over' },
+    { zh: '回答',     py: 'huí dá',            en: 'Answer' },
+    { zh: '畫家',     py: 'huà jiā',           en: 'Artist / Painter' },
+    { zh: '過年',     py: 'guò nián',          en: 'Celebrate New Year' },
+    { zh: '書桌',     py: 'shū zhuō',          en: 'Desk' },
+    { zh: '果汁',     py: 'guǒ zhī',           en: 'Juice' },
+    { zh: '開學',     py: 'kāi xué',           en: 'School starts' },
+    { zh: '信用卡',   py: 'xìn yòng kǎ',       en: 'Credit card' },
+    // 第六課
+    { zh: '黃河',     py: 'huáng hé',          en: 'Yellow River' },
+    { zh: '這麼多',   py: 'zhè me duō',        en: 'So many / So much' },
+    { zh: '兒歌',     py: 'ér gē',             en: "Children's song" },
+    { zh: '流汗',     py: 'liú hàn',           en: 'Sweat' },
+    { zh: '海邊',     py: 'hǎi biān',          en: 'Seaside / Beach' },
+    { zh: '從前',     py: 'cóng qián',         en: 'Once upon a time / Long ago' },
+    { zh: '遲到',     py: 'chí dào',           en: 'Late / Tardy' },
+    { zh: '跳得高',   py: 'tiào de gāo',       en: 'Jump high' },
+    { zh: '一公里',   py: 'yī gōng lǐ',        en: 'One kilometer' },
+    { zh: '裡面',     py: 'lǐ miàn',           en: 'Inside' },
+    { zh: '入口',     py: 'rù kǒu',            en: 'Entrance' },
+    { zh: '河馬',     py: 'hé mǎ',             en: 'Hippopotamus' },
+    { zh: '什麼',     py: 'shén me',           en: 'What' },
+    { zh: '多麼',     py: 'duō me',            en: 'How (exclamation)' },
+    { zh: '國歌',     py: 'guó gē',            en: 'National anthem' },
+    { zh: '流星',     py: 'liú xīng',          en: 'Shooting star' },
+    { zh: '海豚',     py: 'hǎi tún',           en: 'Dolphin' },
+    { zh: '從來',     py: 'cóng lái',          en: 'Ever / Never (with negation)' },
+    { zh: '到學校',   py: 'dào xué xiào',      en: 'Arrive at school' },
+    { zh: '得到',     py: 'dé dào',            en: 'Obtain / Receive' },
+    { zh: '家裡',     py: 'jiā lǐ',            en: 'At home' },
+    // 第七課
+    { zh: '新年',     py: 'xīn nián',          en: 'New Year' },
+    { zh: '一年',     py: 'yī nián',           en: 'One year' },
+    { zh: '春天',     py: 'chūn tiān',         en: 'Spring' },
+    { zh: '幾次',     py: 'jǐ cì',             en: 'How many times' },
+    { zh: '不知道',   py: 'bù zhī dào',        en: "Don't know" },
+    { zh: '人行道',   py: 'rén xíng dào',      en: 'Sidewalk' },
+    { zh: '外套',     py: 'wài tào',           en: 'Coat / Jacket' },
+    { zh: '再見',     py: 'zài jiàn',          en: 'Goodbye' },
+    { zh: '冬天',     py: 'dōng tiān',         en: 'Winter' },
+    { zh: '只有',     py: 'zhǐ yǒu',           en: 'Only / Just' },
+    { zh: '告訴',     py: 'gào sù',            en: 'Tell' },
+    { zh: '新娘',     py: 'xīn niáng',         en: 'Bride' },
+    { zh: '二年級',   py: 'èr nián jí',        en: 'Second grade' },
+    { zh: '春假',     py: 'chūn jiǎ',          en: 'Spring break' },
+    { zh: '幾個',     py: 'jǐ gè',             en: 'How many' },
+    { zh: '知識',     py: 'zhī shì',           en: 'Knowledge' },
+    { zh: '道歉',     py: 'dào qiàn',          en: 'Apologize' },
+    { zh: '外國人',   py: 'wài guó rén',       en: 'Foreigner' },
+    { zh: '再一次',   py: 'zài yī cì',         en: 'One more time' },
+    { zh: '冬眠',     py: 'dōng mián',         en: 'Hibernate' },
+    // 第八課
+    { zh: '爬樹',     py: 'pá shù',            en: 'Climb a tree' },
+    { zh: '賽跑',     py: 'sài pǎo',           en: 'Race' },
+    { zh: '跳繩',     py: 'tiào shéng',        en: 'Jump rope' },
+    { zh: '翻跟斗',   py: 'fān gēn dou',       en: 'Somersault' },
+    { zh: '起來',     py: 'qǐ lái',            en: 'Get up / Stand up' },
+    { zh: '妹妹',     py: 'mèi mei',           en: 'Younger sister' },
+    { zh: '游泳',     py: 'yóu yǒng',          en: 'Swim' },
+    { zh: '黑色',     py: 'hēi sè',            en: 'Black' },
+    { zh: '飛盤',     py: 'fēi pán',           en: 'Frisbee' },
+    { zh: '不會',     py: 'bù huì',            en: "Can't / Don't know how" },
+    { zh: '爬山',     py: 'pá shān',           en: 'Hike / Climb a mountain' },
+    { zh: '跑步',     py: 'pǎo bù',            en: 'Run / Jog' },
+    { zh: '跳舞',     py: 'tiào wǔ',           en: 'Dance' },
+    { zh: '一起',     py: 'yī qǐ',             en: 'Together' },
+    { zh: '游泳池',   py: 'yóu yǒng chí',      en: 'Swimming pool' },
+    { zh: '飛機',     py: 'fēi jī',            en: 'Airplane' },
+    { zh: '怎麼辦',   py: 'zěn me bàn',        en: 'What to do / What now?' },
+    { zh: '開會',     py: 'kāi huì',           en: 'Have a meeting' },
+  ],
+};
+
+// ═══════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════
+let cfg = { grade: '2', dir: 'zh2en', mode: 'solo', count: 20, timer: 3 };
+let queue = [], qIdx = 0, scores = { kyle: 0, lindsey: 0 }, streak = 0;
+let currentPlayer = 'kyle'; // for versus
+let answeredLog = [];        // { word, correct, player }
+let answered = false;
+
+const $ = id => document.getElementById(id);
+
+// ═══════════════════════════════════════════════════════
+//  SETUP UI
+// ═══════════════════════════════════════════════════════
+document.querySelectorAll('.opt-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const g = btn.dataset.group;
+    document.querySelectorAll(`.opt-btn[data-group="${g}"]`).forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    cfg[g] = btn.dataset.val;
+  });
+});
+
+$('startBtn').addEventListener('click', startGame);
+$('playAgainBtn').addEventListener('click', () => showScreen('setupScreen'));
+
+// ═══════════════════════════════════════════════════════
+//  SPEECH
+// ═══════════════════════════════════════════════════════
+let allZhVoices = [];
+let zhVoice = null;
+
+function loadVoices() {
+  const voices = speechSynthesis.getVoices();
+  // Collect all Chinese voices
+  allZhVoices = voices.filter(v => v.lang.startsWith('zh'));
+  if (!allZhVoices.length) return;
+
+  // Populate dropdown
+  const sel = $('voiceSelect');
+  const prevVal = sel.value;
+  sel.innerHTML = '';
+  allZhVoices.forEach((v, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    const tag = v.lang === 'zh-TW' ? '🇹🇼' : v.lang === 'zh-HK' ? '🇭🇰' : '🇨🇳';
+    opt.textContent = `${tag} ${v.name} (${v.lang})`;
+    sel.appendChild(opt);
+  });
+
+  // Auto-select best: Meijia first, then zh-TW local, then zh-TW, then zh-HK, then anything zh
+  const best =
+    allZhVoices.findIndex(v => v.name.toLowerCase().includes('meijia')) !== -1
+      ? allZhVoices.findIndex(v => v.name.toLowerCase().includes('meijia'))
+      : allZhVoices.findIndex(v => v.lang === 'zh-TW' && v.localService) !== -1
+      ? allZhVoices.findIndex(v => v.lang === 'zh-TW' && v.localService)
+      : allZhVoices.findIndex(v => v.lang === 'zh-TW') !== -1
+      ? allZhVoices.findIndex(v => v.lang === 'zh-TW')
+      : allZhVoices.findIndex(v => v.lang === 'zh-HK' && v.localService) !== -1
+      ? allZhVoices.findIndex(v => v.lang === 'zh-HK' && v.localService)
+      : 0;
+
+  // Restore previous selection if still valid, else use best
+  if (prevVal !== '' && prevVal < allZhVoices.length) sel.value = prevVal;
+  else sel.value = best;
+
+  zhVoice = allZhVoices[parseInt(sel.value)];
+}
+
+speechSynthesis.addEventListener('voiceschanged', loadVoices);
+loadVoices();
+
+$('voiceSelect').addEventListener('change', function() {
+  zhVoice = allZhVoices[parseInt(this.value)] || null;
+});
+
+$('voiceTestBtn').addEventListener('click', () => speak('你好，我是你的老師。', 1));
+
+function speak(text, rate = 1) {
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = zhVoice ? zhVoice.lang : 'zh-TW';
+  if (zhVoice) u.voice = zhVoice;
+  u.rate = rate;
+  u.pitch = 1.05;
+  speechSynthesis.speak(u);
+}
+
+// ═══════════════════════════════════════════════════════
+//  GAME START
+// ═══════════════════════════════════════════════════════
+function buildPool(forPlayer) {
+  // forPlayer: 'kyle' | 'lindsey' | undefined (used in split mode)
+  if (forPlayer === 'kyle')    return [...WORDS.kyle];
+  if (forPlayer === 'lindsey') return [...WORDS.lindsey];
+  if (cfg.grade === 'all')     return [...WORDS[2], ...WORDS[3], ...WORDS[4], ...WORDS[5], ...WORDS.kyle, ...WORDS.lindsey];
+  if (cfg.grade === 'kyle')    return [...WORDS.kyle];
+  if (cfg.grade === 'lindsey') return [...WORDS.lindsey];
+  if (cfg.grade === 'split')   return [...WORDS.kyle, ...WORDS.lindsey]; // combined pool for distractors
+  return [...WORDS[Number(cfg.grade)]];
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function startGame() {
+  const count = Number(cfg.count);
+  if (cfg.grade === 'split' && cfg.mode === 'versus') {
+    // Interleave Kyle and Lindsey words so each player answers their own bank
+    const kPool = shuffle(buildPool('kyle')).slice(0, Math.ceil(count / 2));
+    const lPool = shuffle(buildPool('lindsey')).slice(0, Math.floor(count / 2));
+    queue = [];
+    for (let i = 0; i < Math.max(kPool.length, lPool.length); i++) {
+      if (i < kPool.length)  queue.push(kPool[i]);
+      if (i < lPool.length)  queue.push(lPool[i]);
+    }
+  } else {
+    const pool = shuffle(buildPool());
+    queue = pool.slice(0, Math.min(count, pool.length));
+  }
+  qIdx = 0;
+  scores = { kyle: 0, lindsey: 0 };
+  streak = 0;
+  answeredLog = [];
+  currentPlayer = 'kyle';
+
+  // Show/hide player UI
+  const versus = cfg.mode === 'versus';
+  $('playerCards').style.display = versus ? 'flex' : 'none';
+  $('soloScore').style.display = versus ? 'none' : 'flex';
+
+  $('kyleScore').textContent = '0';
+  $('lindseyScore').textContent = '0';
+  $('soloScoreVal').textContent = '0';
+
+  TIMER_SECS = Number(cfg.timer);
+  showScreen('gameScreen');
+  renderQuestion();
+}
+
+// ═══════════════════════════════════════════════════════
+//  TIMER
+// ═══════════════════════════════════════════════════════
+let TIMER_SECS = 30;
+const CIRCUMFERENCE = 2 * Math.PI * 27; // r=27 → ~169.6
+let timerInterval = null;
+let timerLeft = TIMER_SECS;
+
+function startTimer(word) {
+  stopTimer();
+  // Reset pause state for each new question
+  isPaused = false;
+  $('pauseBtn').textContent = '⏸';
+  $('pauseBtn').classList.remove('paused');
+  $('pausedOverlay').classList.remove('show');
+  timerLeft = TIMER_SECS;
+
+  const circle = $('timerCircle');
+  const bar    = $('timerBar');
+
+  // Snap bar & ring to full instantly (no transition)
+  circle.style.transition = 'stroke 0.3s';
+  bar.style.transition    = 'background 0.3s';
+  circle.style.strokeDashoffset = '0';
+  bar.style.width = '100%';
+
+  // Force reflow so the snap takes effect before we start the sweep
+  bar.offsetWidth;
+
+  // Now apply one smooth linear sweep over the full duration
+  circle.style.transition = `stroke-dashoffset ${TIMER_SECS}s linear, stroke 0.3s`;
+  bar.style.transition    = `width ${TIMER_SECS}s linear, background 0.3s`;
+  circle.style.strokeDashoffset = CIRCUMFERENCE;
+  bar.style.width = '0%';
+
+  updateTimerLabel(timerLeft); // set initial number/color
+
+  timerInterval = setInterval(() => {
+    timerLeft--;
+    updateTimerLabel(timerLeft);
+    if (timerLeft <= 0) {
+      stopTimer();
+      timeOut(word);
+    }
+  }, 1000);
+}
+
+function stopTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  // Freeze bar & ring in place by removing the transition and locking current width
+  const bar    = $('timerBar');
+  const circle = $('timerCircle');
+  const frac   = timerLeft / TIMER_SECS;
+  bar.style.transition    = 'background 0.3s';
+  circle.style.transition = 'stroke 0.3s';
+  bar.style.width = (frac * 100) + '%';
+  circle.style.strokeDashoffset = CIRCUMFERENCE * (1 - frac);
+}
+
+// ── Pause / Resume ──
+let isPaused = false;
+
+$('pauseBtn').addEventListener('click', togglePause);
+
+function togglePause() {
+  if (answered) return; // don't pause after answering
+  isPaused = !isPaused;
+  const btn = $('pauseBtn');
+  const overlay = $('pausedOverlay');
+  if (isPaused) {
+    stopTimer();
+    btn.textContent = '▶';
+    btn.classList.add('paused');
+    overlay.classList.add('show');
+    speechSynthesis.cancel();
+  } else {
+    btn.textContent = '⏸';
+    btn.classList.remove('paused');
+    overlay.classList.remove('show');
+    // Resume bar/ring sweep from current timerLeft
+    const bar    = $('timerBar');
+    const circle = $('timerCircle');
+    bar.style.transition    = `width ${timerLeft}s linear, background 0.3s`;
+    circle.style.transition = `stroke-dashoffset ${timerLeft}s linear, stroke 0.3s`;
+    bar.style.width = '0%';
+    circle.style.strokeDashoffset = CIRCUMFERENCE;
+    // Resume interval
+    timerInterval = setInterval(() => {
+      timerLeft--;
+      updateTimerLabel(timerLeft);
+      if (timerLeft <= 0) {
+        stopTimer();
+        timeOut(queue[qIdx]);
+      }
+    }, 1000);
+  }
+}
+
+function updateTimerLabel(secs) {
+  const num    = $('timerNum');
+  const circle = $('timerCircle');
+  const bar    = $('timerBar');
+  num.textContent = secs;
+  // Color: green → yellow (≤½) → red (≤⅙)
+  const color = secs > TIMER_SECS / 2 ? '#2ecc71' : secs > TIMER_SECS / 6 ? '#f9c22e' : '#e53935';
+  circle.style.stroke  = color;
+  bar.style.background = color;
+  num.style.color = secs <= Math.min(TIMER_SECS / 3, 5) ? '#e53935' : '#eee';
+}
+
+function timeOut(word) {
+  if (answered) return;
+  answered = true;
+
+  // Mark all buttons disabled, reveal correct
+  const buttons = $('choicesGrid').querySelectorAll('.choice-btn');
+  buttons.forEach(b => {
+    b.disabled = true;
+    if (b.dataset.correct === '1') b.classList.add('reveal');
+  });
+
+  streak = 0;
+  // Show pinyin so they can learn
+  if (cfg.dir === 'zh2en') {
+    $('questionContent').innerHTML += `<div class="pinyin" style="margin-top:8px">${word.py}</div>`;
+  }
+  showToast('⏰ Time\'s up!', 'wrong');
+  // Always speak the word on timeout so they can hear it
+  speak(word.zh, 0.85);
+
+  answeredLog.push({ word, correct: false, player: currentPlayer });
+  if (cfg.mode === 'versus') {
+    currentPlayer = currentPlayer === 'kyle' ? 'lindsey' : 'kyle';
+  }
+
+  setTimeout(() => {
+    qIdx++;
+    if (qIdx >= queue.length) showResults();
+    else renderQuestion();
+  }, 1400);
+}
+
+// ═══════════════════════════════════════════════════════
+//  QUESTION RENDERING
+// ═══════════════════════════════════════════════════════
+function renderQuestion() {
+  answered = false;
+  const word = queue[qIdx];
+  const total = queue.length;
+
+  // Progress
+  $('progressLabel').textContent = `Question ${qIdx + 1} of ${total}`;
+  $('progressFill').style.width = `${(qIdx / total) * 100}%`;
+
+  // Streak
+  $('streakDisplay').textContent = streak >= 3 ? `🔥 ${streak} streak!` : '';
+
+  // Player turn UI
+  if (cfg.mode === 'versus') updateTurnUI();
+
+  // Question content
+  const qLabel = $('questionLabel');
+  const qContent = $('questionContent');
+  const speakRow = $('speakRow');
+
+  const splitTag = (cfg.grade === 'split' && cfg.mode === 'versus')
+    ? ` · ${currentPlayer === 'kyle' ? "🏆 Kyle's words" : "📚 Lindsey's words"}`
+    : '';
+  if (cfg.dir === 'zh2en') {
+    qLabel.textContent = 'What does this mean in English?' + splitTag;
+    qContent.innerHTML = `<div class="chinese-char">${word.zh}</div>`;
+    speakRow.style.display = 'flex';
+  } else {
+    qLabel.textContent = 'Which Chinese word/phrase means…' + splitTag;
+    qContent.innerHTML = `<div class="english-prompt">${word.en}</div>`;
+    speakRow.style.display = 'none';
+  }
+
+  // Choices
+  buildChoices(word);
+
+  // Start countdown
+  startTimer(word);
+}
+
+function buildChoices(word) {
+  // In split versus mode, pull distractors from the current player's own bank
+  const distractorSrc = (cfg.grade === 'split' && cfg.mode === 'versus')
+    ? buildPool(currentPlayer)
+    : buildPool();
+  const pool = distractorSrc.filter(w => w.zh !== word.zh);
+  shuffle(pool);
+  const distractors = pool.slice(0, 3);
+  const allOptions = shuffle([word, ...distractors]);
+
+  const grid = $('choicesGrid');
+  grid.innerHTML = '';
+
+  allOptions.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+
+    if (cfg.dir === 'zh2en') {
+      // Show English answer options
+      btn.textContent = opt.en;
+    } else {
+      // Show Chinese answer options
+      btn.innerHTML = `<span class="choice-zh">${opt.zh}</span>`;
+    }
+
+    btn.dataset.correct = (opt.zh === word.zh) ? '1' : '0';
+    btn.addEventListener('click', () => handleChoice(btn, word));
+    grid.appendChild(btn);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  CHOICE HANDLING
+// ═══════════════════════════════════════════════════════
+function handleChoice(btn, word) {
+  if (answered) return;
+  answered = true;
+  stopTimer();
+
+  const correct = btn.dataset.correct === '1';
+  const buttons = $('choicesGrid').querySelectorAll('.choice-btn');
+
+  // Disable all buttons, mark correct/wrong
+  buttons.forEach(b => {
+    b.disabled = true;
+    if (b.dataset.correct === '1') b.classList.add('reveal');
+  });
+
+  if (correct) {
+    btn.classList.add('correct');
+    btn.classList.remove('reveal');
+    streak++;
+    if (cfg.mode === 'versus') {
+      scores[currentPlayer]++;
+      $(`${currentPlayer}Score`).textContent = scores[currentPlayer];
+    } else {
+      const s = parseInt($('soloScoreVal').textContent) + 1;
+      $('soloScoreVal').textContent = s;
+    }
+    showToast('✓ Correct!', 'correct');
+  } else {
+    btn.classList.add('wrong');
+    streak = 0;
+    // Reveal pinyin on the question card so they can learn
+    const qc = $('questionContent');
+    if (cfg.dir === 'zh2en') {
+      qc.innerHTML += `<div class="pinyin" style="margin-top:8px">${word.py}</div>`;
+    }
+    showToast('✗ Wrong!', 'wrong');
+  }
+
+  $('streakDisplay').textContent = streak >= 3 ? `🔥 ${streak} streak!` : '';
+
+  // Log
+  answeredLog.push({ word, correct, player: currentPlayer });
+
+  // Always switch player in versus mode — one question per turn
+  if (cfg.mode === 'versus') {
+    currentPlayer = currentPlayer === 'kyle' ? 'lindsey' : 'kyle';
+  }
+
+  setTimeout(() => {
+    qIdx++;
+    if (qIdx >= queue.length) showResults();
+    else renderQuestion();
+  }, 1400);
+}
+
+// ═══════════════════════════════════════════════════════
+//  SPEAK BUTTONS
+// ═══════════════════════════════════════════════════════
+$('speakNormal').addEventListener('click', () => speak(queue[qIdx].zh, 1));
+$('speakSlow').addEventListener('click', () => speak(queue[qIdx].zh, 0.55));
+
+// ═══════════════════════════════════════════════════════
+//  FEEDBACK TOAST
+// ═══════════════════════════════════════════════════════
+let toastTimer = null;
+function showToast(msg, type) {
+  const t = $('feedbackToast');
+  t.textContent = msg;
+  t.className = `feedback-toast ${type} show`;
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.classList.remove('show'); }, 900);
+}
+
+// ═══════════════════════════════════════════════════════
+//  TURN UI
+// ═══════════════════════════════════════════════════════
+function updateTurnUI() {
+  ['kyle', 'lindsey'].forEach(p => {
+    $(`${p}Card`).classList.toggle('active', p === currentPlayer);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  RESULTS
+// ═══════════════════════════════════════════════════════
+function showResults() {
+  stopTimer();
+  $('progressFill').style.width = '100%';
+
+  const total = queue.length;
+  const correct = answeredLog.filter(l => l.correct).length;
+  const pct = Math.round((correct / total) * 100);
+
+  // Icon & title
+  const resultIcon = $('resultIcon');
+  const resultTitle = $('resultTitle');
+  const resultSubtitle = $('resultSubtitle');
+
+  if (pct === 100)      { resultIcon.textContent = '🏆'; resultTitle.textContent = 'Perfect Score!'; }
+  else if (pct >= 80)   { resultIcon.textContent = '⭐'; resultTitle.textContent = 'Excellent!'; }
+  else if (pct >= 60)   { resultIcon.textContent = '👍'; resultTitle.textContent = 'Good Job!'; }
+  else                  { resultIcon.textContent = '📚'; resultTitle.textContent = 'Keep Practicing!'; }
+
+  // Scorecards
+  const sc = $('resultScorecards');
+  sc.innerHTML = '';
+  if (cfg.mode === 'versus') {
+    resultSubtitle.textContent = `Kyle: ${scores.kyle}  •  Lindsey: ${scores.lindsey}`;
+    const winner = scores.kyle > scores.lindsey ? 'kyle' : scores.lindsey > scores.kyle ? 'lindsey' : null;
+    ['kyle', 'lindsey'].forEach(p => {
+      const kTotal = answeredLog.filter(l => l.player === p).length || 1;
+      const kRight = answeredLog.filter(l => l.player === p && l.correct).length;
+      const card = document.createElement('div');
+      card.className = `result-scorecard ${p}${winner === p ? ' winner' : ''}`;
+      card.innerHTML = `
+        <div class="rs-crown">👑</div>
+        <div class="rs-name">${p === 'kyle' ? 'Kyle' : 'Lindsey'}</div>
+        <div class="rs-score">${scores[p]}</div>
+        <div class="rs-pct">${Math.round((kRight/kTotal)*100)}% correct</div>
+      `;
+      sc.appendChild(card);
+    });
+    if (pct === 100) confettiBurst();
+  } else {
+    resultSubtitle.textContent = `${correct} / ${total} correct  •  ${pct}%`;
+    const card = document.createElement('div');
+    card.className = 'result-scorecard kyle';
+    card.style.maxWidth = '220px';
+    card.innerHTML = `
+      <div class="rs-crown">⭐</div>
+      <div class="rs-name">Your Score</div>
+      <div class="rs-score">${correct}<span style="font-size:1.2rem;color:#667"> / ${total}</span></div>
+      <div class="rs-pct">${pct}%</div>
+    `;
+    sc.appendChild(card);
+    if (pct === 100) confettiBurst();
+  }
+
+  // Answer review rows
+  const rows = $('resultsRows');
+  rows.innerHTML = '';
+  answeredLog.forEach(({ word, correct: ok, player }) => {
+    const row = document.createElement('div');
+    row.className = `result-row ${ok ? 'correct-row' : 'wrong-row'}`;
+    row.innerHTML = `
+      <span class="rr-icon">${ok ? '✅' : '❌'}</span>
+      <button class="rr-speak" title="Hear it">🔊</button>
+      <span class="rr-zh">${word.zh}<br><span class="rr-py">${word.py}</span></span>
+      <span class="rr-en">${word.en}</span>
+      ${cfg.mode === 'versus' ? `<span class="rr-who">${player === 'kyle' ? '🟡 Kyle' : '🩵 Lindsey'}</span>` : ''}
+    `;
+    row.querySelector('.rr-speak').addEventListener('click', () => speak(word.zh, 0.9));
+    rows.appendChild(row);
+  });
+
+  showScreen('resultsScreen');
+}
+
+// ═══════════════════════════════════════════════════════
+//  CONFETTI
+// ═══════════════════════════════════════════════════════
+function confettiBurst() {
+  const colors = ['#e53','#ff9800','#f0c040','#2ecc71','#22A6B3','#9b59b6'];
+  for (let i = 0; i < 60; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'confetti-piece';
+      el.style.cssText = `
+        left: ${Math.random()*100}vw;
+        top: -10px;
+        background: ${colors[Math.floor(Math.random()*colors.length)]};
+        width: ${6+Math.random()*8}px;
+        height: ${6+Math.random()*8}px;
+        border-radius: ${Math.random()>0.5 ? '50%' : '2px'};
+        animation-duration: ${1.5+Math.random()*2}s;
+        animation-delay: ${Math.random()*0.5}s;
+      `;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 3500);
+    }, i * 30);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  SCREEN SWITCHER
+// ═══════════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $(id).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>

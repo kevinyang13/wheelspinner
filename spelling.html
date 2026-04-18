@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spelling Bee</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #0a0c10;
+      color: #eee;
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 12px 16px 40px;
+    }
+
+    nav {
+      width: 100%; max-width: 640px;
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 12px;
+    }
+    nav a { color: #f0c040; text-decoration: none; font-size: 0.9rem; opacity: 0.8; }
+    nav a:hover { opacity: 1; }
+    nav span { font-size: 1rem; font-weight: bold; }
+
+    /* ── Setup screen ─────────────────────── */
+    #setup-screen {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 28px; padding-top: 12px; width: 100%; max-width: 520px;
+    }
+    .setup-title { font-size: 2.4rem; font-weight: 900; text-align: center; line-height: 1.1; }
+    .setup-title span { display: block; font-size: 1rem; color: #556; font-weight: 400; margin-top: 6px; letter-spacing: 1px; }
+
+    .option-group { width: 100%; }
+    .option-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1px; color: #556; margin-bottom: 10px; text-align: center; }
+    .option-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+    .opt-btn {
+      padding: 14px 32px; border-radius: 14px;
+      border: 2px solid #222; background: #111520;
+      color: #889; font-size: 1rem; cursor: pointer; text-align: center;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+      min-width: 140px;
+    }
+    .opt-btn small { display: block; font-size: 0.72rem; color: #445; margin-top: 3px; }
+    .opt-btn:hover { border-color: #f0c040; color: #f0c040; }
+    .opt-btn.sel   { border-color: #f0c040; color: #f0c040; background: rgba(240,192,64,0.08); }
+
+    .big-start {
+      padding: 15px 64px; font-size: 1.2rem; font-weight: bold;
+      border: none; border-radius: 32px;
+      background: linear-gradient(135deg, #f0c040, #ff9f43);
+      color: #0a0c10; cursor: pointer;
+      box-shadow: 0 4px 20px rgba(240,192,64,0.35);
+      transition: transform 0.1s;
+    }
+    .big-start:hover { transform: scale(1.04); }
+
+    /* ── Game screen ──────────────────────── */
+    #game-screen { display: none; flex-direction: column; align-items: center; gap: 16px; width: 100%; max-width: 580px; }
+
+    .scoreboard {
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%; background: #111520; border-radius: 14px; padding: 12px 20px;
+    }
+    .player-box { text-align: center; min-width: 80px; }
+    .player-box .pname { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: #556; }
+    .player-box .pscore { font-size: 2rem; font-weight: bold; line-height: 1.1; }
+    .player-box.kyle    .pscore { color: #f0c040; }
+    .player-box.lindsey .pscore { color: #22A6B3; }
+    .player-box.active-player { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 4px 12px; }
+    .round-center { text-align: center; flex: 1; }
+    .round-center .rnum { font-size: 0.82rem; color: #445; }
+    .round-center .rturn { font-size: 1rem; font-weight: bold; color: #eee; margin-top: 2px; }
+
+    /* ── Word card ────────────────────────── */
+    .word-card {
+      background: #111520; border-radius: 20px;
+      padding: 28px 32px; width: 100%;
+      border: 2px solid #1a2035;
+      display: flex; flex-direction: column; align-items: center; gap: 18px;
+    }
+
+    .bee-icon { font-size: 2.4rem; line-height: 1; }
+
+    .hear-row { display: flex; gap: 10px; }
+    .hear-btn {
+      padding: 9px 20px; border-radius: 10px;
+      border: 2px solid #f0c040; background: transparent;
+      color: #f0c040; font-size: 0.9rem; cursor: pointer;
+      transition: background 0.15s; white-space: nowrap;
+    }
+    .hear-btn:hover { background: rgba(240,192,64,0.12); }
+    .hear-btn.slow  { border-color: #888; color: #888; }
+    .hear-btn.slow:hover { border-color: #aaa; color: #aaa; background: rgba(255,255,255,0.05); }
+    .hear-btn.sentence { border-color: #a78bfa; color: #a78bfa; }
+    .hear-btn.sentence:hover { background: rgba(167,139,250,0.12); }
+
+    /* Voice picker (setup) */
+    .voice-row {
+      display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap;
+    }
+    .voice-select {
+      padding: 10px 14px; border-radius: 12px; border: 2px solid #222;
+      background: #111520; color: #eee; font-size: 0.9rem; cursor: pointer;
+      outline: none; flex: 1; min-width: 200px; max-width: 340px;
+      transition: border-color 0.2s;
+    }
+    .voice-select:focus { border-color: #f0c040; }
+    .voice-test-btn {
+      padding: 10px 18px; border-radius: 12px; border: 2px solid #f0c040;
+      background: transparent; color: #f0c040; font-size: 0.88rem; cursor: pointer;
+      transition: background 0.15s; white-space: nowrap;
+    }
+    .voice-test-btn:hover { background: rgba(240,192,64,0.1); }
+
+    /* Letter blanks */
+    .blanks { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+    .blank-box {
+      width: 34px; height: 38px; border-bottom: 3px solid #334;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; font-weight: bold; color: #f0c040;
+      transition: border-color 0.2s;
+    }
+    .blank-box.filled { border-color: #f0c040; }
+
+    /* Input */
+    .spell-input-wrap { display: flex; gap: 10px; width: 100%; }
+    .spell-input {
+      flex: 1; padding: 12px 16px; font-size: 1.2rem; font-weight: bold;
+      border-radius: 12px; border: 2px solid #223; background: #0a0e18;
+      color: #fff; text-align: center; letter-spacing: 3px; text-transform: lowercase;
+      outline: none; transition: border-color 0.2s;
+    }
+    .spell-input:focus { border-color: #f0c040; }
+    .spell-input:disabled { opacity: 0.5; }
+    .check-btn {
+      padding: 12px 22px; border-radius: 12px; font-size: 1rem; font-weight: bold;
+      border: none; background: linear-gradient(135deg, #f0c040, #ff9f43);
+      color: #0a0c10; cursor: pointer; transition: transform 0.1s;
+      white-space: nowrap;
+    }
+    .check-btn:hover { transform: scale(1.04); }
+    .check-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* Feedback */
+    .feedback { min-height: 52px; text-align: center; width: 100%; }
+    .feedback .fb-correct {
+      font-size: 1.3rem; font-weight: bold; color: #6AB04C;
+    }
+    .feedback .fb-wrong {
+      font-size: 1.1rem; font-weight: bold; color: #ff6b6b;
+    }
+    .feedback .reveal {
+      margin-top: 8px; font-size: 1rem; color: #aaa; letter-spacing: 2px;
+    }
+    .reveal .correct-letter { color: #6AB04C; font-weight: bold; }
+    .reveal .wrong-letter   { color: #ff6b6b; text-decoration: line-through; }
+
+    .next-btn {
+      padding: 11px 36px; border-radius: 12px; font-size: 1rem; font-weight: bold;
+      border: 2px solid #22A6B3; background: transparent;
+      color: #22A6B3; cursor: pointer; transition: background 0.15s;
+    }
+    .next-btn:hover { background: rgba(34,166,179,0.12); }
+
+    /* Streak badge */
+    .streak { font-size: 0.85rem; color: #f0c040; font-weight: bold; min-height: 20px; }
+
+    /* Progress bar */
+    .progress-wrap {
+      width: 100%; height: 6px; background: #1a2035; border-radius: 3px; overflow: hidden;
+    }
+    .progress-bar { height: 100%; background: linear-gradient(90deg, #f0c040, #ff9f43); border-radius: 3px; transition: width 0.4s ease; }
+
+    /* ── Results screen ───────────────────── */
+    #result-screen {
+      display: none; flex-direction: column; align-items: center;
+      gap: 22px; padding-top: 10px; width: 100%; max-width: 520px;
+    }
+    .result-title { font-size: 2rem; font-weight: 900; color: #f0c040; text-align: center; }
+    .result-cards { display: flex; gap: 16px; width: 100%; flex-wrap: wrap; justify-content: center; }
+    .result-card {
+      flex: 1; min-width: 180px; background: #111520; border-radius: 16px;
+      padding: 20px 16px; text-align: center; border: 2px solid transparent;
+    }
+    .result-card.kyle    { border-color: #f0c040; }
+    .result-card.lindsey { border-color: #22A6B3; }
+    .result-card.winner  { box-shadow: 0 0 24px rgba(240,192,64,0.3); }
+    .result-card .rcard-name  { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #556; margin-bottom: 6px; }
+    .result-card.kyle    .rcard-score { color: #f0c040; }
+    .result-card.lindsey .rcard-score { color: #22A6B3; }
+    .result-card .rcard-score { font-size: 3rem; font-weight: 900; line-height: 1; }
+    .result-card .rcard-sub   { font-size: 0.78rem; color: #445; margin-top: 4px; }
+    .result-card .rcard-words { margin-top: 12px; font-size: 0.75rem; color: #556; text-align: left; line-height: 1.6; }
+    .rcard-words .w-correct { color: #6AB04C; }
+    .rcard-words .w-wrong   { color: #ff6b6b; }
+
+    .result-winner-banner {
+      background: rgba(240,192,64,0.1); border: 2px solid #f0c040;
+      border-radius: 16px; padding: 16px 32px; text-align: center;
+      font-size: 1.3rem; font-weight: bold; color: #f0c040; width: 100%;
+    }
+
+    .result-btns { display: flex; gap: 12px; }
+    .result-btn-primary {
+      padding: 12px 36px; border-radius: 24px; font-size: 1rem; font-weight: bold;
+      border: none; background: linear-gradient(135deg, #f0c040, #ff9f43);
+      color: #0a0c10; cursor: pointer; transition: transform 0.1s;
+    }
+    .result-btn-primary:hover { transform: scale(1.04); }
+    .result-btn-secondary {
+      padding: 12px 28px; border-radius: 24px; font-size: 1rem;
+      border: 2px solid #334; background: transparent; color: #aaa;
+      cursor: pointer; transition: border-color 0.2s, color 0.2s;
+    }
+    .result-btn-secondary:hover { border-color: #f0c040; color: #f0c040; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html">← Home</a>
+  <span>🐝 Spelling Bee</span>
+</nav>
+
+<!-- ── Setup ──────────────────────────────── -->
+<div id="setup-screen">
+  <div class="setup-title">
+    🐝 Spelling Bee
+    <span>CHOOSE GRADE &amp; MODE</span>
+  </div>
+
+  <div class="option-group">
+    <div class="option-label">Grade Level</div>
+    <div class="option-row">
+      <button class="opt-btn sel" data-grade="2">2nd Grade<small>Foundational words</small></button>
+      <button class="opt-btn"     data-grade="3">3rd Grade<small>Challenge words</small></button>
+    </div>
+  </div>
+
+  <div class="option-group">
+    <div class="option-label">Mode</div>
+    <div class="option-row">
+      <button class="opt-btn sel" data-mode="solo">Solo<small>Practice on your own</small></button>
+      <button class="opt-btn"     data-mode="versus">Kyle vs Lindsey<small>Take turns, most correct wins</small></button>
+    </div>
+  </div>
+
+  <div class="option-group">
+    <div class="option-label">Words per round</div>
+    <div class="option-row">
+      <button class="opt-btn" data-count="5">5 words</button>
+      <button class="opt-btn sel" data-count="10">10 words</button>
+      <button class="opt-btn" data-count="15">15 words</button>
+    </div>
+  </div>
+
+  <div class="option-group">
+    <div class="option-label">Voice</div>
+    <div class="voice-row">
+      <select class="voice-select" id="voiceSelect"></select>
+      <button class="voice-test-btn" id="voiceTestBtn">🔊 Test</button>
+    </div>
+  </div>
+
+  <button class="big-start" id="startBtn">Start Spelling Bee 🐝</button>
+</div>
+
+<!-- ── Game ───────────────────────────────── -->
+<div id="game-screen">
+  <div class="scoreboard" id="scoreboard">
+    <div class="player-box kyle active-player" id="kyleBox">
+      <div class="pname">Kyle</div>
+      <div class="pscore" id="kyleScoreEl">0</div>
+    </div>
+    <div class="round-center">
+      <div class="rnum"  id="roundNum">Word 1 of 10</div>
+      <div class="rturn" id="turnName">Kyle</div>
+    </div>
+    <div class="player-box lindsey" id="lindseyBox">
+      <div class="pname">Lindsey</div>
+      <div class="pscore" id="lindseyScoreEl">0</div>
+    </div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-bar" id="progressBar" style="width:0%"></div>
+  </div>
+
+  <div class="word-card">
+    <div class="bee-icon">🐝</div>
+    <div class="hear-row">
+      <button class="hear-btn" id="hearBtn">🔊 Hear word</button>
+      <button class="hear-btn slow" id="hearSlowBtn">🐢 Slowly</button>
+      <button class="hear-btn sentence" id="hearSentenceBtn">💬 Hear sentence</button>
+    </div>
+    <div class="blanks" id="blanksEl"></div>
+    <div class="spell-input-wrap">
+      <input class="spell-input" id="spellingInput" type="text"
+        placeholder="type spelling…"
+        autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" />
+      <button class="check-btn" id="checkBtn">Check ✓</button>
+    </div>
+    <div class="streak" id="streakEl"></div>
+    <div class="feedback" id="feedbackEl"></div>
+    <button class="next-btn" id="nextBtn" style="display:none">Next Word →</button>
+  </div>
+</div>
+
+<!-- ── Results ────────────────────────────── -->
+<div id="result-screen">
+  <div class="result-title" id="resultTitle">🎉 Round Complete!</div>
+  <div class="result-cards" id="resultCards"></div>
+  <div class="result-winner-banner" id="winnerBanner"></div>
+  <div class="result-btns">
+    <button class="result-btn-primary"   id="playAgainBtn">Play Again</button>
+    <button class="result-btn-secondary" id="homeBtn">Home</button>
+  </div>
+</div>
+
+<script>
+// ── Word banks ──────────────────────────────────────────────────────
+const WORDS = {
+  2: [
+    { w:'about',    s:'What is this story about?' },
+    { w:'afraid',   s:'The puppy was afraid of thunder.' },
+    { w:'again',    s:'Can you say that again please?' },
+    { w:'almost',   s:'We are almost at the park.' },
+    { w:'always',   s:'She always shares her toys.' },
+    { w:'animal',   s:'A horse is a large animal.' },
+    { w:'answer',   s:'Raise your hand if you know the answer.' },
+    { w:'around',   s:'The dog ran around the yard.' },
+    { w:'before',   s:'Wash your hands before you eat.' },
+    { w:'behind',   s:'The cat hid behind the chair.' },
+    { w:'below',    s:'Look at the fish below the water.' },
+    { w:'better',   s:'I feel better today, thank you.' },
+    { w:'birthday', s:'Happy birthday to you!' },
+    { w:'both',     s:'Both of us love pizza.' },
+    { w:'bring',    s:'Please bring your book to school.' },
+    { w:'brown',    s:'The bear has brown fur.' },
+    { w:'carry',    s:'Can you carry this bag for me?' },
+    { w:'catch',    s:'Try to catch the ball!' },
+    { w:'chair',    s:'Please sit in the red chair.' },
+    { w:'change',   s:'The leaves change color in autumn.' },
+    { w:'clean',    s:'Please clean your room today.' },
+    { w:'climb',    s:'I like to climb the tall tree.' },
+    { w:'color',    s:'What is your favorite color?' },
+    { w:'could',    s:'She could swim very fast.' },
+    { w:'count',    s:'Can you count to one hundred?' },
+    { w:'dance',    s:'We will dance at the party.' },
+    { w:'drink',    s:'Please drink your milk.' },
+    { w:'early',    s:'We woke up early to see the sunrise.' },
+    { w:'eight',    s:'There are eight crayons in the box.' },
+    { w:'enjoy',    s:'I enjoy reading books.' },
+    { w:'every',    s:'Every student did a great job.' },
+    { w:'first',    s:'She was the first one to arrive.' },
+    { w:'floor',    s:'The toy fell on the floor.' },
+    { w:'flower',   s:'The flower bloomed in spring.' },
+    { w:'found',    s:'I found my missing sock!' },
+    { w:'friend',   s:'He is my best friend at school.' },
+    { w:'funny',    s:'That was a really funny joke.' },
+    { w:'green',    s:'Frogs are usually green.' },
+    { w:'group',    s:'We worked in a small group.' },
+    { w:'happy',    s:'She was happy to see her dad.' },
+    { w:'heavy',    s:'The box was too heavy to lift.' },
+    { w:'honey',    s:'Bees make sweet honey.' },
+    { w:'house',    s:'Our house has a red roof.' },
+    { w:'hurry',    s:'We need to hurry or we will be late.' },
+    { w:'inside',   s:'Come inside out of the rain.' },
+    { w:'jump',     s:'How high can you jump?' },
+    { w:'keep',     s:'Please keep your desk tidy.' },
+    { w:'kind',     s:'It is kind to share with others.' },
+    { w:'large',    s:'An elephant is a very large animal.' },
+    { w:'laugh',    s:'The joke made everyone laugh.' },
+    { w:'learn',    s:'We learn something new every day.' },
+    { w:'leave',    s:'What time do we leave for school?' },
+    { w:'light',    s:'The sun gives us light and warmth.' },
+    { w:'little',   s:'She has a little kitten.' },
+    { w:'magic',    s:'The wizard used magic to fly.' },
+    { w:'money',    s:'He saved his money to buy a toy.' },
+    { w:'morning',  s:'Good morning! How did you sleep?' },
+    { w:'mother',   s:'My mother makes the best pancakes.' },
+    { w:'music',    s:'We listen to music on the radio.' },
+    { w:'never',    s:'I have never climbed a mountain.' },
+    { w:'night',    s:'Stars come out at night.' },
+    { w:'noise',    s:'The puppy made a lot of noise.' },
+    { w:'north',    s:'We drove north toward the mountains.' },
+    { w:'orange',   s:'I love to eat a juicy orange.' },
+    { w:'other',    s:'The other kids are playing outside.' },
+    { w:'paper',    s:'Please write your name on the paper.' },
+    { w:'party',    s:'We are having a birthday party!' },
+    { w:'pencil',   s:'May I borrow your pencil?' },
+    { w:'people',   s:'Many people came to the fair.' },
+    { w:'place',    s:'This is my favorite place to read.' },
+    { w:'plant',    s:'We will plant seeds in the garden.' },
+    { w:'please',   s:'Could you please pass the butter?' },
+    { w:'pretty',   s:'What a pretty butterfly!' },
+    { w:'quiet',    s:'Please be quiet in the library.' },
+    { w:'really',   s:'That was a really good story.' },
+    { w:'right',    s:'Turn right at the corner.' },
+    { w:'round',    s:'The earth is round like a ball.' },
+    { w:'seven',    s:'There are seven days in a week.' },
+    { w:'share',    s:'Always share your toys with others.' },
+    { w:'silly',    s:'The clown made a silly face.' },
+    { w:'sister',   s:'My sister loves to paint.' },
+    { w:'sleep',    s:'Children need eight hours of sleep.' },
+    { w:'small',    s:'The mouse was very small.' },
+    { w:'smile',    s:'Your smile makes me happy.' },
+    { w:'sorry',    s:'I am sorry for bumping into you.' },
+    { w:'sound',    s:'What was that strange sound?' },
+    { w:'space',    s:'Astronauts travel to outer space.' },
+    { w:'spell',    s:'Can you spell your last name?' },
+    { w:'spring',   s:'Flowers bloom in spring.' },
+    { w:'start',    s:'The race will start in ten seconds.' },
+    { w:'story',    s:'Please read me a bedtime story.' },
+    { w:'study',    s:'I need to study for my spelling test.' },
+    { w:'sweet',    s:'Strawberries are sweet and red.' },
+    { w:'table',    s:'Set the dishes on the table.' },
+    { w:'teach',    s:'Our teacher will teach us a new song.' },
+    { w:'think',    s:'Think before you answer.' },
+    { w:'three',    s:'I have three older brothers.' },
+    { w:'tooth',    s:'I lost my first tooth today!' },
+    { w:'treat',    s:'The dog got a yummy treat.' },
+    { w:'under',    s:'The cat hid under the bed.' },
+    { w:'until',    s:'Wait until I come back.' },
+    { w:'visit',    s:'We will visit grandma this weekend.' },
+    { w:'voice',    s:'She has a beautiful singing voice.' },
+    { w:'watch',    s:'Watch where you are going!' },
+    { w:'whole',    s:'I ate the whole sandwich.' },
+    { w:'world',    s:'The world is a big and amazing place.' },
+    { w:'worry',    s:'Don\'t worry, everything will be fine.' },
+    { w:'write',    s:'Please write your name at the top.' },
+    { w:'wrong',    s:'I got the wrong answer.' },
+    { w:'young',    s:'The young puppy ran and played.' },
+    { w:'yours',    s:'Is this pencil yours?' },
+  ],
+  3: [
+    { w:'accept',    s:'Please accept this gift.' },
+    { w:'action',    s:'We need to take action now.' },
+    { w:'address',   s:'Write your address on the envelope.' },
+    { w:'although',  s:'Although it was cold, she went outside.' },
+    { w:'ancient',   s:'We studied ancient Egypt in class.' },
+    { w:'appear',    s:'Stars appear when the sun sets.' },
+    { w:'autumn',    s:'Leaves fall from trees in autumn.' },
+    { w:'beauty',    s:'The waterfall was full of beauty.' },
+    { w:'because',   s:'I stayed home because I was sick.' },
+    { w:'believe',   s:'I believe you can do it!' },
+    { w:'borrow',    s:'May I borrow your eraser?' },
+    { w:'bought',    s:'She bought a new pair of shoes.' },
+    { w:'bridge',    s:'We crossed the old stone bridge.' },
+    { w:'broken',    s:'The broken toy could not be fixed.' },
+    { w:'brought',   s:'He brought cookies for the class.' },
+    { w:'building',  s:'The school is a large building.' },
+    { w:'capture',   s:'The camera tried to capture the bird.' },
+    { w:'careful',   s:'Be careful when you cross the street.' },
+    { w:'caught',    s:'The player caught the ball perfectly.' },
+    { w:'certain',   s:'Are you certain that is the answer?' },
+    { w:'chapter',   s:'Read the first chapter of the book.' },
+    { w:'children',  s:'The children played in the park.' },
+    { w:'circle',    s:'Draw a perfect circle on your paper.' },
+    { w:'clothes',   s:'Put your dirty clothes in the basket.' },
+    { w:'complete',  s:'Please complete all ten questions.' },
+    { w:'correct',   s:'You got every answer correct!' },
+    { w:'create',    s:'We will create art using paint.' },
+    { w:'danger',    s:'The sign warned of danger ahead.' },
+    { w:'decide',    s:'I could not decide which book to read.' },
+    { w:'discover',  s:'Scientists discover new things every day.' },
+    { w:'distance',  s:'We could see the town in the distance.' },
+    { w:'either',    s:'You can have either cake or pie.' },
+    { w:'enough',    s:'Have you had enough to eat?' },
+    { w:'escape',    s:'The rabbit tried to escape from the box.' },
+    { w:'example',   s:'Give me an example of a mammal.' },
+    { w:'exercise',  s:'We need to exercise every day.' },
+    { w:'explain',   s:'Can you explain how it works?' },
+    { w:'famous',    s:'She is a famous painter.' },
+    { w:'favorite',  s:'Reading is my favorite subject.' },
+    { w:'forward',   s:'Take one step forward.' },
+    { w:'friendly',  s:'Our new neighbor is very friendly.' },
+    { w:'garden',    s:'We grow vegetables in the garden.' },
+    { w:'happen',    s:'What will happen next in the story?' },
+    { w:'history',   s:'We are learning about ancient history.' },
+    { w:'hundred',   s:'Count to one hundred by tens.' },
+    { w:'hungry',    s:'After gym class I was very hungry.' },
+    { w:'instead',   s:'She had juice instead of water.' },
+    { w:'island',    s:'The island was surrounded by water.' },
+    { w:'journey',   s:'The long journey took three days.' },
+    { w:'language',  s:'We are learning a new language.' },
+    { w:'library',   s:'I borrowed three books from the library.' },
+    { w:'machine',   s:'The washing machine broke down.' },
+    { w:'measure',   s:'Measure the wood before you cut it.' },
+    { w:'memory',    s:'She has a great memory for names.' },
+    { w:'minute',    s:'I will be ready in one minute.' },
+    { w:'mountain',  s:'They climbed to the top of the mountain.' },
+    { w:'nature',    s:'I love to take walks in nature.' },
+    { w:'neighbor',  s:'Our neighbor has a friendly dog.' },
+    { w:'notice',    s:'Did you notice the new painting on the wall?' },
+    { w:'outside',   s:'Let\'s play outside after lunch.' },
+    { w:'picture',   s:'Draw a picture of your favorite animal.' },
+    { w:'possible',  s:'Anything is possible if you try hard.' },
+    { w:'present',   s:'She gave me a wonderful birthday present.' },
+    { w:'problem',   s:'Can you help me solve this problem?' },
+    { w:'promise',   s:'I promise to be home before dark.' },
+    { w:'protect',   s:'A helmet helps protect your head.' },
+    { w:'quarter',   s:'A quarter is worth twenty-five cents.' },
+    { w:'reason',    s:'What was your reason for being late?' },
+    { w:'receive',   s:'I hope to receive good news soon.' },
+    { w:'report',    s:'Write a report about your favorite animal.' },
+    { w:'result',    s:'Hard work always gives a good result.' },
+    { w:'secret',    s:'Can you keep a secret?' },
+    { w:'sentence',  s:'Write each spelling word in a sentence.' },
+    { w:'separate',  s:'Please separate the red crayons from the blue.' },
+    { w:'serious',   s:'Please be serious during the test.' },
+    { w:'several',   s:'I have read several books this month.' },
+    { w:'shadow',    s:'My shadow is very tall in the morning.' },
+    { w:'special',   s:'Today is a very special day!' },
+    { w:'strange',   s:'The dog made a strange sound.' },
+    { w:'strength',  s:'He used all his strength to lift the box.' },
+    { w:'surface',   s:'The surface of the moon is rocky.' },
+    { w:'surprise',  s:'The party was a big surprise!' },
+    { w:'thousand',  s:'There were a thousand stars in the sky.' },
+    { w:'through',   s:'The ball flew through the window.' },
+    { w:'toward',    s:'She walked toward the door.' },
+    { w:'travel',    s:'We will travel by airplane.' },
+    { w:'trouble',   s:'Try not to get into trouble.' },
+    { w:'understand',s:'Do you understand the instructions?' },
+    { w:'unusual',   s:'The weather was unusual for this time of year.' },
+    { w:'usually',   s:'I usually wake up at seven o\'clock.' },
+    { w:'village',   s:'The small village had only one school.' },
+    { w:'visible',   s:'The moon is visible tonight.' },
+    { w:'wonder',    s:'I wonder what the answer is.' },
+    { w:'without',   s:'I cannot leave without my backpack.' },
+    { w:'yourself',  s:'Be proud of yourself!' },
+  ],
+};
+
+// ── Helpers ─────────────────────────────────────────────────────────
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i>0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+// ── Voice picker ─────────────────────────────────────────────────────
+let selectedVoice = null;
+
+function populateVoices() {
+  const voices = speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'));
+  if (!voices.length) return;
+  const sel = document.getElementById('voiceSelect');
+  const prev = sel.value;
+  sel.innerHTML = '';
+  voices.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v.name;
+    opt.textContent = (v.localService ? '🖥 ' : '☁️ ') + v.name + ' (' + v.lang + ')';
+    sel.appendChild(opt);
+  });
+  // Auto-select: prefer Samantha (macOS default), then any local English voice
+  const preferred = voices.find(v => v.name === 'Samantha')
+    || voices.find(v => v.localService && v.lang.startsWith('en-US'))
+    || voices.find(v => v.localService)
+    || voices[0];
+  if (prev && voices.find(v => v.name === prev)) {
+    sel.value = prev;
+  } else if (preferred) {
+    sel.value = preferred.name;
+  }
+  selectedVoice = voices.find(v => v.name === sel.value) || preferred;
+  sel.addEventListener('change', () => {
+    selectedVoice = speechSynthesis.getVoices().find(v => v.name === sel.value) || null;
+  });
+}
+
+speechSynthesis.onvoiceschanged = populateVoices;
+populateVoices();
+
+function speak(text, rate=0.88) {
+  if (!window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate  = rate;
+  u.pitch = 1.0;
+  if (selectedVoice) u.voice = selectedVoice;
+  speechSynthesis.speak(u);
+}
+
+// ── State ────────────────────────────────────────────────────────────
+let cfg = { grade: 2, mode: 'solo', count: 10 };
+let game = {};
+
+function initGame() {
+  const pool = shuffle(WORDS[cfg.grade]);
+  const total = cfg.count;
+
+  game = {
+    mode: cfg.mode,
+    kyleWords:     pool.slice(0, total),
+    lindseyWords:  shuffle(WORDS[cfg.grade]).slice(0, total),
+    kyleResults:   [],
+    lindseyResults:[],
+    kyleIndex:     0,
+    lindseyIndex:  0,
+    kyleScore:     0,
+    lindseyScore:  0,
+    currentPlayer: 'Kyle',
+    streak:        0,
+    phase:         'question', // question | answered
+  };
+  // Solo mode uses only Kyle's words
+  if (cfg.mode === 'solo') {
+    game.lindseyWords = [];
+  }
+}
+
+function currentWord() {
+  if (game.currentPlayer === 'Kyle') return game.kyleWords[game.kyleIndex];
+  return game.lindseyWords[game.lindseyIndex];
+}
+
+function currentIndex() {
+  return game.currentPlayer === 'Kyle' ? game.kyleIndex : game.lindseyIndex;
+}
+
+function totalDone() {
+  return game.kyleIndex + game.lindseyIndex;
+}
+
+function totalWords() {
+  return game.mode === 'solo' ? game.kyleWords.length : game.kyleWords.length + game.lindseyWords.length;
+}
+
+function isGameOver() {
+  if (game.mode === 'solo') return game.kyleIndex >= game.kyleWords.length;
+  return game.kyleIndex >= game.kyleWords.length && game.lindseyIndex >= game.lindseyWords.length;
+}
+
+// ── UI updates ───────────────────────────────────────────────────────
+function updateScoreboard() {
+  document.getElementById('kyleScoreEl').textContent    = game.kyleScore;
+  document.getElementById('lindseyScoreEl').textContent = game.lindseyScore;
+
+  const wordNum = Math.min(totalDone() + 1, totalWords());
+  document.getElementById('roundNum').textContent = `Word ${wordNum} of ${totalWords()}`;
+
+  if (cfg.mode === 'solo') {
+    document.getElementById('turnName').textContent = 'Kyle';
+    document.getElementById('kyleBox').classList.add('active-player');
+    document.getElementById('lindseyBox').style.visibility = 'hidden';
+    document.getElementById('scoreboard').querySelector('.round-center').style.flex = '2';
+  } else {
+    document.getElementById('lindseyBox').style.visibility = 'visible';
+    document.getElementById('turnName').textContent = game.currentPlayer + "'s turn";
+    document.getElementById('kyleBox').classList.toggle('active-player',    game.currentPlayer === 'Kyle');
+    document.getElementById('lindseyBox').classList.toggle('active-player', game.currentPlayer === 'Lindsey');
+  }
+
+  const pct = (totalDone() / totalWords()) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+}
+
+function renderBlanks(word) {
+  const el = document.getElementById('blanksEl');
+  el.innerHTML = '';
+  for (let i = 0; i < word.length; i++) {
+    const b = document.createElement('div');
+    b.className = 'blank-box';
+    b.id = `blank-${i}`;
+    el.appendChild(b);
+  }
+}
+
+function updateBlanks(typed) {
+  const word = currentWord().w;
+  for (let i = 0; i < word.length; i++) {
+    const b = document.getElementById(`blank-${i}`);
+    if (!b) continue;
+    if (i < typed.length) {
+      b.textContent = typed[i];
+      b.classList.add('filled');
+    } else {
+      b.textContent = '';
+      b.classList.remove('filled');
+    }
+  }
+}
+
+function loadQuestion() {
+  game.phase = 'question';
+  const entry = currentWord();
+
+  renderBlanks(entry.w);
+  document.getElementById('spellingInput').value = '';
+  document.getElementById('spellingInput').disabled = false;
+  document.getElementById('checkBtn').disabled = false;
+  document.getElementById('feedbackEl').innerHTML = '';
+  document.getElementById('nextBtn').style.display = 'none';
+  document.getElementById('streakEl').textContent = game.streak >= 3 ? `🔥 ${game.streak} in a row!` : '';
+
+  updateScoreboard();
+
+  // Auto-speak after short delay
+  setTimeout(() => speak(entry.w), 350);
+  document.getElementById('spellingInput').focus();
+}
+
+function checkAnswer() {
+  if (game.phase !== 'question') return;
+  const entry   = currentWord();
+  const typed   = document.getElementById('spellingInput').value.trim().toLowerCase();
+  if (!typed) return;
+
+  game.phase = 'answered';
+  const correct = typed === entry.w.toLowerCase();
+
+  document.getElementById('spellingInput').disabled = true;
+  document.getElementById('checkBtn').disabled = true;
+
+  // Record result
+  const result = { word: entry.w, typed, correct };
+  if (game.currentPlayer === 'Kyle') game.kyleResults.push(result);
+  else game.lindseyResults.push(result);
+
+  if (correct) {
+    if (game.currentPlayer === 'Kyle') game.kyleScore++;
+    else game.lindseyScore++;
+    game.streak++;
+    showFeedback(true, entry.w, typed);
+  } else {
+    game.streak = 0;
+    showFeedback(false, entry.w, typed);
+  }
+
+  document.getElementById('streakEl').textContent = game.streak >= 3 ? `🔥 ${game.streak} in a row!` : '';
+  updateScoreboard();
+  document.getElementById('nextBtn').style.display = 'inline-block';
+}
+
+function showFeedback(correct, word, typed) {
+  const el = document.getElementById('feedbackEl');
+  if (correct) {
+    el.innerHTML = '<div class="fb-correct">✅ Correct!</div>';
+    // Fill blanks green
+    word.split('').forEach((_, i) => {
+      const b = document.getElementById(`blank-${i}`);
+      if (b) { b.textContent = word[i]; b.style.color = '#6AB04C'; b.style.borderColor = '#6AB04C'; }
+    });
+    speak('Correct!', 1.0);
+  } else {
+    // Build comparison
+    let revealHTML = '<div class="fb-wrong">❌ Not quite.</div><div class="reveal">Correct: ';
+    word.split('').forEach((ch, i) => {
+      const t = typed[i] || '';
+      if (t.toLowerCase() === ch.toLowerCase()) {
+        revealHTML += `<span class="correct-letter">${ch}</span>`;
+      } else {
+        revealHTML += `<span class="correct-letter">${ch}</span>`;
+      }
+    });
+    revealHTML += '</div>';
+    el.innerHTML = revealHTML;
+    // Fill blanks with correct word
+    word.split('').forEach((ch, i) => {
+      const b = document.getElementById(`blank-${i}`);
+      if (b) { b.textContent = ch; b.style.color = '#ff6b6b'; b.style.borderColor = '#ff6b6b'; }
+    });
+    // Speak the correct word
+    setTimeout(() => speak(word, 0.75), 600);
+  }
+}
+
+function nextWord() {
+  // Advance index
+  if (game.currentPlayer === 'Kyle') game.kyleIndex++;
+  else game.lindseyIndex++;
+
+  if (isGameOver()) {
+    showResults();
+    return;
+  }
+
+  // Switch player in versus mode
+  if (cfg.mode === 'versus') {
+    if (game.currentPlayer === 'Kyle' && game.lindseyIndex < game.lindseyWords.length) {
+      game.currentPlayer = 'Lindsey';
+    } else if (game.currentPlayer === 'Lindsey' && game.kyleIndex < game.kyleWords.length) {
+      game.currentPlayer = 'Kyle';
+    } else if (game.kyleIndex < game.kyleWords.length) {
+      game.currentPlayer = 'Kyle';
+    } else {
+      game.currentPlayer = 'Lindsey';
+    }
+  }
+
+  loadQuestion();
+}
+
+// ── Results ──────────────────────────────────────────────────────────
+function showResults() {
+  document.getElementById('game-screen').style.display  = 'none';
+  document.getElementById('result-screen').style.display= 'flex';
+
+  const ks = game.kyleScore, ls = game.lindseyScore;
+  const kTotal = game.kyleResults.length, lTotal = game.lindseyResults.length;
+
+  if (cfg.mode === 'solo') {
+    document.getElementById('resultTitle').textContent = '🐝 Round Complete!';
+    document.getElementById('winnerBanner').textContent = `Kyle scored ${ks} out of ${kTotal}!`;
+    document.getElementById('resultCards').innerHTML = buildResultCard('kyle', 'Kyle', game.kyleResults, true);
+    return;
+  }
+
+  const tie    = ks === ls;
+  const winner = tie ? null : (ks > ls ? 'Kyle' : 'Lindsey');
+  document.getElementById('resultTitle').textContent = tie ? "🤝 It's a Tie!" : `🏆 ${winner} Wins!`;
+  document.getElementById('winnerBanner').textContent = tie
+    ? `Both scored ${ks} — perfectly matched!`
+    : `${winner} got ${Math.max(ks,ls)} out of ${kTotal} correct!`;
+
+  document.getElementById('resultCards').innerHTML =
+    buildResultCard('kyle', 'Kyle', game.kyleResults, winner === 'Kyle') +
+    buildResultCard('lindsey', 'Lindsey', game.lindseyResults, winner === 'Lindsey');
+}
+
+function buildResultCard(cls, name, results, isWinner) {
+  const correct = results.filter(r => r.correct).length;
+  const words = results.map(r =>
+    `<div><span class="${r.correct ? 'w-correct' : 'w-wrong'}">${r.correct ? '✓' : '✗'}</span> ${r.word}${!r.correct ? ` <em style="color:#445">(you typed: ${r.typed})</em>` : ''}</div>`
+  ).join('');
+  return `<div class="result-card ${cls}${isWinner ? ' winner' : ''}">
+    <div class="rcard-name">${name}</div>
+    <div class="rcard-score">${correct}</div>
+    <div class="rcard-sub">out of ${results.length} correct</div>
+    <div class="rcard-words">${words}</div>
+  </div>`;
+}
+
+// ── Setup screen logic ────────────────────────────────────────────────
+function setupOptionButtons(selector, key) {
+  document.querySelectorAll(selector).forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll(selector).forEach(b => b.classList.remove('sel'));
+      btn.classList.add('sel');
+      cfg[key] = isNaN(btn.dataset[key]) ? btn.dataset[key] : parseInt(btn.dataset[key]);
+    });
+  });
+}
+setupOptionButtons('[data-grade]', 'grade');
+setupOptionButtons('[data-mode]',  'mode');
+setupOptionButtons('[data-count]', 'count');
+
+document.getElementById('voiceTestBtn').addEventListener('click', () => {
+  speak('The quick brown fox jumps over the lazy dog.', 0.88);
+});
+
+document.getElementById('startBtn').addEventListener('click', () => {
+  initGame();
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display  = 'flex';
+  loadQuestion();
+});
+
+// ── Game buttons ──────────────────────────────────────────────────────
+document.getElementById('hearBtn').addEventListener('click', () => {
+  speak(currentWord().w, 0.88);
+});
+document.getElementById('hearSlowBtn').addEventListener('click', () => {
+  speak(currentWord().w, 0.58);
+});
+document.getElementById('hearSentenceBtn').addEventListener('click', () => {
+  speak(currentWord().s, 0.88);
+});
+document.getElementById('checkBtn').addEventListener('click', checkAnswer);
+document.getElementById('spellingInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') checkAnswer();
+});
+document.getElementById('spellingInput').addEventListener('input', e => {
+  updateBlanks(e.target.value.toLowerCase());
+});
+document.getElementById('nextBtn').addEventListener('click', nextWord);
+
+// ── Results buttons ────────────────────────────────────────────────────
+document.getElementById('playAgainBtn').addEventListener('click', () => {
+  document.getElementById('result-screen').style.display = 'none';
+  document.getElementById('setup-screen').style.display  = 'flex';
+});
+document.getElementById('homeBtn').addEventListener('click', () => {
+  window.location.href = 'index.html';
+});
+
+// Trigger voice load on browsers that need an explicit call
+speechSynthesis.getVoices();
+</script>
+</body>
+</html>
