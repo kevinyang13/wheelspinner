@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simon Says – Kyle & Lindsey</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #0f0f1e;
+      color: #eee;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 24px;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      flex-shrink: 0;
+    }
+    .header a { color: #667; text-decoration: none; font-size: 0.85rem; }
+    .header a:hover { color: #22d3ee; }
+    .header-title { font-size: 1.1rem; font-weight: 800; color: #22d3ee; }
+
+    .screen { display: none; flex-direction: column; align-items: center; justify-content: center; flex: 1; width: 100%; padding: 24px; }
+    .screen.active { display: flex; }
+
+    /* ── Start ── */
+    #startScreen h1 {
+      font-size: 3rem; font-weight: 900; margin-bottom: 8px;
+      background: linear-gradient(135deg, #22d3ee, #818cf8);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    #startScreen .subtitle { color: #667; margin-bottom: 40px; font-size: 1rem; text-align: center; line-height: 1.6; }
+
+    .lives-select { margin-bottom: 36px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .lives-select label { color: #889; font-size: 0.9rem; }
+    .lives-btns { display: flex; gap: 12px; }
+    .lives-btn {
+      width: 56px; height: 56px; border-radius: 14px; border: 2px solid #334;
+      background: #16213e; color: #eee; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: all 0.15s;
+    }
+    .lives-btn.selected { border-color: #22d3ee; background: rgba(34,211,238,0.12); color: #22d3ee; }
+
+    .start-btn {
+      padding: 18px 52px; border-radius: 16px;
+      background: linear-gradient(135deg, #22d3ee, #818cf8);
+      border: none; color: #fff; font-size: 1.2rem; font-weight: 800; cursor: pointer;
+      box-shadow: 0 8px 32px rgba(34,211,238,0.3); transition: transform 0.15s;
+    }
+    .start-btn:hover { transform: translateY(-3px); }
+
+    /* ── Game ── */
+    #gameScreen { gap: 0; padding: 16px; justify-content: space-between; }
+
+    /* Status bar */
+    .status-bar {
+      width: 100%; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 8px; margin-bottom: 12px; max-width: 460px;
+    }
+    .player-info {
+      display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 110px;
+    }
+    .player-info.right { align-items: flex-end; }
+    .p-name { font-size: 1rem; font-weight: 800; color: #556; transition: color 0.2s; }
+    .p-name.active { color: #22d3ee; }
+    .p-lives { font-size: 1rem; }
+
+    .seq-indicator {
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+    }
+    .seq-num {
+      font-size: 2rem; font-weight: 900; color: #22d3ee; line-height: 1;
+      text-shadow: 0 0 20px rgba(34,211,238,0.5);
+    }
+    .seq-lbl { font-size: 0.6rem; color: #445; letter-spacing: 1px; }
+
+    /* Turn banner */
+    .turn-banner {
+      font-size: 1rem; font-weight: 700; color: #22d3ee;
+      background: rgba(34,211,238,0.08); border: 1px solid rgba(34,211,238,0.2);
+      padding: 8px 24px; border-radius: 20px; margin-bottom: 16px;
+      min-height: 40px; display: flex; align-items: center; text-align: center;
+      transition: all 0.3s;
+    }
+    .turn-banner.watching { color: #f59e0b; background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.2); }
+    .turn-banner.success  { color: #22c55e; background: rgba(34,197,94,0.08); border-color: rgba(34,197,94,0.2); }
+    .turn-banner.fail     { color: #ef4444; background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.2); }
+
+    /* ── Simon board ── */
+    .simon-board {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      width: min(360px, 90vw);
+      aspect-ratio: 1;
+    }
+
+    .sim-btn {
+      border-radius: 20px;
+      border: none;
+      cursor: pointer;
+      transition: filter 0.08s, transform 0.08s;
+      position: relative;
+      overflow: hidden;
+      filter: brightness(0.35) saturate(0.6);
+    }
+    .sim-btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.35), transparent 65%);
+      border-radius: inherit;
+      pointer-events: none;
+    }
+    .sim-btn.lit {
+      filter: brightness(1) saturate(1.2);
+      transform: scale(0.96);
+      box-shadow: var(--btn-glow);
+    }
+    .sim-btn:active:not([disabled]) {
+      filter: brightness(0.85) saturate(1);
+      transform: scale(0.94);
+    }
+    .sim-btn.disabled-input { cursor: default; pointer-events: none; }
+
+    .btn-red    { background: #ef4444; --btn-glow: 0 0 40px rgba(239,68,68,0.9); }
+    .btn-blue   { background: #3b82f6; --btn-glow: 0 0 40px rgba(59,130,246,0.9); }
+    .btn-green  { background: #22c55e; --btn-glow: 0 0 40px rgba(34,197,94,0.9); }
+    .btn-yellow { background: #eab308; --btn-glow: 0 0 40px rgba(234,179,8,0.9); }
+
+    .btn-label {
+      position: absolute; bottom: 10px; left: 0; right: 0; text-align: center;
+      font-size: 0.7rem; font-weight: 700; color: rgba(255,255,255,0.4); letter-spacing: 1px;
+    }
+
+    /* Progress dots */
+    .progress-row {
+      display: flex; gap: 5px; flex-wrap: wrap; justify-content: center;
+      max-width: 360px; min-height: 20px; margin-top: 12px;
+    }
+    .prog-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #22c55e; opacity: 0.25; transition: opacity 0.15s;
+    }
+    .prog-dot.done { opacity: 1; }
+    .prog-dot.wrong { background: #ef4444; opacity: 1; }
+
+    /* ── Win Screen ── */
+    #winScreen { gap: 20px; }
+    .win-emoji { font-size: 5rem; }
+    .win-title { font-size: 2.5rem; font-weight: 900; color: #22d3ee; }
+    .win-sub   { color: #889; font-size: 1rem; }
+    .win-stats {
+      display: flex; gap: 20px;
+    }
+    .win-stat-box {
+      background: #16213e; border-radius: 14px; padding: 16px 24px; text-align: center;
+      border: 2px solid rgba(255,255,255,0.05);
+    }
+    .win-stat-box.winner { border-color: #22d3ee; background: rgba(34,211,238,0.08); }
+    .ws-name { font-size: 0.75rem; color: #556; margin-bottom: 6px; }
+    .ws-val  { font-size: 2rem; font-weight: 900; color: #22d3ee; line-height: 1; }
+    .ws-sub  { font-size: 0.7rem; color: #445; margin-top: 4px; }
+    .play-again-btn {
+      padding: 16px 48px; border-radius: 16px;
+      background: linear-gradient(135deg, #22d3ee, #818cf8);
+      border: none; color: #fff; font-size: 1.1rem; font-weight: 800; cursor: pointer;
+      box-shadow: 0 8px 32px rgba(34,211,238,0.3); transition: transform 0.15s;
+    }
+    .play-again-btn:hover { transform: translateY(-3px); }
+    .home-link { color: #556; text-decoration: none; font-size: 0.85rem; }
+    .home-link:hover { color: #22d3ee; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <a href="index.html">← Back</a>
+  <span class="header-title">🔵 Simon Says</span>
+  <span></span>
+</div>
+
+<!-- Start -->
+<div id="startScreen" class="screen active">
+  <h1>🔵 Simon Says</h1>
+  <p class="subtitle">Watch the sequence, then repeat it.<br>Players alternate — one mistake costs a life!</p>
+
+  <div class="lives-select">
+    <label>Lives per player</label>
+    <div class="lives-btns">
+      <button class="lives-btn" data-lives="3">3</button>
+      <button class="lives-btn selected" data-lives="5">5</button>
+      <button class="lives-btn" data-lives="7">7</button>
+    </div>
+  </div>
+
+  <button class="start-btn" id="startBtn">Start Game</button>
+  <p style="margin-top:28px;color:#445;font-size:0.75rem;">Click / tap the buttons · or use keys 1 2 3 4</p>
+</div>
+
+<!-- Game -->
+<div id="gameScreen" class="screen">
+  <div class="status-bar">
+    <div class="player-info" id="kyleInfo">
+      <div class="p-name" id="kyleName">Kyle</div>
+      <div class="p-lives" id="kyleLives"></div>
+    </div>
+    <div class="seq-indicator">
+      <div class="seq-num" id="seqNum">1</div>
+      <div class="seq-lbl">STEPS</div>
+    </div>
+    <div class="player-info right" id="lindseyInfo">
+      <div class="p-name" id="lindseyName">Lindsey</div>
+      <div class="p-lives" id="lindseyLives"></div>
+    </div>
+  </div>
+
+  <div class="turn-banner" id="turnBanner">Get ready…</div>
+
+  <div class="simon-board">
+    <button class="sim-btn btn-red"    data-color="red"    id="btnRed">    <span class="btn-label">1</span></button>
+    <button class="sim-btn btn-blue"   data-color="blue"   id="btnBlue">   <span class="btn-label">2</span></button>
+    <button class="sim-btn btn-green"  data-color="green"  id="btnGreen">  <span class="btn-label">3</span></button>
+    <button class="sim-btn btn-yellow" data-color="yellow" id="btnYellow"> <span class="btn-label">4</span></button>
+  </div>
+
+  <div class="progress-row" id="progressRow"></div>
+</div>
+
+<!-- Win -->
+<div id="winScreen" class="screen">
+  <div class="win-emoji">🏆</div>
+  <div class="win-title" id="winTitle">Kyle Wins!</div>
+  <div class="win-sub"   id="winSub">Lindsey ran out of lives!</div>
+  <div class="win-stats">
+    <div class="win-stat-box" id="kyleWinBox">
+      <div class="ws-name">KYLE</div>
+      <div class="ws-val" id="kyleWinLives"></div>
+      <div class="ws-sub">lives left</div>
+    </div>
+    <div class="win-stat-box" id="seqWinBox">
+      <div class="ws-name">LONGEST</div>
+      <div class="ws-val" id="longestSeq">0</div>
+      <div class="ws-sub">steps reached</div>
+    </div>
+    <div class="win-stat-box" id="lindseyWinBox">
+      <div class="ws-name">LINDSEY</div>
+      <div class="ws-val" id="lindseyWinLives"></div>
+      <div class="ws-sub">lives left</div>
+    </div>
+  </div>
+  <button class="play-again-btn" id="playAgainBtn">Play Again</button>
+  <a class="home-link" href="index.html">← Back to Games</a>
+</div>
+
+<script>
+  // ── Audio ──
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  let audioCtx = null;
+  function getAudio() {
+    if (!audioCtx) audioCtx = new AudioCtx();
+    return audioCtx;
+  }
+  const FREQS = { red: 220, blue: 277, green: 330, yellow: 415 };
+  function playTone(color, duration = 0.25) {
+    try {
+      const ctx = getAudio();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = FREQS[color];
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.4, ctx.currentTime + 0.01);
+      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + duration);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + duration + 0.05);
+    } catch(e) {}
+  }
+  function playFail() {
+    try {
+      const ctx = getAudio();
+      [180, 140, 100].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'sawtooth';
+        osc.frequency.value = freq;
+        const t = ctx.currentTime + i * 0.15;
+        gain.gain.setValueAtTime(0.3, t);
+        gain.gain.linearRampToValueAtTime(0, t + 0.13);
+        osc.start(t); osc.stop(t + 0.15);
+      });
+    } catch(e) {}
+  }
+  function playSuccess() {
+    try {
+      const ctx = getAudio();
+      [330, 415, 523].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        const t = ctx.currentTime + i * 0.1;
+        gain.gain.setValueAtTime(0.3, t);
+        gain.gain.linearRampToValueAtTime(0, t + 0.12);
+        osc.start(t); osc.stop(t + 0.15);
+      });
+    } catch(e) {}
+  }
+
+  // ── State ──
+  const COLORS = ['red', 'blue', 'green', 'yellow'];
+  let sequence     = [];
+  let inputIndex   = 0;
+  let turn         = 'kyle';   // whose turn it is to input
+  let phase        = 'idle';   // 'watching' | 'inputting' | 'paused'
+  let lives        = { kyle: 5, lindsey: 5 };
+  let maxLives     = 5;
+  let longestReached = 0;
+  let gameActive   = false;
+  let playbackTimeout = null;
+
+  // ── DOM ──
+  const startScreen  = document.getElementById('startScreen');
+  const gameScreen   = document.getElementById('gameScreen');
+  const winScreen    = document.getElementById('winScreen');
+  const turnBanner   = document.getElementById('turnBanner');
+  const seqNum       = document.getElementById('seqNum');
+  const progressRow  = document.getElementById('progressRow');
+  const kyleName     = document.getElementById('kyleName');
+  const lindseyName  = document.getElementById('lindseyName');
+
+  const btns = {
+    red:    document.getElementById('btnRed'),
+    blue:   document.getElementById('btnBlue'),
+    green:  document.getElementById('btnGreen'),
+    yellow: document.getElementById('btnYellow'),
+  };
+
+  // ── Setup ──
+  let selectedLives = 5;
+  document.querySelectorAll('.lives-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.lives-btn').forEach(x => x.classList.remove('selected'));
+      b.classList.add('selected');
+      selectedLives = parseInt(b.dataset.lives);
+    });
+  });
+  document.getElementById('startBtn').addEventListener('click', startGame);
+  document.getElementById('playAgainBtn').addEventListener('click', () => showScreen(startScreen));
+
+  function showScreen(s) {
+    [startScreen, gameScreen, winScreen].forEach(el => el.classList.remove('active'));
+    s.classList.add('active');
+  }
+
+  function startGame() {
+    maxLives = selectedLives;
+    lives = { kyle: maxLives, lindsey: maxLives };
+    sequence = [];
+    longestReached = 0;
+    turn = Math.random() < 0.5 ? 'kyle' : 'lindsey';
+    gameActive = true;
+    showScreen(gameScreen);
+    renderLives();
+    updateNameHighlight();
+    setTimeout(nextRound, 600);
+  }
+
+  function renderLives() {
+    document.getElementById('kyleLives').textContent    = '❤️'.repeat(lives.kyle)  + '🖤'.repeat(maxLives - lives.kyle);
+    document.getElementById('lindseyLives').textContent = '❤️'.repeat(lives.lindsey) + '🖤'.repeat(maxLives - lives.lindsey);
+  }
+
+  function updateNameHighlight() {
+    kyleName.classList.toggle('active', turn === 'kyle');
+    lindseyName.classList.toggle('active', turn === 'lindsey');
+  }
+
+  function nextRound() {
+    // Grow sequence
+    sequence.push(COLORS[Math.floor(Math.random() * 4)]);
+    seqNum.textContent = sequence.length;
+    if (sequence.length > longestReached) longestReached = sequence.length;
+    buildProgressDots();
+    setBanner(`👀 Watch carefully, ${cap(turn)}…`, 'watching');
+    setInputEnabled(false);
+    phase = 'watching';
+
+    // Play back sequence
+    playSequence(() => {
+      phase = 'inputting';
+      inputIndex = 0;
+      setInputEnabled(true);
+      setBanner(`🎮 Your turn, ${cap(turn)}! Repeat the sequence.`, '');
+    });
+  }
+
+  function playSequence(onDone) {
+    let i = 0;
+    const FLASH = 380;   // ms button lit
+    const GAP   = 160;   // ms between flashes
+    const delay = sequence.length > 8 ? FLASH - 60 : FLASH;
+
+    function next() {
+      if (i >= sequence.length) { setTimeout(onDone, GAP); return; }
+      const color = sequence[i++];
+      flashBtn(color, delay);
+      playTone(color, delay / 1000);
+      playbackTimeout = setTimeout(next, delay + GAP);
+    }
+    next();
+  }
+
+  function flashBtn(color, duration = 380) {
+    const btn = btns[color];
+    btn.classList.add('lit');
+    setTimeout(() => btn.classList.remove('lit'), duration);
+  }
+
+  function buildProgressDots() {
+    progressRow.innerHTML = '';
+    for (let i = 0; i < sequence.length; i++) {
+      const d = document.createElement('div');
+      d.className = 'prog-dot';
+      d.id = `dot-${i}`;
+      progressRow.appendChild(d);
+    }
+  }
+
+  function setInputEnabled(on) {
+    Object.values(btns).forEach(b => b.classList.toggle('disabled-input', !on));
+  }
+
+  function setBanner(text, cls) {
+    turnBanner.textContent = text;
+    turnBanner.className = 'turn-banner ' + (cls || '');
+  }
+
+  // ── Input handling ──
+  function handleInput(color) {
+    if (phase !== 'inputting' || !gameActive) return;
+    flashBtn(color, 200);
+    playTone(color, 0.18);
+
+    const correct = sequence[inputIndex];
+    const dot = document.getElementById(`dot-${inputIndex}`);
+
+    if (color === correct) {
+      if (dot) dot.classList.add('done');
+      inputIndex++;
+      if (inputIndex === sequence.length) {
+        // Success!
+        phase = 'paused';
+        setInputEnabled(false);
+        setTimeout(() => {
+          playSuccess();
+          setBanner(`✅ Nice one, ${cap(turn)}!`, 'success');
+        }, 150);
+        setTimeout(() => {
+          turn = turn === 'kyle' ? 'lindsey' : 'kyle';
+          updateNameHighlight();
+          nextRound();
+        }, 1400);
+      }
+    } else {
+      // Wrong!
+      if (dot) dot.classList.add('wrong');
+      phase = 'paused';
+      setInputEnabled(false);
+      playFail();
+      lives[turn]--;
+      setBanner(`❌ Oops, ${cap(turn)}! That was wrong.`, 'fail');
+      renderLives();
+
+      setTimeout(() => {
+        if (lives.kyle <= 0 || lives.lindsey <= 0) {
+          endGame();
+        } else {
+          // Reset sequence, other player goes
+          sequence = [];
+          turn = turn === 'kyle' ? 'lindsey' : 'kyle';
+          updateNameHighlight();
+          setBanner(`Starting over…`, 'watching');
+          setTimeout(nextRound, 800);
+        }
+      }, 1600);
+    }
+  }
+
+  // Button clicks
+  Object.entries(btns).forEach(([color, btn]) => {
+    btn.addEventListener('pointerdown', e => { e.preventDefault(); handleInput(color); });
+  });
+
+  // Keyboard: 1=red 2=blue 3=green 4=yellow
+  document.addEventListener('keydown', e => {
+    const map = { '1': 'red', '2': 'blue', '3': 'green', '4': 'yellow' };
+    if (map[e.key]) handleInput(map[e.key]);
+  });
+
+  function endGame() {
+    const winner = lives.kyle > 0 ? 'kyle' : 'lindsey';
+    const loser  = winner === 'kyle' ? 'lindsey' : 'kyle';
+    document.getElementById('winTitle').textContent = `${cap(winner)} Wins!`;
+    document.getElementById('winSub').textContent   = `${cap(loser)} ran out of lives!`;
+    document.getElementById('kyleWinLives').textContent    = lives.kyle;
+    document.getElementById('lindseyWinLives').textContent = lives.lindsey;
+    document.getElementById('longestSeq').textContent      = longestReached;
+    document.getElementById('kyleWinBox').classList.toggle('winner', winner === 'kyle');
+    document.getElementById('lindseyWinBox').classList.toggle('winner', winner === 'lindsey');
+    showScreen(winScreen);
+  }
+
+  function cap(s) { return s[0].toUpperCase() + s.slice(1); }
+</script>
+</body>
+</html>

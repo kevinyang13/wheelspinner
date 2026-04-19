@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hot Potato – Kyle & Lindsey</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #0f0f1e;
+      color: #eee;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* ── Header ── */
+    .header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 24px;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .header a {
+      color: #667;
+      text-decoration: none;
+      font-size: 0.85rem;
+    }
+    .header a:hover { color: #ff6b35; }
+    .header-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #ff6b35;
+    }
+
+    /* ── Screens ── */
+    .screen { display: none; flex-direction: column; align-items: center; justify-content: center; flex: 1; width: 100%; padding: 20px; }
+    .screen.active { display: flex; }
+
+    /* ── Start Screen ── */
+    #startScreen h1 {
+      font-size: 3rem;
+      font-weight: 900;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #ff6b35, #ff9500);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    #startScreen .subtitle {
+      color: #667;
+      margin-bottom: 40px;
+      font-size: 1rem;
+    }
+    .lives-select {
+      margin-bottom: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .lives-select label { color: #889; font-size: 0.9rem; }
+    .lives-btns { display: flex; gap: 12px; }
+    .lives-btn {
+      width: 56px; height: 56px;
+      border-radius: 14px;
+      border: 2px solid #334;
+      background: #16213e;
+      color: #eee;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .lives-btn.selected {
+      border-color: #ff6b35;
+      background: rgba(255,107,53,0.15);
+      color: #ff6b35;
+    }
+    .start-btn {
+      padding: 18px 52px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #ff6b35, #ff9500);
+      border: none;
+      color: #fff;
+      font-size: 1.2rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 8px 32px rgba(255,107,53,0.3);
+    }
+    .start-btn:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(255,107,53,0.45); }
+    .start-btn:active { transform: translateY(0); }
+
+    /* ── Game Screen ── */
+    #gameScreen {
+      flex-direction: column;
+      padding: 0;
+      height: calc(100vh - 53px);
+    }
+
+    .game-arena {
+      display: flex;
+      flex: 1;
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Player zones */
+    .player-zone {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      cursor: pointer;
+      transition: background 0.2s;
+      position: relative;
+      padding: 30px 20px;
+    }
+    .player-zone.kyle { border-right: 1px solid rgba(255,255,255,0.06); }
+
+    .player-zone.holding {
+      background: rgba(255, 107, 53, 0.05);
+    }
+    .player-zone.holding.urgent {
+      animation: urgentPulse 0.4s ease-in-out infinite alternate;
+    }
+    @keyframes urgentPulse {
+      from { background: rgba(255,107,53,0.05); }
+      to   { background: rgba(255,50,20,0.18); }
+    }
+
+    .player-name {
+      font-size: 2rem;
+      font-weight: 900;
+      color: #aaa;
+      transition: color 0.2s;
+    }
+    .player-zone.holding .player-name { color: #ff6b35; }
+
+    .lives-display {
+      display: flex;
+      gap: 8px;
+      font-size: 1.6rem;
+    }
+
+    .key-hint {
+      font-size: 0.9rem;
+      color: #445;
+      margin-top: 8px;
+    }
+    .player-zone.holding .key-hint { color: #ff6b35; }
+
+    .pass-btn {
+      padding: 16px 40px;
+      border-radius: 16px;
+      background: #16213e;
+      border: 2px solid #334;
+      color: #667;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+      letter-spacing: 0.5px;
+    }
+    .player-zone.holding .pass-btn {
+      border-color: #ff6b35;
+      background: rgba(255,107,53,0.15);
+      color: #ff6b35;
+      animation: btnPulse 0.8s ease-in-out infinite alternate;
+    }
+    @keyframes btnPulse {
+      from { box-shadow: 0 0 0 rgba(255,107,53,0); }
+      to   { box-shadow: 0 0 24px rgba(255,107,53,0.5); }
+    }
+
+    /* Potato */
+    .potato-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      pointer-events: none;
+      z-index: 10;
+      transition: left 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .potato-container.kyle-side { left: 25%; }
+    .potato-container.lindsey-side { left: 75%; }
+
+    .potato {
+      font-size: 5rem;
+      line-height: 1;
+      transition: transform 0.1s;
+      filter: drop-shadow(0 0 12px rgba(255,107,53,0.4));
+    }
+    .potato.calm    { animation: float 2s ease-in-out infinite; }
+    .potato.warm    { animation: shake 0.6s ease-in-out infinite; filter: drop-shadow(0 0 16px rgba(255,150,30,0.6)); }
+    .potato.hot     { animation: shake 0.35s ease-in-out infinite; filter: drop-shadow(0 0 24px rgba(255,80,20,0.8)); }
+    .potato.burning { animation: shake 0.15s ease-in-out infinite; filter: drop-shadow(0 0 32px rgba(255,30,10,1)); }
+
+    @keyframes float {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-8px); }
+    }
+    @keyframes shake {
+      0%,100% { transform: translateX(0) rotate(0deg); }
+      20%     { transform: translateX(-5px) rotate(-4deg); }
+      40%     { transform: translateX(5px) rotate(4deg); }
+      60%     { transform: translateX(-4px) rotate(-3deg); }
+      80%     { transform: translateX(4px) rotate(3deg); }
+    }
+
+    .flame-row { font-size: 1.5rem; transition: opacity 0.3s; }
+    .flame-row.hidden { opacity: 0; }
+
+    /* Pass flash overlay */
+    .flash {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 5;
+      border-radius: 0;
+      opacity: 0;
+    }
+    .flash.kyle    { background: radial-gradient(ellipse at left, rgba(255,107,53,0.3), transparent 70%); }
+    .flash.lindsey { background: radial-gradient(ellipse at right, rgba(255,107,53,0.3), transparent 70%); }
+
+    /* Explode overlay */
+    .explode-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(255,50,10,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .explode-overlay.show { display: flex; }
+    .explode-emoji { font-size: 5rem; animation: bigShake 0.1s linear infinite; }
+    @keyframes bigShake {
+      0%,100% { transform: translate(0,0) rotate(0); }
+      25%     { transform: translate(-8px,4px) rotate(-5deg); }
+      75%     { transform: translate(8px,-4px) rotate(5deg); }
+    }
+    .explode-text { font-size: 1.8rem; font-weight: 900; color: #fff; }
+    .explode-sub  { font-size: 1rem; color: rgba(255,255,255,0.7); }
+
+    /* Win Screen */
+    #winScreen { gap: 20px; }
+    .win-emoji { font-size: 5rem; }
+    .win-title { font-size: 2.5rem; font-weight: 900; color: #ff6b35; }
+    .win-sub   { color: #889; font-size: 1rem; }
+    .play-again-btn {
+      margin-top: 20px;
+      padding: 16px 48px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #ff6b35, #ff9500);
+      border: none;
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 8px 32px rgba(255,107,53,0.3);
+      transition: transform 0.15s;
+    }
+    .play-again-btn:hover { transform: translateY(-3px); }
+    .home-link { color: #556; text-decoration: none; font-size: 0.85rem; }
+    .home-link:hover { color: #ff6b35; }
+
+    /* Countdown bar */
+    .countdown-bar-wrap {
+      width: 100%;
+      height: 6px;
+      background: #111;
+    }
+    .countdown-bar {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, #ff3300, #ff9500, #ffcc00);
+      transition: width 0.1s linear, background 0.5s;
+      transform-origin: left;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <a href="index.html">← Back</a>
+  <span class="header-title">🥔 Hot Potato</span>
+  <span></span>
+</div>
+
+<!-- Start Screen -->
+<div id="startScreen" class="screen active">
+  <h1>🥔 Hot Potato</h1>
+  <p class="subtitle">Pass the potato before it explodes!</p>
+
+  <div class="lives-select">
+    <label>Lives per player</label>
+    <div class="lives-btns">
+      <button class="lives-btn" data-lives="3">3</button>
+      <button class="lives-btn selected" data-lives="5">5</button>
+      <button class="lives-btn" data-lives="7">7</button>
+    </div>
+  </div>
+
+  <button class="start-btn" id="startBtn">Start Game</button>
+
+  <p style="margin-top:28px;color:#445;font-size:0.8rem;">
+    Kyle: press <strong style="color:#667">F</strong> or tap left &nbsp;|&nbsp; Lindsey: press <strong style="color:#667">J</strong> or tap right
+  </p>
+</div>
+
+<!-- Game Screen -->
+<div id="gameScreen" class="screen">
+  <div class="countdown-bar-wrap">
+    <div class="countdown-bar" id="countdownBar"></div>
+  </div>
+
+  <div class="game-arena" id="gameArena">
+    <!-- Kyle -->
+    <div class="player-zone kyle" id="kyleZone">
+      <div class="player-name">Kyle</div>
+      <div class="lives-display" id="kyleLives"></div>
+      <div class="key-hint">Press F</div>
+      <button class="pass-btn" id="kyleBtn">PASS IT! 🔥</button>
+    </div>
+
+    <!-- Potato -->
+    <div class="potato-container kyle-side" id="potatoEl">
+      <div class="flame-row hidden" id="flameTop">🔥🔥🔥</div>
+      <div class="potato calm" id="potatoEmoji">🥔</div>
+      <div class="flame-row hidden" id="flameBot">💨💨💨</div>
+    </div>
+
+    <!-- Lindsey -->
+    <div class="player-zone lindsey" id="lindseyZone">
+      <div class="player-name">Lindsey</div>
+      <div class="lives-display" id="lindseyLives"></div>
+      <div class="key-hint">Press J</div>
+      <button class="pass-btn" id="lindseyBtn">PASS IT! 🔥</button>
+    </div>
+
+    <div class="flash kyle" id="flashKyle"></div>
+    <div class="flash lindsey" id="flashLindsey"></div>
+  </div>
+</div>
+
+<!-- Win Screen -->
+<div id="winScreen" class="screen">
+  <div class="win-emoji" id="winEmoji">🏆</div>
+  <div class="win-title" id="winTitle">Kyle Wins!</div>
+  <div class="win-sub" id="winSub">Lindsey got burned too many times!</div>
+  <button class="play-again-btn" id="playAgainBtn">Play Again</button>
+  <a class="home-link" href="index.html">← Back to Games</a>
+</div>
+
+<!-- Explode overlay -->
+<div class="explode-overlay" id="explodeOverlay">
+  <div class="explode-emoji">💥</div>
+  <div class="explode-text" id="explodeText">BOOM!</div>
+  <div class="explode-sub" id="explodeSub">Kyle is holding the potato!</div>
+</div>
+
+<script>
+  // State
+  let lives = { kyle: 5, lindsey: 5 };
+  let maxLives = 5;
+  let holder = 'kyle';
+  let timerEnd = 0;
+  let timerDuration = 0;
+  let gameActive = false;
+  let holdStart = 0;
+  const MIN_HOLD_MS = 600;
+  let rafId = null;
+  let explodeTimeout = null;
+
+  // DOM
+  const startScreen   = document.getElementById('startScreen');
+  const gameScreen    = document.getElementById('gameScreen');
+  const winScreen     = document.getElementById('winScreen');
+  const kyleZone      = document.getElementById('kyleZone');
+  const lindseyZone   = document.getElementById('lindseyZone');
+  const kyleBtn       = document.getElementById('kyleBtn');
+  const lindseyBtn    = document.getElementById('lindseyBtn');
+  const potatoEl      = document.getElementById('potatoEl');
+  const potatoEmoji   = document.getElementById('potatoEmoji');
+  const flameTop      = document.getElementById('flameTop');
+  const flameBot      = document.getElementById('flameBot');
+  const countdownBar  = document.getElementById('countdownBar');
+  const explodeOverlay = document.getElementById('explodeOverlay');
+  const explodeText   = document.getElementById('explodeText');
+  const explodeSub    = document.getElementById('explodeSub');
+  const flashKyle     = document.getElementById('flashKyle');
+  const flashLindsey  = document.getElementById('flashLindsey');
+
+  // Lives select
+  let selectedLives = 5;
+  document.querySelectorAll('.lives-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.lives-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedLives = parseInt(btn.dataset.lives);
+    });
+  });
+
+  document.getElementById('startBtn').addEventListener('click', startGame);
+  document.getElementById('playAgainBtn').addEventListener('click', () => showScreen(startScreen));
+
+  function showScreen(s) {
+    [startScreen, gameScreen, winScreen].forEach(el => el.classList.remove('active'));
+    s.classList.add('active');
+  }
+
+  function startGame() {
+    maxLives = selectedLives;
+    lives = { kyle: maxLives, lindsey: maxLives };
+    holder = Math.random() < 0.5 ? 'kyle' : 'lindsey';
+    gameActive = true;
+    showScreen(gameScreen);
+    renderLives();
+    startRound();
+  }
+
+  function renderLives() {
+    document.getElementById('kyleLives').innerHTML    = heartRow(lives.kyle, maxLives);
+    document.getElementById('lindseyLives').innerHTML = heartRow(lives.lindsey, maxLives);
+  }
+
+  function heartRow(cur, max) {
+    let s = '';
+    for (let i = 0; i < max; i++) s += `<span style="opacity:${i < cur ? 1 : 0.15}">❤️</span>`;
+    return s;
+  }
+
+  function startRound() {
+    holdStart = performance.now();
+    timerDuration = 5000 + Math.random() * 10000; // 5–15 sec
+    timerEnd = performance.now() + timerDuration;
+    updateHolderUI();
+    if (rafId) cancelAnimationFrame(rafId);
+    tick();
+  }
+
+  function updateHolderUI() {
+    kyleZone.classList.toggle('holding', holder === 'kyle');
+    lindseyZone.classList.toggle('holding', holder === 'lindsey');
+    potatoEl.classList.toggle('kyle-side', holder === 'kyle');
+    potatoEl.classList.toggle('lindsey-side', holder === 'lindsey');
+  }
+
+  function tick() {
+    if (!gameActive) return;
+    const now = performance.now();
+    const remaining = timerEnd - now;
+    const ratio = Math.max(0, remaining / timerDuration);
+
+    // Update bar
+    countdownBar.style.width = (ratio * 100) + '%';
+
+    // Update potato heat
+    const heat = 1 - ratio;
+    potatoEmoji.className = 'potato';
+    kyleZone.classList.remove('urgent');
+    lindseyZone.classList.remove('urgent');
+    flameTop.classList.add('hidden');
+    flameBot.classList.add('hidden');
+
+    if (heat < 0.4) {
+      potatoEmoji.classList.add('calm');
+    } else if (heat < 0.65) {
+      potatoEmoji.classList.add('warm');
+      flameTop.classList.remove('hidden');
+    } else if (heat < 0.85) {
+      potatoEmoji.classList.add('hot');
+      flameTop.classList.remove('hidden');
+      flameBot.classList.remove('hidden');
+      (holder === 'kyle' ? kyleZone : lindseyZone).classList.add('urgent');
+    } else {
+      potatoEmoji.classList.add('burning');
+      flameTop.classList.remove('hidden');
+      flameBot.classList.remove('hidden');
+      (holder === 'kyle' ? kyleZone : lindseyZone).classList.add('urgent');
+    }
+
+    if (remaining <= 0) {
+      explode();
+      return;
+    }
+    rafId = requestAnimationFrame(tick);
+  }
+
+  function tryPass(who) {
+    if (!gameActive) return;
+    if (holder !== who) return;
+    if (performance.now() - holdStart < MIN_HOLD_MS) return; // too quick
+
+    const other = who === 'kyle' ? 'lindsey' : 'kyle';
+    holder = other;
+    holdStart = performance.now();
+    flashPass(who);
+    updateHolderUI();
+  }
+
+  function flashPass(from) {
+    const el = from === 'kyle' ? flashKyle : flashLindsey;
+    el.style.transition = 'none';
+    el.style.opacity = '1';
+    setTimeout(() => {
+      el.style.transition = 'opacity 0.4s';
+      el.style.opacity = '0';
+    }, 20);
+  }
+
+  function explode() {
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    gameActive = false;
+    lives[holder]--;
+
+    explodeText.textContent = '💥 BOOM!';
+    explodeSub.textContent  = `${cap(holder)} was holding the potato!`;
+    explodeOverlay.classList.add('show');
+
+    // Shake the potato position
+    potatoEmoji.className = 'potato burning';
+
+    explodeTimeout = setTimeout(() => {
+      explodeOverlay.classList.remove('show');
+      if (lives.kyle <= 0 || lives.lindsey <= 0) {
+        endGame();
+      } else {
+        renderLives();
+        gameActive = true;
+        // Loser starts with the potato next round
+        // holder is already the loser
+        startRound();
+      }
+    }, 1800);
+  }
+
+  function endGame() {
+    renderLives();
+    const winner = lives.kyle > 0 ? 'kyle' : 'lindsey';
+    const loser  = winner === 'kyle' ? 'lindsey' : 'kyle';
+    document.getElementById('winEmoji').textContent  = '🏆';
+    document.getElementById('winTitle').textContent  = `${cap(winner)} Wins!`;
+    document.getElementById('winSub').textContent    = `${cap(loser)} got burned too many times!`;
+    showScreen(winScreen);
+  }
+
+  function cap(s) { return s[0].toUpperCase() + s.slice(1); }
+
+  // Keyboard
+  document.addEventListener('keydown', e => {
+    if (!gameActive) return;
+    // Kyle keys: left side — F, D, S, A, Q, W, E, R, T, G, V, C, X, Z, Tab, CapsLock
+    const kyleKeys = new Set(['f','d','s','a','q','w','e','r','t','g','v','c','x','z']);
+    const lindseyKeys = new Set(['j','k','l',';','h','n','m',',','.','/','\\',"'",']','[','p','o','i','u','y']);
+    const k = e.key.toLowerCase();
+    if (kyleKeys.has(k)) tryPass('kyle');
+    else if (lindseyKeys.has(k)) tryPass('lindsey');
+  });
+
+  // Touch / click
+  kyleZone.addEventListener('pointerdown', () => tryPass('kyle'));
+  kyleBtn.addEventListener('pointerdown', e => { e.stopPropagation(); tryPass('kyle'); });
+  lindseyZone.addEventListener('pointerdown', () => tryPass('lindsey'));
+  lindseyBtn.addEventListener('pointerdown', e => { e.stopPropagation(); tryPass('lindsey'); });
+</script>
+</body>
+</html>
