@@ -42,9 +42,30 @@
       background: linear-gradient(135deg, #22d3ee, #818cf8);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
-    #startScreen .subtitle { color: #667; margin-bottom: 40px; font-size: 1rem; text-align: center; line-height: 1.6; }
+    #startScreen .subtitle { color: #667; margin-bottom: 32px; font-size: 1rem; text-align: center; line-height: 1.6; }
 
-    .lives-select { margin-bottom: 36px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    /* Mode toggle */
+    .mode-select { display: flex; gap: 10px; margin-bottom: 24px; }
+    .mode-btn {
+      padding: 12px 28px; border-radius: 14px; border: 2px solid #334;
+      background: #16213e; color: #667; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.15s;
+    }
+    .mode-btn.selected { border-color: #22d3ee; background: rgba(34,211,238,0.12); color: #22d3ee; }
+
+    /* Solo player pick */
+    .solo-select {
+      display: flex; gap: 12px; margin-bottom: 24px;
+      transition: opacity 0.2s;
+    }
+    .solo-select.hidden { opacity: 0; pointer-events: none; }
+    .solo-select label { display: none; }
+    .player-btn {
+      padding: 10px 28px; border-radius: 14px; border: 2px solid #334;
+      background: #16213e; color: #667; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.15s;
+    }
+    .player-btn.selected { border-color: #818cf8; background: rgba(129,140,248,0.12); color: #818cf8; }
+
+    .lives-select { margin-bottom: 32px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
     .lives-select label { color: #889; font-size: 0.9rem; }
     .lives-btns { display: flex; gap: 12px; }
     .lives-btn {
@@ -64,14 +85,12 @@
     /* ── Game ── */
     #gameScreen { gap: 0; padding: 16px; justify-content: space-between; }
 
-    /* Status bar */
+    /* 2P status bar */
     .status-bar {
       width: 100%; display: flex; align-items: center; justify-content: space-between;
       padding: 0 8px; margin-bottom: 12px; max-width: 460px;
     }
-    .player-info {
-      display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 110px;
-    }
+    .player-info { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 110px; }
     .player-info.right { align-items: flex-end; }
     .p-name { font-size: 1rem; font-weight: 800; color: #556; transition: color 0.2s; }
     .p-name.active { color: #22d3ee; }
@@ -82,11 +101,23 @@
       border: 1px solid #223; transition: color 0.2s, border-color 0.2s;
     }
     .player-info.active-player .p-level { color: #22d3ee; border-color: rgba(34,211,238,0.3); }
-
-    .seq-indicator {
-      display: flex; flex-direction: column; align-items: center; gap: 2px;
-    }
+    .seq-indicator { display: flex; flex-direction: column; align-items: center; gap: 2px; }
     .seq-lbl { font-size: 1rem; color: #334; letter-spacing: 1px; font-weight: 700; }
+
+    /* 1P HUD */
+    .solo-hud {
+      width: 100%; max-width: 460px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 8px; margin-bottom: 12px; gap: 12px;
+    }
+    .solo-hud-box {
+      background: #16213e; border-radius: 14px; padding: 10px 18px; text-align: center;
+      border: 1px solid rgba(255,255,255,0.05); flex: 1;
+    }
+    .solo-hud-box.center { flex: 1.4; border-color: rgba(34,211,238,0.2); }
+    .shb-val  { font-size: 1.6rem; font-weight: 900; color: #22d3ee; line-height: 1; }
+    .shb-lbl  { font-size: 0.6rem; color: #445; letter-spacing: 1px; margin-top: 2px; }
+    .shb-lives { font-size: 1.2rem; }
 
     /* Turn banner */
     .turn-banner {
@@ -108,40 +139,24 @@
       width: min(360px, 90vw);
       aspect-ratio: 1;
     }
-
     .sim-btn {
-      border-radius: 20px;
-      border: none;
-      cursor: pointer;
+      border-radius: 20px; border: none; cursor: pointer;
       transition: filter 0.08s, transform 0.08s;
-      position: relative;
-      overflow: hidden;
+      position: relative; overflow: hidden;
       filter: brightness(0.35) saturate(0.6);
     }
     .sim-btn::after {
-      content: '';
-      position: absolute;
-      inset: 0;
+      content: ''; position: absolute; inset: 0;
       background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.35), transparent 65%);
-      border-radius: inherit;
-      pointer-events: none;
+      border-radius: inherit; pointer-events: none;
     }
-    .sim-btn.lit {
-      filter: brightness(1) saturate(1.2);
-      transform: scale(0.96);
-      box-shadow: var(--btn-glow);
-    }
-    .sim-btn:active:not([disabled]) {
-      filter: brightness(0.85) saturate(1);
-      transform: scale(0.94);
-    }
+    .sim-btn.lit { filter: brightness(1) saturate(1.2); transform: scale(0.96); box-shadow: var(--btn-glow); }
+    .sim-btn:active:not([disabled]) { filter: brightness(0.85) saturate(1); transform: scale(0.94); }
     .sim-btn.disabled-input { cursor: default; pointer-events: none; }
-
     .btn-red    { background: #ef4444; --btn-glow: 0 0 40px rgba(239,68,68,0.9); }
     .btn-blue   { background: #3b82f6; --btn-glow: 0 0 40px rgba(59,130,246,0.9); }
     .btn-green  { background: #22c55e; --btn-glow: 0 0 40px rgba(34,197,94,0.9); }
     .btn-yellow { background: #eab308; --btn-glow: 0 0 40px rgba(234,179,8,0.9); }
-
     .btn-label {
       position: absolute; bottom: 10px; left: 0; right: 0; text-align: center;
       font-size: 0.7rem; font-weight: 700; color: rgba(255,255,255,0.4); letter-spacing: 1px;
@@ -152,24 +167,19 @@
       display: flex; gap: 5px; flex-wrap: wrap; justify-content: center;
       max-width: 360px; min-height: 20px; margin-top: 12px;
     }
-    .prog-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: #22c55e; opacity: 0.25; transition: opacity 0.15s;
-    }
-    .prog-dot.done { opacity: 1; }
+    .prog-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; opacity: 0.25; transition: opacity 0.15s; }
+    .prog-dot.done  { opacity: 1; }
     .prog-dot.wrong { background: #ef4444; opacity: 1; }
 
-    /* ── Win Screen ── */
+    /* ── Win / Game Over Screen ── */
     #winScreen { gap: 20px; }
     .win-emoji { font-size: 5rem; }
     .win-title { font-size: 2.5rem; font-weight: 900; color: #22d3ee; }
-    .win-sub   { color: #889; font-size: 1rem; }
-    .win-stats {
-      display: flex; gap: 20px;
-    }
+    .win-sub   { color: #889; font-size: 1rem; text-align: center; line-height: 1.6; }
+    .win-stats { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
     .win-stat-box {
       background: #16213e; border-radius: 14px; padding: 16px 24px; text-align: center;
-      border: 2px solid rgba(255,255,255,0.05);
+      border: 2px solid rgba(255,255,255,0.05); min-width: 100px;
     }
     .win-stat-box.winner { border-color: #22d3ee; background: rgba(34,211,238,0.08); }
     .ws-name { font-size: 0.75rem; color: #556; margin-bottom: 6px; }
@@ -197,10 +207,20 @@
 <!-- Start -->
 <div id="startScreen" class="screen active">
   <h1>🔵 Simon Says</h1>
-  <p class="subtitle">Watch the sequence, then repeat it.<br>Players alternate — one mistake costs a life!</p>
+  <p class="subtitle">Watch the sequence flash, then repeat it.<br>One mistake costs a life!</p>
+
+  <div class="mode-select">
+    <button class="mode-btn selected" data-mode="1p">1 Player</button>
+    <button class="mode-btn" data-mode="2p">2 Players</button>
+  </div>
+
+  <div class="solo-select" id="soloSelect">
+    <button class="player-btn selected" data-player="kyle">Kyle</button>
+    <button class="player-btn" data-player="lindsey">Lindsey</button>
+  </div>
 
   <div class="lives-select">
-    <label>Lives per player</label>
+    <label>Lives</label>
     <div class="lives-btns">
       <button class="lives-btn" data-lives="3">3</button>
       <button class="lives-btn selected" data-lives="5">5</button>
@@ -214,7 +234,24 @@
 
 <!-- Game -->
 <div id="gameScreen" class="screen">
-  <div class="status-bar">
+  <!-- 1P HUD -->
+  <div class="solo-hud" id="soloHud" style="display:none;">
+    <div class="solo-hud-box">
+      <div class="shb-lives" id="soloLives"></div>
+      <div class="shb-lbl">LIVES</div>
+    </div>
+    <div class="solo-hud-box center">
+      <div class="shb-val" id="soloStep">0</div>
+      <div class="shb-lbl">CURRENT STEP</div>
+    </div>
+    <div class="solo-hud-box">
+      <div class="shb-val" id="soloBest">0</div>
+      <div class="shb-lbl">BEST</div>
+    </div>
+  </div>
+
+  <!-- 2P status bar -->
+  <div class="status-bar" id="twoPlayerBar">
     <div class="player-info" id="kyleInfo">
       <div class="p-name" id="kyleName">Kyle</div>
       <div class="p-lives" id="kyleLives"></div>
@@ -242,26 +279,12 @@
   <div class="progress-row" id="progressRow"></div>
 </div>
 
-<!-- Win -->
+<!-- Win / Game Over -->
 <div id="winScreen" class="screen">
-  <div class="win-emoji">🏆</div>
+  <div class="win-emoji" id="winEmoji">🏆</div>
   <div class="win-title" id="winTitle">Kyle Wins!</div>
-  <div class="win-sub"   id="winSub">Lindsey ran out of lives!</div>
-  <div class="win-stats">
-    <div class="win-stat-box" id="kyleWinBox">
-      <div class="ws-name">KYLE</div>
-      <div class="ws-val" id="kyleWinLives"></div>
-      <div class="ws-sub" id="kyleWinBest"></div>
-    </div>
-    <div class="win-stat-box" id="seqWinBox" style="border:none;background:none;padding:0 8px;">
-      <div class="ws-val" style="font-size:2rem;">⚔️</div>
-    </div>
-    <div class="win-stat-box" id="lindseyWinBox">
-      <div class="ws-name">LINDSEY</div>
-      <div class="ws-val" id="lindseyWinLives"></div>
-      <div class="ws-sub" id="lindseyWinBest"></div>
-    </div>
-  </div>
+  <div class="win-sub"   id="winSub"></div>
+  <div class="win-stats" id="winStats"></div>
   <button class="play-again-btn" id="playAgainBtn">Play Again</button>
   <a class="home-link" href="index.html">← Back to Games</a>
 </div>
@@ -270,38 +293,28 @@
   // ── Audio ──
   const AudioCtx = window.AudioContext || window.webkitAudioContext;
   let audioCtx = null;
-  function getAudio() {
-    if (!audioCtx) audioCtx = new AudioCtx();
-    return audioCtx;
-  }
+  function getAudio() { if (!audioCtx) audioCtx = new AudioCtx(); return audioCtx; }
   const FREQS = { red: 220, blue: 277, green: 330, yellow: 415 };
   function playTone(color, duration = 0.25) {
     try {
-      const ctx = getAudio();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
+      const ctx = getAudio(), osc = ctx.createOscillator(), gain = ctx.createGain();
       osc.connect(gain); gain.connect(ctx.destination);
-      osc.type = 'sine';
-      osc.frequency.value = FREQS[color];
+      osc.type = 'sine'; osc.frequency.value = FREQS[color];
       gain.gain.setValueAtTime(0, ctx.currentTime);
       gain.gain.linearRampToValueAtTime(0.4, ctx.currentTime + 0.01);
       gain.gain.linearRampToValueAtTime(0, ctx.currentTime + duration);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + duration + 0.05);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + duration + 0.05);
     } catch(e) {}
   }
   function playFail() {
     try {
       const ctx = getAudio();
       [180, 140, 100].forEach((freq, i) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
+        const osc = ctx.createOscillator(), gain = ctx.createGain();
         osc.connect(gain); gain.connect(ctx.destination);
-        osc.type = 'sawtooth';
-        osc.frequency.value = freq;
+        osc.type = 'sawtooth'; osc.frequency.value = freq;
         const t = ctx.currentTime + i * 0.15;
-        gain.gain.setValueAtTime(0.3, t);
-        gain.gain.linearRampToValueAtTime(0, t + 0.13);
+        gain.gain.setValueAtTime(0.3, t); gain.gain.linearRampToValueAtTime(0, t + 0.13);
         osc.start(t); osc.stop(t + 0.15);
       });
     } catch(e) {}
@@ -310,14 +323,11 @@
     try {
       const ctx = getAudio();
       [330, 415, 523].forEach((freq, i) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
+        const osc = ctx.createOscillator(), gain = ctx.createGain();
         osc.connect(gain); gain.connect(ctx.destination);
-        osc.type = 'sine';
-        osc.frequency.value = freq;
+        osc.type = 'sine'; osc.frequency.value = freq;
         const t = ctx.currentTime + i * 0.1;
-        gain.gain.setValueAtTime(0.3, t);
-        gain.gain.linearRampToValueAtTime(0, t + 0.12);
+        gain.gain.setValueAtTime(0.3, t); gain.gain.linearRampToValueAtTime(0, t + 0.12);
         osc.start(t); osc.stop(t + 0.15);
       });
     } catch(e) {}
@@ -325,6 +335,8 @@
 
   // ── State ──
   const COLORS = ['red', 'blue', 'green', 'yellow'];
+  let gameMode     = '1p';       // '1p' | '2p'
+  let soloPlayer   = 'kyle';
   let sequences    = { kyle: [], lindsey: [] };
   let inputIndex   = 0;
   let turn         = 'kyle';
@@ -333,18 +345,17 @@
   let maxLives     = 5;
   let longestReached = { kyle: 0, lindsey: 0 };
   let gameActive   = false;
-  let playbackTimeout = null;
 
   // ── DOM ──
   const startScreen  = document.getElementById('startScreen');
   const gameScreen   = document.getElementById('gameScreen');
   const winScreen    = document.getElementById('winScreen');
   const turnBanner   = document.getElementById('turnBanner');
-  const seqNum       = document.getElementById('seqNum');
   const progressRow  = document.getElementById('progressRow');
   const kyleName     = document.getElementById('kyleName');
   const lindseyName  = document.getElementById('lindseyName');
-
+  const soloHud      = document.getElementById('soloHud');
+  const twoPlayerBar = document.getElementById('twoPlayerBar');
   const btns = {
     red:    document.getElementById('btnRed'),
     blue:   document.getElementById('btnBlue'),
@@ -352,8 +363,26 @@
     yellow: document.getElementById('btnYellow'),
   };
 
-  // ── Setup ──
+  // ── Start screen controls ──
   let selectedLives = 5;
+
+  document.querySelectorAll('.mode-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.mode-btn').forEach(x => x.classList.remove('selected'));
+      b.classList.add('selected');
+      gameMode = b.dataset.mode;
+      document.getElementById('soloSelect').classList.toggle('hidden', gameMode === '2p');
+    });
+  });
+
+  document.querySelectorAll('.player-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.player-btn').forEach(x => x.classList.remove('selected'));
+      b.classList.add('selected');
+      soloPlayer = b.dataset.player;
+    });
+  });
+
   document.querySelectorAll('.lives-btn').forEach(b => {
     b.addEventListener('click', () => {
       document.querySelectorAll('.lives-btn').forEach(x => x.classList.remove('selected'));
@@ -361,6 +390,7 @@
       selectedLives = parseInt(b.dataset.lives);
     });
   });
+
   document.getElementById('startBtn').addEventListener('click', startGame);
   document.getElementById('playAgainBtn').addEventListener('click', () => showScreen(startScreen));
 
@@ -369,23 +399,44 @@
     s.classList.add('active');
   }
 
+  // ── Game start ──
   function startGame() {
     maxLives = selectedLives;
-    lives = { kyle: maxLives, lindsey: maxLives };
     sequences = { kyle: [], lindsey: [] };
     longestReached = { kyle: 0, lindsey: 0 };
-    turn = Math.random() < 0.5 ? 'kyle' : 'lindsey';
     gameActive = true;
+
+    if (gameMode === '1p') {
+      lives = { [soloPlayer]: maxLives };
+      turn = soloPlayer;
+      soloHud.style.display = 'flex';
+      twoPlayerBar.style.display = 'none';
+      renderSoloHud();
+    } else {
+      lives = { kyle: maxLives, lindsey: maxLives };
+      turn = Math.random() < 0.5 ? 'kyle' : 'lindsey';
+      soloHud.style.display = 'none';
+      twoPlayerBar.style.display = 'flex';
+      renderLives();
+      updateSeqLevels();
+      updateNameHighlight();
+    }
+
     showScreen(gameScreen);
-    renderLives();
-    updateSeqLevels();
-    updateNameHighlight();
     setTimeout(nextRound, 600);
   }
 
+  // ── Render helpers ──
   function renderLives() {
-    document.getElementById('kyleLives').textContent    = '❤️'.repeat(lives.kyle)  + '🖤'.repeat(maxLives - lives.kyle);
+    document.getElementById('kyleLives').textContent    = '❤️'.repeat(lives.kyle)    + '🖤'.repeat(maxLives - lives.kyle);
     document.getElementById('lindseyLives').textContent = '❤️'.repeat(lives.lindsey) + '🖤'.repeat(maxLives - lives.lindsey);
+  }
+
+  function renderSoloHud() {
+    const l = lives[soloPlayer] ?? 0;
+    document.getElementById('soloLives').textContent = '❤️'.repeat(l) + '🖤'.repeat(maxLives - l);
+    document.getElementById('soloStep').textContent  = sequences[soloPlayer].length;
+    document.getElementById('soloBest').textContent  = longestReached[soloPlayer];
   }
 
   function updateNameHighlight() {
@@ -400,14 +451,21 @@
     document.getElementById('lindseyLevel').textContent = `Step ${sequences.lindsey.length}`;
   }
 
+  // ── Round logic ──
   function nextRound() {
-    // Grow only the current player's sequence
     sequences[turn].push(COLORS[Math.floor(Math.random() * 4)]);
     const seq = sequences[turn];
     if (seq.length > longestReached[turn]) longestReached[turn] = seq.length;
-    updateSeqLevels();
+
+    if (gameMode === '1p') {
+      renderSoloHud();
+      setBanner(`👀 Watch carefully…`, 'watching');
+    } else {
+      updateSeqLevels();
+      setBanner(`👀 Watch carefully, ${cap(turn)}…`, 'watching');
+    }
+
     buildProgressDots(seq.length);
-    setBanner(`👀 Watch carefully, ${cap(turn)}…`, 'watching');
     setInputEnabled(false);
     phase = 'watching';
 
@@ -415,22 +473,22 @@
       phase = 'inputting';
       inputIndex = 0;
       setInputEnabled(true);
-      setBanner(`🎮 Your turn, ${cap(turn)}! Repeat the sequence.`, '');
+      setBanner(gameMode === '1p'
+        ? `🎮 Repeat the sequence!`
+        : `🎮 Your turn, ${cap(turn)}! Repeat the sequence.`, '');
     });
   }
 
   function playSequence(seq, onDone) {
     let i = 0;
-    const FLASH = 380;
-    const GAP   = 160;
+    const FLASH = 380, GAP = 160;
     const delay = seq.length > 8 ? FLASH - 60 : FLASH;
-
     function next() {
       if (i >= seq.length) { setTimeout(onDone, GAP); return; }
       const color = seq[i++];
       flashBtn(color, delay);
       playTone(color, delay / 1000);
-      playbackTimeout = setTimeout(next, delay + GAP);
+      setTimeout(next, delay + GAP);
     }
     next();
   }
@@ -467,72 +525,111 @@
     playTone(color, 0.18);
 
     const seq = sequences[turn];
-    const correct = seq[inputIndex];
     const dot = document.getElementById(`dot-${inputIndex}`);
 
-    if (color === correct) {
+    if (color === seq[inputIndex]) {
       if (dot) dot.classList.add('done');
       inputIndex++;
+
       if (inputIndex === seq.length) {
-        // Success — switch turn, other player's sequence grows next
+        // Success
         phase = 'paused';
         setInputEnabled(false);
-        setTimeout(() => {
-          playSuccess();
-          setBanner(`✅ Nice one, ${cap(turn)}!`, 'success');
-        }, 150);
-        setTimeout(() => {
-          turn = turn === 'kyle' ? 'lindsey' : 'kyle';
-          updateNameHighlight();
-          nextRound();
-        }, 1400);
+        setTimeout(() => { playSuccess(); setBanner(`✅ Nice one!`, 'success'); }, 150);
+
+        if (gameMode === '1p') {
+          setTimeout(() => nextRound(), 1200);
+        } else {
+          setTimeout(() => {
+            turn = turn === 'kyle' ? 'lindsey' : 'kyle';
+            updateNameHighlight();
+            nextRound();
+          }, 1400);
+        }
       }
     } else {
-      // Wrong — reset this player's sequence only
+      // Wrong
       if (dot) dot.classList.add('wrong');
       phase = 'paused';
       setInputEnabled(false);
       playFail();
-      lives[turn]--;
-      setBanner(`❌ Oops, ${cap(turn)}! Sequence resets to 1.`, 'fail');
-      renderLives();
 
-      setTimeout(() => {
-        if (lives.kyle <= 0 || lives.lindsey <= 0) {
-          endGame();
-        } else {
+      if (gameMode === '1p') {
+        lives[soloPlayer]--;
+        setBanner(`❌ Wrong! Sequence resets.`, 'fail');
+        renderSoloHud();
+        setTimeout(() => {
+          if ((lives[soloPlayer] ?? 0) <= 0) { endGame(); return; }
+          sequences[soloPlayer] = [];
+          nextRound();
+        }, 1600);
+      } else {
+        lives[turn]--;
+        setBanner(`❌ Oops, ${cap(turn)}! Sequence resets to 1.`, 'fail');
+        renderLives();
+        setTimeout(() => {
+          if (lives.kyle <= 0 || lives.lindsey <= 0) { endGame(); return; }
           sequences[turn] = [];
           updateSeqLevels();
           turn = turn === 'kyle' ? 'lindsey' : 'kyle';
           updateNameHighlight();
           setTimeout(nextRound, 400);
-        }
-      }, 1600);
+        }, 1600);
+      }
     }
   }
 
-  // Button clicks
+  // Button clicks & keyboard
   Object.entries(btns).forEach(([color, btn]) => {
     btn.addEventListener('pointerdown', e => { e.preventDefault(); handleInput(color); });
   });
-
-  // Keyboard: 1=red 2=blue 3=green 4=yellow
   document.addEventListener('keydown', e => {
     const map = { '1': 'red', '2': 'blue', '3': 'green', '4': 'yellow' };
     if (map[e.key]) handleInput(map[e.key]);
   });
 
+  // ── End game ──
   function endGame() {
-    const winner = lives.kyle > 0 ? 'kyle' : 'lindsey';
-    const loser  = winner === 'kyle' ? 'lindsey' : 'kyle';
-    document.getElementById('winTitle').textContent = `${cap(winner)} Wins!`;
-    document.getElementById('winSub').textContent   = `${cap(loser)} ran out of lives!`;
-    document.getElementById('kyleWinLives').textContent    = lives.kyle;
-    document.getElementById('lindseyWinLives').textContent = lives.lindsey;
-    document.getElementById('kyleWinBest').textContent     = `best: ${longestReached.kyle} steps`;
-    document.getElementById('lindseyWinBest').textContent  = `best: ${longestReached.lindsey} steps`;
-    document.getElementById('kyleWinBox').classList.toggle('winner', winner === 'kyle');
-    document.getElementById('lindseyWinBox').classList.toggle('winner', winner === 'lindsey');
+    gameActive = false;
+    const stats = document.getElementById('winStats');
+    stats.innerHTML = '';
+
+    if (gameMode === '1p') {
+      document.getElementById('winEmoji').textContent = longestReached[soloPlayer] >= 10 ? '🏆' : '😵';
+      document.getElementById('winTitle').textContent = 'Game Over!';
+      document.getElementById('winSub').textContent   = `${cap(soloPlayer)}, you made it to step ${longestReached[soloPlayer]}!`;
+      stats.innerHTML = `
+        <div class="win-stat-box winner">
+          <div class="ws-name">BEST STREAK</div>
+          <div class="ws-val">${longestReached[soloPlayer]}</div>
+          <div class="ws-sub">steps</div>
+        </div>
+        <div class="win-stat-box">
+          <div class="ws-name">LIVES LEFT</div>
+          <div class="ws-val">${lives[soloPlayer] ?? 0}</div>
+          <div class="ws-sub">of ${maxLives}</div>
+        </div>`;
+    } else {
+      const winner = lives.kyle > 0 ? 'kyle' : 'lindsey';
+      const loser  = winner === 'kyle' ? 'lindsey' : 'kyle';
+      document.getElementById('winEmoji').textContent = '🏆';
+      document.getElementById('winTitle').textContent = `${cap(winner)} Wins!`;
+      document.getElementById('winSub').textContent   = `${cap(loser)} ran out of lives!`;
+      stats.innerHTML = `
+        <div class="win-stat-box ${winner === 'kyle' ? 'winner' : ''}">
+          <div class="ws-name">KYLE</div>
+          <div class="ws-val">${lives.kyle}</div>
+          <div class="ws-sub">best: ${longestReached.kyle} steps</div>
+        </div>
+        <div class="win-stat-box" style="border:none;background:none;padding:0 8px;">
+          <div class="ws-val" style="font-size:2rem;">⚔️</div>
+        </div>
+        <div class="win-stat-box ${winner === 'lindsey' ? 'winner' : ''}">
+          <div class="ws-name">LINDSEY</div>
+          <div class="ws-val">${lives.lindsey}</div>
+          <div class="ws-sub">best: ${longestReached.lindsey} steps</div>
+        </div>`;
+    }
     showScreen(winScreen);
   }
 
