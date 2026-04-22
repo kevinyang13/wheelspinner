@@ -1436,12 +1436,9 @@ function timeOut(word) {
   if (answered) return;
   answered = true;
 
-  // Mark all buttons disabled, reveal correct
+  // Mark all buttons disabled
   const buttons = $('choicesGrid').querySelectorAll('.choice-btn');
-  buttons.forEach(b => {
-    b.disabled = true;
-    if (b.dataset.correct === '1') b.classList.add('reveal');
-  });
+  buttons.forEach(b => { b.disabled = true; });
 
   streak = 0;
   // Show pinyin so they can learn

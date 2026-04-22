@@ -65,15 +65,15 @@
       display: flex; align-items: center; justify-content: space-between;
       width: 100%; background: #111520; border-radius: 14px; padding: 12px 20px;
     }
-    .player-box { text-align: center; min-width: 80px; }
+    .player-box { text-align: center; min-width: 80px; transition: opacity 0.25s; opacity: 0.38; }
     .player-box .pname { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: #556; }
     .player-box .pscore { font-size: 2rem; font-weight: bold; line-height: 1.1; }
     .player-box.kyle    .pscore { color: #f0c040; }
     .player-box.lindsey .pscore { color: #22A6B3; }
-    .player-box.active-player { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 4px 12px; }
+    .player-box.active-player { background: rgba(255,255,255,0.06); border-radius: 10px; padding: 4px 12px; opacity: 1; }
     .round-center { text-align: center; flex: 1; }
     .round-center .rnum { font-size: 0.82rem; color: #445; }
-    .round-center .rturn { font-size: 1rem; font-weight: bold; color: #eee; margin-top: 2px; }
+    .round-center .rturn { font-size: 1rem; font-weight: bold; color: #eee; margin-top: 2px; transition: color 0.25s; }
 
     /* ── Word card ────────────────────────── */
     .word-card {
@@ -217,6 +217,48 @@
       cursor: pointer; transition: border-color 0.2s, color 0.2s;
     }
     .result-btn-secondary:hover { border-color: #f0c040; color: #f0c040; }
+
+    /* ── Mobile ───────────────────────────── */
+    @media (max-width: 480px) {
+      body { padding: 10px 12px 32px; }
+
+      /* Setup */
+      .setup-title { font-size: 1.9rem; }
+      .opt-btn { min-width: 0; flex: 1 1 calc(50% - 6px); padding: 12px 10px; font-size: 0.9rem; }
+      .opt-btn small { font-size: 0.67rem; }
+      .big-start { width: 100%; padding: 15px 24px; font-size: 1.1rem; }
+      .voice-select { min-width: 0; font-size: 0.85rem; }
+
+      /* Scoreboard */
+      .scoreboard { padding: 10px 12px; }
+      .player-box { min-width: 60px; }
+      .player-box .pscore { font-size: 1.6rem; }
+      .round-center .rturn { font-size: 0.9rem; }
+
+      /* Word card */
+      .word-card { padding: 20px 16px; gap: 14px; }
+      .bee-icon { font-size: 2rem; }
+      .hear-row { flex-wrap: wrap; justify-content: center; gap: 8px; }
+      .hear-btn { padding: 9px 14px; font-size: 0.82rem; }
+
+      /* Blanks */
+      .blank-box { width: 28px; height: 34px; font-size: 1rem; }
+
+      /* Input row */
+      .spell-input-wrap { flex-direction: column; gap: 8px; }
+      .check-btn { width: 100%; padding: 13px; font-size: 1rem; }
+      .spell-input { font-size: 1.1rem; letter-spacing: 2px; }
+
+      /* Next btn */
+      .next-btn { width: 100%; text-align: center; }
+
+      /* Results */
+      .result-cards { flex-direction: column; }
+      .result-card { min-width: 0; }
+      .result-winner-banner { padding: 14px 16px; font-size: 1.1rem; }
+      .result-btns { flex-direction: column; width: 100%; }
+      .result-btn-primary, .result-btn-secondary { width: 100%; text-align: center; }
+    }
   </style>
 </head>
 <body>
@@ -648,16 +690,20 @@ function updateScoreboard() {
   const wordNum = Math.min(totalDone() + 1, totalWords());
   document.getElementById('roundNum').textContent = `Word ${wordNum} of ${totalWords()}`;
 
+  const turnEl = document.getElementById('turnName');
   if (cfg.mode === 'solo') {
-    document.getElementById('turnName').textContent = 'Kyle';
+    turnEl.textContent = 'Kyle';
+    turnEl.style.color = '#f0c040';
     document.getElementById('kyleBox').classList.add('active-player');
     document.getElementById('lindseyBox').style.visibility = 'hidden';
     document.getElementById('scoreboard').querySelector('.round-center').style.flex = '2';
   } else {
     document.getElementById('lindseyBox').style.visibility = 'visible';
-    document.getElementById('turnName').textContent = game.currentPlayer + "'s turn";
-    document.getElementById('kyleBox').classList.toggle('active-player',    game.currentPlayer === 'Kyle');
-    document.getElementById('lindseyBox').classList.toggle('active-player', game.currentPlayer === 'Lindsey');
+    const isKyle = game.currentPlayer === 'Kyle';
+    turnEl.textContent = game.currentPlayer + "'s turn";
+    turnEl.style.color = isKyle ? '#f0c040' : '#22A6B3';
+    document.getElementById('kyleBox').classList.toggle('active-player',    isKyle);
+    document.getElementById('lindseyBox').classList.toggle('active-player', !isKyle);
   }
 
   const pct = (totalDone() / totalWords()) * 100;
@@ -706,7 +752,7 @@ function loadQuestion() {
 
   // Auto-speak after short delay
   setTimeout(() => speak(entry.w), 350);
-  document.getElementById('spellingInput').focus();
+  // input not auto-focused so the answer isn't pre-selected
 }
 
 function checkAnswer() {
@@ -775,7 +821,7 @@ function showFeedback(correct, word, typed) {
 }
 
 function nextWord() {
-  // Advance index
+  // Advance current player's index
   if (game.currentPlayer === 'Kyle') game.kyleIndex++;
   else game.lindseyIndex++;
 
@@ -784,17 +830,9 @@ function nextWord() {
     return;
   }
 
-  // Switch player in versus mode
+  // Always alternate in versus mode — correct or wrong
   if (cfg.mode === 'versus') {
-    if (game.currentPlayer === 'Kyle' && game.lindseyIndex < game.lindseyWords.length) {
-      game.currentPlayer = 'Lindsey';
-    } else if (game.currentPlayer === 'Lindsey' && game.kyleIndex < game.kyleWords.length) {
-      game.currentPlayer = 'Kyle';
-    } else if (game.kyleIndex < game.kyleWords.length) {
-      game.currentPlayer = 'Kyle';
-    } else {
-      game.currentPlayer = 'Lindsey';
-    }
+    game.currentPlayer = game.currentPlayer === 'Kyle' ? 'Lindsey' : 'Kyle';
   }
 
   loadQuestion();
