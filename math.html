@@ -241,6 +241,7 @@
     <div class="option-group" style="width:100%">
       <div class="option-label">Grade</div>
       <div class="option-row">
+        <button class="opt-btn" data-group="grade" data-val="2">2nd</button>
         <button class="opt-btn selected" data-group="grade" data-val="3">3rd</button>
         <button class="opt-btn" data-group="grade" data-val="4">4th</button>
         <button class="opt-btn" data-group="grade" data-val="5">5th</button>
@@ -408,7 +409,7 @@ function rand(min, max) {
 }
 
 function pickGrade() {
-  if (cfg.grade === 'mix') return [3, 4, 5][rand(0, 2)];
+  if (cfg.grade === 'mix') return [2, 3, 4, 5][rand(0, 3)];
   return Number(cfg.grade);
 }
 
@@ -423,15 +424,18 @@ function generateProblem() {
   let a, b;
 
   if (op === '+') {
-    if (grade === 3)      { a = rand(10, 99);   b = rand(10, 99); }
+    if (grade === 2)      { a = rand(1, 50);   b = rand(1, 50); }
+    else if (grade === 3) { a = rand(10, 99);   b = rand(10, 99); }
     else if (grade === 4) { a = rand(100, 999);  b = rand(100, 999); }
     else                  { a = rand(1000, 9999); b = rand(1000, 9999); }
   } else if (op === '−') {
-    if (grade === 3)      { a = rand(21, 99);   b = rand(10, a - 1); }
+    if (grade === 2)      { a = rand(11, 99);  b = rand(1, a - 1); }
+    else if (grade === 3) { a = rand(21, 99);   b = rand(10, a - 1); }
     else if (grade === 4) { a = rand(201, 999);  b = rand(100, a - 1); }
     else                  { a = rand(1001, 9999); b = rand(100, a - 1); }
   } else { // ×
-    if (grade === 3)      { a = rand(2, 12);  b = rand(2, 12); }
+    if (grade === 2)      { a = rand(1, 5);   b = rand(1, 5); }
+    else if (grade === 3) { a = rand(2, 12);  b = rand(2, 12); }
     else if (grade === 4) { a = rand(13, 99); b = rand(2, 9); }
     else                  { a = rand(12, 50); b = rand(12, 30); }
   }
