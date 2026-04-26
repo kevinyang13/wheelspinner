@@ -137,9 +137,9 @@
     /* ── Touch: portrait — D-pads side-by-side below canvas ── */
     @media (hover: none) and (pointer: coarse) and (orientation: portrait) {
       #controls-hint { display: none; }
-      #game-area     { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+      #game-area     { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 16px; }
       #canvas-col    { order: 1; flex: 0 0 100%; }
-      .dpad-wrap     { display: flex; flex: 1; justify-content: center; }
+      .dpad-wrap     { display: flex; flex: 0 0 auto; }
     }
 
     /* ── Touch: landscape — D-pads flank the canvas ── */
