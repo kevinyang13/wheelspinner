@@ -123,7 +123,7 @@
 <!-- Start / Game-over overlay -->
 <div id="overlay">
   <h1>🐍 Snake</h1>
-  <div id="overlay-sub">Kyle: <b>WASD</b> &nbsp;·&nbsp; Lindsey: <b>Arrow Keys</b><br>Eat food to grow. Avoid walls &amp; each other!</div>
+  <div id="overlay-sub">Kyle: <b>WASD</b> &nbsp;·&nbsp; Lindsey: <b>Arrow Keys</b><br>Eat food to grow. Walls wrap around — avoid yourself &amp; each other!</div>
   <div id="result-banner" style="display:none"></div>
   <div class="overlay-scores" id="overlay-scores" style="display:none">
     <span class="os-kyle" id="ov-kyle-score"></span>
@@ -254,8 +254,8 @@ function moveSnake(snake, other) {
   if (snake.dead) return;
   snake.dir = { ...snake.nextDir };
   const head = {
-    x: snake.body[0].x + snake.dir.x,
-    y: snake.body[0].y + snake.dir.y,
+    x: (snake.body[0].x + snake.dir.x + COLS) % COLS,
+    y: (snake.body[0].y + snake.dir.y + ROWS) % ROWS,
   };
 
   // Check food
@@ -273,10 +273,6 @@ function checkCollisions() {
   for (const snake of [kyle, lindsey]) {
     if (snake.dead) continue;
     const h = snake.body[0];
-    // Wall
-    if (h.x < 0 || h.x >= COLS || h.y < 0 || h.y >= ROWS) {
-      snake.dead = true; continue;
-    }
     // Self collision (skip head itself)
     for (let i = 1; i < snake.body.length; i++) {
       if (snake.body[i].x === h.x && snake.body[i].y === h.y) {
