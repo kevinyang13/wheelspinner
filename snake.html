@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Snake — Kyle vs Lindsey</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #05080f;
+      display: flex; flex-direction: column; align-items: center;
+      min-height: 100vh; padding: 12px 16px 24px;
+      font-family: system-ui, sans-serif; color: #eee;
+      user-select: none; -webkit-user-select: none;
+    }
+    nav {
+      width: 100%; max-width: 680px;
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 10px;
+    }
+    nav a { color: #f0c040; text-decoration: none; font-size: 0.9rem; opacity: 0.8; }
+    nav a:hover { opacity: 1; }
+    nav span { font-size: 1rem; font-weight: bold; }
+
+    #scoreboard {
+      display: flex; gap: 40px; margin-bottom: 12px;
+      font-size: 1rem; font-weight: 700;
+    }
+    .score-kyle    { color: #f0c040; }
+    .score-lindsey { color: #22A6B3; }
+    .score-val { font-size: 1.6rem; display: block; text-align: center; }
+
+    canvas {
+      display: block;
+      border-radius: 8px;
+      box-shadow: 0 0 60px rgba(80,200,255,0.12), 0 0 20px rgba(0,0,0,0.6);
+      touch-action: none;
+    }
+
+    #controls-hint {
+      margin-top: 10px;
+      display: flex; gap: 40px;
+      font-size: 0.75rem; color: #445; text-align: center;
+    }
+    .hint-kyle    { color: #7a6020; }
+    .hint-lindsey { color: #1a5a62; }
+
+    /* ── Overlay ── */
+    #overlay {
+      position: fixed; inset: 0;
+      background: rgba(5,8,15,0.92);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 22px; z-index: 10;
+    }
+    #overlay h1 {
+      font-size: 2.2rem; font-weight: 900;
+      background: linear-gradient(135deg, #f0c040, #22A6B3);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    #overlay-sub {
+      font-size: 1rem; color: #778; text-align: center; line-height: 1.6;
+    }
+    #result-banner {
+      font-size: 1.4rem; font-weight: 800; text-align: center;
+    }
+    .result-kyle    { color: #f0c040; }
+    .result-lindsey { color: #22A6B3; }
+    .result-tie     { color: #aaa; }
+
+    .overlay-scores {
+      display: flex; gap: 32px; font-size: 0.95rem;
+    }
+    .os-kyle    { color: #f0c040; font-weight: 700; }
+    .os-lindsey { color: #22A6B3; font-weight: 700; }
+
+    .btn {
+      padding: 13px 40px; border-radius: 12px;
+      border: 2px solid #22A6B3; background: rgba(34,166,179,0.12);
+      color: #22A6B3; font-size: 1rem; font-weight: 700; cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .btn:hover { background: rgba(34,166,179,0.25); color: #fff; }
+    .btn-row { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+
+    .speed-row { display: flex; gap: 10px; }
+    .speed-btn {
+      padding: 8px 20px; border-radius: 10px;
+      border: 2px solid #334; background: #111828;
+      color: #889; font-size: 0.88rem; cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .speed-btn.sel { border-color: #22A6B3; color: #22A6B3; }
+
+    .overlay-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #445; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html">← Games</a>
+  <span>🐍 Snake</span>
+  <span style="width:80px"></span>
+</nav>
+
+<div id="scoreboard">
+  <div class="score-kyle">
+    Kyle <span class="score-val" id="kyle-score">0</span>
+  </div>
+  <div class="score-lindsey">
+    Lindsey <span class="score-val" id="lindsey-score">0</span>
+  </div>
+</div>
+
+<canvas id="c"></canvas>
+
+<div id="controls-hint">
+  <div class="hint-kyle">Kyle: WASD</div>
+  <div class="hint-lindsey">Lindsey: Arrow Keys</div>
+</div>
+
+<!-- Start / Game-over overlay -->
+<div id="overlay">
+  <h1>🐍 Snake</h1>
+  <div id="overlay-sub">Kyle: <b>WASD</b> &nbsp;·&nbsp; Lindsey: <b>Arrow Keys</b><br>Eat food to grow. Avoid walls &amp; each other!</div>
+  <div id="result-banner" style="display:none"></div>
+  <div class="overlay-scores" id="overlay-scores" style="display:none">
+    <span class="os-kyle" id="ov-kyle-score"></span>
+    <span class="os-lindsey" id="ov-lindsey-score"></span>
+  </div>
+  <div>
+    <div class="overlay-label" style="text-align:center;margin-bottom:8px">Speed</div>
+    <div class="speed-row">
+      <button class="speed-btn" data-speed="slow">Slow</button>
+      <button class="speed-btn sel" data-speed="normal">Normal</button>
+      <button class="speed-btn" data-speed="fast">Fast</button>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn" id="start-btn">Start Game</button>
+  </div>
+</div>
+
+<script>
+const COLS = 30, ROWS = 24, CELL = 20;
+const canvas = document.getElementById('c');
+canvas.width  = COLS * CELL;
+canvas.height = ROWS * CELL;
+const ctx = canvas.getContext('2d');
+
+const overlay      = document.getElementById('overlay');
+const resultBanner = document.getElementById('result-banner');
+const overlayScores= document.getElementById('overlay-scores');
+const ovKyleScore  = document.getElementById('ov-kyle-score');
+const ovLindseyScore= document.getElementById('ov-lindsey-score');
+const startBtn     = document.getElementById('start-btn');
+const kyleScoreEl  = document.getElementById('kyle-score');
+const lindseyScoreEl= document.getElementById('lindsey-score');
+
+const SPEEDS = { slow: 150, normal: 105, fast: 65 };
+let speed = 'normal';
+let gameInterval = null;
+let gameActive = false;
+
+document.querySelectorAll('.speed-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.speed-btn').forEach(x => x.classList.remove('sel'));
+    b.classList.add('sel');
+    speed = b.dataset.speed;
+  });
+});
+
+// ── State ──
+let kyle, lindsey, food, gameOver;
+
+function initState() {
+  kyle = {
+    body: [
+      { x: 7, y: 11 },
+      { x: 6, y: 11 },
+      { x: 5, y: 11 },
+    ],
+    dir: { x: 1, y: 0 },
+    nextDir: { x: 1, y: 0 },
+    score: 0,
+    color: '#f0c040',
+    darkColor: '#7a6020',
+    dead: false,
+  };
+  lindsey = {
+    body: [
+      { x: 22, y: 12 },
+      { x: 23, y: 12 },
+      { x: 24, y: 12 },
+    ],
+    dir: { x: -1, y: 0 },
+    nextDir: { x: -1, y: 0 },
+    score: 0,
+    color: '#22A6B3',
+    darkColor: '#1a5a62',
+    dead: false,
+  };
+  spawnFood();
+  gameOver = false;
+}
+
+function spawnFood() {
+  const occupied = new Set();
+  [...kyle.body, ...lindsey.body].forEach(s => occupied.add(s.x + ',' + s.y));
+  let pos;
+  do {
+    pos = { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) };
+  } while (occupied.has(pos.x + ',' + pos.y));
+  food = pos;
+}
+
+// ── Input ──
+const KEY_KYLE = {
+  KeyW: { x: 0, y: -1 }, KeyS: { x: 0, y: 1 },
+  KeyA: { x: -1, y: 0 }, KeyD: { x: 1, y: 0 },
+};
+const KEY_LINDSEY = {
+  ArrowUp: { x: 0, y: -1 }, ArrowDown: { x: 0, y: 1 },
+  ArrowLeft: { x: -1, y: 0 }, ArrowRight: { x: 1, y: 0 },
+};
+
+document.addEventListener('keydown', e => {
+  if (!gameActive) return;
+  if (KEY_KYLE[e.code]) {
+    const d = KEY_KYLE[e.code];
+    if (d.x !== -kyle.dir.x || d.y !== -kyle.dir.y)
+      kyle.nextDir = d;
+    e.preventDefault();
+  }
+  if (KEY_LINDSEY[e.code]) {
+    const d = KEY_LINDSEY[e.code];
+    if (d.x !== -lindsey.dir.x || d.y !== -lindsey.dir.y)
+      lindsey.nextDir = d;
+    e.preventDefault();
+  }
+});
+
+// ── Game tick ──
+function tick() {
+  moveSnake(kyle, lindsey);
+  moveSnake(lindsey, kyle);
+  checkCollisions();
+  draw();
+  if (kyle.dead || lindsey.dead) endGame();
+}
+
+function moveSnake(snake, other) {
+  if (snake.dead) return;
+  snake.dir = { ...snake.nextDir };
+  const head = {
+    x: snake.body[0].x + snake.dir.x,
+    y: snake.body[0].y + snake.dir.y,
+  };
+
+  // Check food
+  const ate = head.x === food.x && head.y === food.y;
+  snake.body.unshift(head);
+  if (ate) {
+    snake.score++;
+    spawnFood();
+  } else {
+    snake.body.pop();
+  }
+}
+
+function checkCollisions() {
+  for (const snake of [kyle, lindsey]) {
+    if (snake.dead) continue;
+    const h = snake.body[0];
+    // Wall
+    if (h.x < 0 || h.x >= COLS || h.y < 0 || h.y >= ROWS) {
+      snake.dead = true; continue;
+    }
+    // Self collision (skip head itself)
+    for (let i = 1; i < snake.body.length; i++) {
+      if (snake.body[i].x === h.x && snake.body[i].y === h.y) {
+        snake.dead = true; break;
+      }
+    }
+    if (snake.dead) continue;
+    // Other snake
+    const other = snake === kyle ? lindsey : kyle;
+    for (const seg of other.body) {
+      if (seg.x === h.x && seg.y === h.y) {
+        snake.dead = true; break;
+      }
+    }
+  }
+}
+
+// ── Drawing ──
+function draw() {
+  // Background
+  ctx.fillStyle = '#0a0e1a';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Grid dots
+  ctx.fillStyle = '#0f1422';
+  for (let x = 0; x < COLS; x++)
+    for (let y = 0; y < ROWS; y++)
+      ctx.fillRect(x * CELL + CELL / 2 - 1, y * CELL + CELL / 2 - 1, 2, 2);
+
+  drawSnake(kyle);
+  drawSnake(lindsey);
+  drawFood();
+
+  // Update score display
+  kyleScoreEl.textContent    = kyle.score;
+  lindseyScoreEl.textContent = lindsey.score;
+}
+
+function drawSnake(snake) {
+  const color = snake.dead ? '#333' : snake.color;
+  const dark  = snake.dead ? '#222' : snake.darkColor;
+  snake.body.forEach((seg, i) => {
+    const pad = i === 0 ? 1 : 2;
+    ctx.fillStyle = i === 0 ? color : dark;
+    roundRect(ctx,
+      seg.x * CELL + pad,
+      seg.y * CELL + pad,
+      CELL - pad * 2,
+      CELL - pad * 2,
+      i === 0 ? 5 : 4
+    );
+    // Glow on head
+    if (i === 0 && !snake.dead) {
+      ctx.shadowColor = color;
+      ctx.shadowBlur  = 10;
+      roundRect(ctx, seg.x * CELL + pad, seg.y * CELL + pad, CELL - pad * 2, CELL - pad * 2, 5);
+      ctx.shadowBlur = 0;
+    }
+  });
+}
+
+function drawFood() {
+  const cx = food.x * CELL + CELL / 2;
+  const cy = food.y * CELL + CELL / 2;
+  const r  = CELL / 2 - 3;
+  ctx.shadowColor = '#ff4466';
+  ctx.shadowBlur  = 12;
+  ctx.fillStyle   = '#ff4466';
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  // shine
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.beginPath();
+  ctx.arc(cx - 2, cy - 2, r * 0.4, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  ctx.fill();
+}
+
+// ── Game flow ──
+function startGame() {
+  initState();
+  overlay.style.display = 'none';
+  gameActive = true;
+  clearInterval(gameInterval);
+  gameInterval = setInterval(tick, SPEEDS[speed]);
+  draw();
+}
+
+function endGame() {
+  clearInterval(gameInterval);
+  gameActive = false;
+
+  // Final draw with dead snake dimmed
+  draw();
+
+  // Show overlay
+  resultBanner.style.display = '';
+  overlayScores.style.display = '';
+  ovKyleScore.textContent    = `Kyle: ${kyle.score}`;
+  ovLindseyScore.textContent = `Lindsey: ${lindsey.score}`;
+
+  const kDead = kyle.dead, lDead = lindsey.dead;
+  if (kDead && lDead) {
+    resultBanner.className = 'result-tie';
+    resultBanner.textContent = "It's a Tie!";
+  } else if (kDead) {
+    resultBanner.className = 'result-lindsey';
+    resultBanner.textContent = 'Lindsey Wins!';
+  } else {
+    resultBanner.className = 'result-kyle';
+    resultBanner.textContent = 'Kyle Wins!';
+  }
+
+  startBtn.textContent = 'Play Again';
+  overlay.style.display = 'flex';
+}
+
+startBtn.addEventListener('click', startGame);
+
+// Initial static draw
+initState();
+draw();
+overlay.style.display = 'flex';
+</script>
+</body>
+</html>
