@@ -30,9 +30,20 @@
     .score-lindsey { color: #22A6B3; }
     .score-val { font-size: 1.6rem; display: block; text-align: center; }
 
-    #canvas-wrap {
-      position: relative; width: 100%; max-width: 600px;
+    /* ── Game area: canvas + D-pads ── */
+    #game-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 800px;
+      gap: 10px;
     }
+    #canvas-col {
+      width: 100%; max-width: 600px;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    #canvas-wrap { width: 100%; }
     canvas {
       display: block; width: 100%; height: auto;
       border-radius: 8px;
@@ -49,15 +60,9 @@
     .hint-lindsey { color: #1a5a62; }
 
     /* ── D-pad touch controls ── */
-    #touch-controls {
-      display: none;
-      width: 100%; max-width: 600px;
-      margin-top: 14px;
-      gap: 12px;
-      justify-content: space-around;
-    }
     .dpad-wrap {
-      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      display: none; /* shown only on touch */
+      flex-direction: column; align-items: center; gap: 2px;
     }
     .dpad-label {
       font-size: 0.7rem; font-weight: 700; letter-spacing: 1px;
@@ -79,7 +84,7 @@
       -webkit-tap-highlight-color: transparent;
     }
     .dpad-btn:active { background: #1e2d4a; color: #aaa; }
-    .dpad-center { width: 52px; height: 52px; } /* spacer */
+    .dpad-center { width: 52px; height: 52px; }
 
     /* ── Overlay ── */
     #overlay {
@@ -129,9 +134,28 @@
     .opt-btn.sel { border-color: #22A6B3; color: #22A6B3; }
     .overlay-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #445; }
 
-    @media (hover: none) and (pointer: coarse) {
-      #touch-controls { display: flex; }
-      #controls-hint  { display: none; }
+    /* ── Touch: portrait — D-pads side-by-side below canvas ── */
+    @media (hover: none) and (pointer: coarse) and (orientation: portrait) {
+      #controls-hint { display: none; }
+      #game-area     { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+      #canvas-col    { order: 1; flex: 0 0 100%; }
+      .dpad-wrap     { display: flex; flex: 1; justify-content: center; }
+    }
+
+    /* ── Touch: landscape — D-pads flank the canvas ── */
+    @media (hover: none) and (pointer: coarse) and (orientation: landscape) {
+      body           { padding: 6px 8px 10px; }
+      #controls-hint { display: none; }
+      #game-area     { flex-direction: row; flex-wrap: nowrap; align-items: center; gap: 8px; }
+      #canvas-col    { order: 2; flex: 1; min-width: 0; max-width: none; }
+      #dpad-kyle     { display: flex; order: 1; flex: 0 0 auto; }
+      #dpad-lindsey  { display: flex; order: 3; flex: 0 0 auto; }
+      /* Scale canvas to viewport height so it doesn't overflow */
+      canvas         { height: calc(100svh - 80px); width: auto; max-width: 100%; }
+      .dpad-btn      { width: 46px; height: 46px; font-size: 1.15rem; }
+      .dpad-center   { width: 46px; height: 46px; }
+      #scoreboard    { margin-bottom: 6px; }
+      .score-val     { font-size: 1.2rem; }
     }
   </style>
 </head>
@@ -148,17 +172,9 @@
   <div class="score-lindsey">Lindsey <span class="score-val" id="lindsey-score">0</span></div>
 </div>
 
-<div id="canvas-wrap">
-  <canvas id="c" width="600" height="480"></canvas>
-</div>
+<div id="game-area">
 
-<div id="controls-hint">
-  <div class="hint-kyle">Kyle: WASD</div>
-  <div class="hint-lindsey" id="hint-lindsey">Lindsey: Arrow Keys</div>
-</div>
-
-<!-- Touch D-pads -->
-<div id="touch-controls">
+  <!-- Kyle D-pad (left in landscape, below-left in portrait) -->
   <div class="dpad-wrap" id="dpad-kyle">
     <div class="dpad-label kyle">Kyle</div>
     <div class="dpad-row">
@@ -178,6 +194,18 @@
     </div>
   </div>
 
+  <!-- Canvas column (center) -->
+  <div id="canvas-col">
+    <div id="canvas-wrap">
+      <canvas id="c" width="600" height="480"></canvas>
+    </div>
+    <div id="controls-hint">
+      <div class="hint-kyle">Kyle: WASD</div>
+      <div class="hint-lindsey" id="hint-lindsey">Lindsey: Arrow Keys</div>
+    </div>
+  </div>
+
+  <!-- Lindsey D-pad (right in landscape, below-right in portrait) -->
   <div class="dpad-wrap" id="dpad-lindsey">
     <div class="dpad-label lindsey" id="dpad-lindsey-label">Lindsey</div>
     <div class="dpad-row">
@@ -196,6 +224,7 @@
       <div class="dpad-center"></div>
     </div>
   </div>
+
 </div>
 
 <!-- Start / Game-over overlay -->
