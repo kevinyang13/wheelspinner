@@ -429,12 +429,20 @@ function checkCollisions() {
     if (snake.dead) continue;
     const h = snake.body[0];
     for (let i = 1; i < snake.body.length; i++) {
-      if (snake.body[i].x === h.x && snake.body[i].y === h.y) { snake.dead = true; break; }
+      if (snake.body[i].x === h.x && snake.body[i].y === h.y) {
+        snake.dead = true;
+        snake.collisionAt = { x: h.x, y: h.y };
+        break;
+      }
     }
     if (snake.dead) continue;
     const other = snake === kyle ? lindsey : kyle;
     for (const seg of other.body) {
-      if (seg.x === h.x && seg.y === h.y) { snake.dead = true; break; }
+      if (seg.x === h.x && seg.y === h.y) {
+        snake.dead = true;
+        snake.collisionAt = { x: h.x, y: h.y };
+        break;
+      }
     }
   }
 }
@@ -508,14 +516,85 @@ function roundRect(x, y, w, h, r) {
   ctx.fill();
 }
 
+// ── Collision + winner canvas animation ──
+let endAnimFrame = null;
+const END_ANIM_MS = 2500;
+
+function drawCollisionBurst(pos, color, t) {
+  // t: 0→1 over END_ANIM_MS
+  const cx = pos.x * CELL + CELL / 2;
+  const cy = pos.y * CELL + CELL / 2;
+
+  // Three staggered expanding rings
+  for (let i = 0; i < 3; i++) {
+    const delay = i * 0.12;
+    const p = Math.max(0, Math.min(1, (t - delay) / 0.55));
+    if (p <= 0) continue;
+    ctx.save();
+    ctx.globalAlpha = (1 - p) * 0.9;
+    ctx.strokeStyle = color;
+    ctx.lineWidth   = 3 - i * 0.6;
+    ctx.shadowColor = color;
+    ctx.shadowBlur  = 14;
+    ctx.beginPath();
+    ctx.arc(cx, cy, p * 48, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // X mark — fades in quickly and stays
+  const xAlpha = Math.min(t / 0.2, 1);
+  const xSize  = 10;
+  ctx.save();
+  ctx.globalAlpha = xAlpha;
+  ctx.strokeStyle = color;
+  ctx.lineWidth   = 3.5;
+  ctx.lineCap     = 'round';
+  ctx.shadowColor = color;
+  ctx.shadowBlur  = 12;
+  ctx.beginPath();
+  ctx.moveTo(cx - xSize, cy - xSize); ctx.lineTo(cx + xSize, cy + xSize);
+  ctx.moveTo(cx + xSize, cy - xSize); ctx.lineTo(cx - xSize, cy + xSize);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawWinnerOnCanvas(text, color, t) {
+  // Fades in after 0.25 of the animation
+  const alpha = Math.max(0, Math.min(1, (t - 0.25) / 0.25));
+  if (alpha <= 0) return;
+
+  const cx = canvas.width  / 2;
+  const cy = canvas.height / 2;
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+
+  // Dark pill background
+  ctx.fillStyle = 'rgba(5,8,15,0.78)';
+  const tw = ctx.measureText(text).width + 60;
+  roundRect(cx - tw / 2, cy - 28, tw, 56, 14);
+
+  // Winner text with glow
+  ctx.shadowColor = color;
+  ctx.shadowBlur  = 24;
+  ctx.fillStyle   = color;
+  ctx.font        = 'bold 32px system-ui, sans-serif';
+  ctx.textAlign   = 'center';
+  ctx.textBaseline= 'middle';
+  ctx.fillText(text, cx, cy);
+
+  ctx.restore();
+}
+
 // ── Game flow ──
 function startGame() {
+  if (endAnimFrame) { cancelAnimationFrame(endAnimFrame); endAnimFrame = null; }
   initState();
-  // Update UI to reflect mode
   const isAI = lindsey.isAI;
-  hintLindsey.textContent = isAI ? 'Lindsey: AI' : 'Lindsey: Arrow Keys';
+  hintLindsey.textContent   = isAI ? 'Lindsey: AI' : 'Lindsey: Arrow Keys';
   dpadLindsey.style.display = isAI ? 'none' : '';
-  overlay.style.display = 'none';
+  overlay.style.display     = 'none';
   gameActive = true;
   clearInterval(gameInterval);
   gameInterval = setInterval(tick, SPEEDS[speed]);
@@ -525,27 +604,46 @@ function startGame() {
 function endGame() {
   clearInterval(gameInterval);
   gameActive = false;
-  draw();
 
+  const kDead = kyle.dead, lDead = lindsey.dead;
+  let winnerText, winnerColor, bannerClass;
+  if (kDead && lDead) {
+    winnerText = "It's a Tie!"; winnerColor = '#aaa'; bannerClass = 'result-tie';
+  } else if (kDead) {
+    winnerText  = lindsey.isAI ? 'AI Wins!' : 'Lindsey Wins!';
+    winnerColor = '#22A6B3'; bannerClass = 'result-lindsey';
+  } else {
+    winnerText = 'Kyle Wins!'; winnerColor = '#f0c040'; bannerClass = 'result-kyle';
+  }
+
+  const animStart = performance.now();
+  function animateEnd(now) {
+    const t = Math.min((now - animStart) / END_ANIM_MS, 1);
+    draw();
+    for (const snake of [kyle, lindsey]) {
+      if (snake.collisionAt) drawCollisionBurst(snake.collisionAt, snake.color, t);
+    }
+    drawWinnerOnCanvas(winnerText, winnerColor, t);
+
+    if (t < 1) {
+      endAnimFrame = requestAnimationFrame(animateEnd);
+    } else {
+      endAnimFrame = null;
+      showResultOverlay(winnerText, bannerClass);
+    }
+  }
+  endAnimFrame = requestAnimationFrame(animateEnd);
+}
+
+function showResultOverlay(winnerText, bannerClass) {
   resultBanner.style.display  = '';
   overlayScores.style.display = '';
   ovKyleScore.textContent     = `Kyle: ${kyle.score}`;
   ovLindseyScore.textContent  = `Lindsey: ${lindsey.score}`;
-
-  const kDead = kyle.dead, lDead = lindsey.dead;
-  if (kDead && lDead) {
-    resultBanner.className   = 'result-tie';
-    resultBanner.textContent = "It's a Tie!";
-  } else if (kDead) {
-    resultBanner.className   = 'result-lindsey';
-    resultBanner.textContent = lindsey.isAI ? 'AI Wins!' : 'Lindsey Wins!';
-  } else {
-    resultBanner.className   = 'result-kyle';
-    resultBanner.textContent = 'Kyle Wins!';
-  }
-
-  startBtn.textContent = 'Play Again';
-  overlay.style.display = 'flex';
+  resultBanner.className      = bannerClass;
+  resultBanner.textContent    = winnerText;
+  startBtn.textContent        = 'Play Again';
+  overlay.style.display       = 'flex';
 }
 
 startBtn.addEventListener('click', startGame);
