@@ -489,9 +489,32 @@ function draw() {
   drawSnake(kyle);
   drawSnake(lindsey);
   drawFood();
+  drawInGameScores();
 
   kyleScoreEl.textContent    = kyle.score;
   lindseyScoreEl.textContent = lindsey.score;
+}
+
+function drawInGameScores() {
+  ctx.save();
+  ctx.textBaseline = 'top';
+  ctx.font         = 'bold 13px system-ui, sans-serif';
+
+  // Kyle — top-left
+  ctx.textAlign  = 'left';
+  ctx.fillStyle  = 'rgba(0,0,0,0.45)';
+  ctx.fillRect(4, 4, 76, 20);
+  ctx.fillStyle  = kyle.dead ? '#555' : '#f0c040';
+  ctx.fillText(`Kyle: ${kyle.score}`, 8, 7);
+
+  // Lindsey — top-right
+  ctx.textAlign  = 'right';
+  ctx.fillStyle  = 'rgba(0,0,0,0.45)';
+  ctx.fillRect(canvas.width - 80, 4, 76, 20);
+  ctx.fillStyle  = lindsey.dead ? '#555' : '#22A6B3';
+  ctx.fillText(`Lindsey: ${lindsey.score}`, canvas.width - 8, 7);
+
+  ctx.restore();
 }
 
 function drawSnake(snake) {
@@ -599,18 +622,18 @@ function drawWinnerOnCanvas(text, color, t) {
   ctx.save();
   ctx.globalAlpha = alpha;
 
-  // Dark pill background
-  ctx.fillStyle = 'rgba(5,8,15,0.78)';
+  // Dark pill background — measure AFTER font is set
+  ctx.font        = 'bold 32px system-ui, sans-serif';
+  ctx.textAlign   = 'center';
+  ctx.textBaseline= 'middle';
   const tw = ctx.measureText(text).width + 60;
+  ctx.fillStyle   = 'rgba(5,8,15,0.78)';
   roundRect(cx - tw / 2, cy - 28, tw, 56, 14);
 
   // Winner text with glow
   ctx.shadowColor = color;
   ctx.shadowBlur  = 24;
   ctx.fillStyle   = color;
-  ctx.font        = 'bold 32px system-ui, sans-serif';
-  ctx.textAlign   = 'center';
-  ctx.textBaseline= 'middle';
   ctx.fillText(text, cx, cy);
 
   ctx.restore();
