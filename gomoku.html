@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>五子棋 Gomoku – Kyle & Lindsey</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, sans-serif;
+      background: #0f0f1e;
+      color: #eee;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 24px;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      flex-shrink: 0;
+    }
+    .header a { color: #667; text-decoration: none; font-size: 0.85rem; }
+    .header a:hover { color: #10b981; }
+    .header-title { font-size: 1.1rem; font-weight: 800; color: #10b981; }
+
+    .screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      width: 100%;
+      padding: 24px;
+    }
+    .screen.active { display: flex; }
+
+    /* ── Start Screen ── */
+    h1 {
+      font-size: 3rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, #10b981, #34d399);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-align: center;
+      margin-bottom: 4px;
+      line-height: 1.1;
+    }
+    .subtitle { color: #667; font-size: 0.95rem; margin-bottom: 28px; }
+
+    .player-legend {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #16213e;
+      padding: 12px 20px;
+      border-radius: 14px;
+      border: 2px solid #2a2a3e;
+    }
+    .legend-stone {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .legend-stone.black {
+      background: radial-gradient(circle at 35% 30%, #666, #111);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.6), inset 0 1px 2px rgba(255,255,255,0.15);
+    }
+    .legend-stone.white {
+      background: radial-gradient(circle at 35% 30%, #fff, #ccc);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.35), inset 0 1px 2px rgba(0,0,0,0.08);
+    }
+    .legend-info { display: flex; flex-direction: column; gap: 2px; }
+    .legend-name { font-weight: 800; font-size: 1rem; }
+    .legend-name.kyle { color: #f0c040; }
+    .legend-name.lindsey { color: #22A6B3; }
+    .legend-role { font-size: 0.72rem; color: #778; }
+
+    .setup-section { margin-bottom: 24px; text-align: center; }
+    .setup-label {
+      font-size: 0.75rem;
+      color: #889;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 10px;
+    }
+    .opt-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .opt-btn {
+      padding: 10px 20px;
+      border-radius: 12px;
+      border: 2px solid #2a2a3e;
+      background: #16213e;
+      color: #aab;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    .opt-btn.selected {
+      border-color: #10b981;
+      background: rgba(16,185,129,0.15);
+      color: #10b981;
+    }
+    .opt-btn:hover { border-color: #10b981; }
+
+    .start-btn {
+      padding: 18px 52px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #10b981, #34d399);
+      border: none;
+      color: #fff;
+      font-size: 1.2rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 8px 32px rgba(16,185,129,0.35);
+      transition: transform 0.15s;
+    }
+    .start-btn:hover { transform: translateY(-3px); }
+
+    /* ── Game Screen ── */
+    .game-hud {
+      width: 100%;
+      max-width: 560px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      gap: 12px;
+    }
+    .player-card {
+      flex: 1;
+      padding: 10px 14px;
+      border-radius: 14px;
+      background: #16213e;
+      border: 2px solid #2a2a3e;
+      position: relative;
+      transition: all 0.25s;
+      text-align: center;
+    }
+    .player-card.active.kyle   { border-color: #f0c040; box-shadow: 0 0 18px rgba(240,192,64,0.25); }
+    .player-card.active.lindsey { border-color: #22A6B3; box-shadow: 0 0 18px rgba(34,166,179,0.25); }
+    .player-name { font-weight: 800; font-size: 0.95rem; }
+    .player-name.kyle { color: #f0c040; }
+    .player-name.lindsey { color: #22A6B3; }
+    .stone-row { display: flex; align-items: center; gap: 6px; justify-content: center; margin-top: 4px; }
+    .stone-pip { width: 14px; height: 14px; border-radius: 50%; }
+    .stone-pip.black {
+      background: radial-gradient(circle at 35% 30%, #555, #000);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    }
+    .stone-pip.white {
+      background: radial-gradient(circle at 35% 30%, #fff, #ccc);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+      border: 1px solid #bbb;
+    }
+    .stone-label { font-size: 0.72rem; color: #889; }
+    .turn-badge {
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #10b981;
+      color: #fff;
+      font-size: 0.6rem;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+      display: none;
+    }
+    .player-card.active .turn-badge { display: block; }
+    .vs-sep { color: #445; font-weight: 800; font-size: 0.9rem; flex-shrink: 0; }
+
+    #boardCanvas {
+      border-radius: 10px;
+      cursor: crosshair;
+      touch-action: none;
+      display: block;
+      max-width: 100%;
+    }
+
+    /* ── Win Screen ── */
+    .win-emoji { font-size: 5rem; margin-bottom: 16px; }
+    .win-title {
+      font-size: 2.5rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, #10b981, #34d399);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+    .win-sub { color: #889; font-size: 1rem; margin-bottom: 32px; text-align: center; }
+    .play-again-btn {
+      padding: 16px 48px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #10b981, #34d399);
+      border: none;
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 8px 32px rgba(16,185,129,0.35);
+      transition: transform 0.15s;
+      margin-bottom: 16px;
+    }
+    .play-again-btn:hover { transform: translateY(-3px); }
+    .home-link { color: #667; text-decoration: none; font-size: 0.9rem; }
+    .home-link:hover { color: #10b981; }
+
+    /* ── Confetti ── */
+    .confetti-piece {
+      position: fixed;
+      top: -10px;
+      border-radius: 2px;
+      animation: confettiFall linear forwards;
+      z-index: 99;
+      pointer-events: none;
+    }
+    @keyframes confettiFall {
+      to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <a href="index.html">← Back</a>
+  <span class="header-title">⚫ 五子棋 Gomoku</span>
+  <span></span>
+</div>
+
+<!-- Start Screen -->
+<div id="startScreen" class="screen active">
+  <h1>五子棋</h1>
+  <div class="subtitle">Gomoku · Five in a Row</div>
+
+  <div class="player-legend">
+    <div class="legend-item">
+      <div class="legend-stone black"></div>
+      <div class="legend-info">
+        <div class="legend-name kyle">Kyle</div>
+        <div class="legend-role">Black · Goes First</div>
+      </div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-stone white"></div>
+      <div class="legend-info">
+        <div class="legend-name lindsey">Lindsey</div>
+        <div class="legend-role">White · Goes Second</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="setup-section">
+    <div class="setup-label">Board Size</div>
+    <div class="opt-row">
+      <button class="opt-btn selected" data-group="size" data-val="15">15×15 Standard</button>
+      <button class="opt-btn" data-group="size" data-val="13">13×13 Small</button>
+      <button class="opt-btn" data-group="size" data-val="19">19×19 Full Go</button>
+    </div>
+  </div>
+
+  <button class="start-btn" id="startBtn">Start Game</button>
+</div>
+
+<!-- Game Screen -->
+<div id="gameScreen" class="screen">
+  <div class="game-hud">
+    <div class="player-card kyle active" id="kyleCard">
+      <div class="turn-badge">YOUR TURN</div>
+      <div class="player-name kyle">Kyle</div>
+      <div class="stone-row">
+        <div class="stone-pip black"></div>
+        <span class="stone-label">Black</span>
+      </div>
+    </div>
+    <div class="vs-sep">VS</div>
+    <div class="player-card lindsey" id="lindseyCard">
+      <div class="turn-badge">YOUR TURN</div>
+      <div class="player-name lindsey">Lindsey</div>
+      <div class="stone-row">
+        <div class="stone-pip white"></div>
+        <span class="stone-label">White</span>
+      </div>
+    </div>
+  </div>
+  <canvas id="boardCanvas"></canvas>
+</div>
+
+<!-- Win Screen -->
+<div id="winScreen" class="screen">
+  <div class="win-emoji" id="winEmoji">🏆</div>
+  <div class="win-title" id="winTitle"></div>
+  <div class="win-sub" id="winSub"></div>
+  <button class="play-again-btn" id="playAgainBtn">Play Again</button>
+  <a class="home-link" href="index.html">← Back to Games</a>
+</div>
+
+<script>
+const startScreen  = document.getElementById('startScreen');
+const gameScreen   = document.getElementById('gameScreen');
+const winScreen    = document.getElementById('winScreen');
+const kyleCard     = document.getElementById('kyleCard');
+const lindseyCard  = document.getElementById('lindseyCard');
+const canvas       = document.getElementById('boardCanvas');
+const ctx          = canvas.getContext('2d');
+
+function showScreen(s) {
+  [startScreen, gameScreen, winScreen].forEach(el => el.classList.remove('active'));
+  s.classList.add('active');
+}
+
+document.querySelectorAll('.opt-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const group = btn.dataset.group;
+    document.querySelectorAll(`.opt-btn[data-group="${group}"]`).forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+  });
+});
+
+// Game state
+let BOARD_SIZE = 15;
+let board = [];
+let currentPlayer = 'kyle';
+let gameActive = false;
+let lastMove = null;
+let winLine = [];
+
+// Layout vars (computed in initLayout)
+let CELL = 32;
+let MARGIN = 22;
+let STONE_R = 14;
+
+function initLayout() {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const available = Math.min(vw - 24, vh - 200, 540);
+  const fixedMargin = Math.max(16, Math.round(available * 0.04));
+  CELL = Math.floor((available - fixedMargin * 2) / (BOARD_SIZE - 1));
+  MARGIN = Math.round((available - CELL * (BOARD_SIZE - 1)) / 2);
+  STONE_R = Math.max(8, Math.floor(CELL * 0.44));
+  const size = CELL * (BOARD_SIZE - 1) + MARGIN * 2;
+  canvas.width = size;
+  canvas.height = size;
+}
+
+function startGame() {
+  const sizeBtn = document.querySelector('.opt-btn[data-group="size"].selected');
+  BOARD_SIZE = parseInt(sizeBtn?.dataset.val || '15');
+  board = Array.from({ length: BOARD_SIZE }, () => Array(BOARD_SIZE).fill(null));
+  currentPlayer = 'kyle';
+  gameActive = true;
+  lastMove = null;
+  winLine = [];
+  showScreen(gameScreen);
+  requestAnimationFrame(() => {
+    initLayout();
+    updateHUD();
+    drawBoard();
+  });
+}
+
+function updateHUD() {
+  kyleCard.classList.toggle('active', currentPlayer === 'kyle');
+  lindseyCard.classList.toggle('active', currentPlayer === 'lindsey');
+}
+
+function cellToXY(col, row) {
+  return { x: MARGIN + col * CELL, y: MARGIN + row * CELL };
+}
+
+function xyToCell(px, py) {
+  const col = Math.round((px - MARGIN) / CELL);
+  const row = Math.round((py - MARGIN) / CELL);
+  if (col < 0 || col >= BOARD_SIZE || row < 0 || row >= BOARD_SIZE) return null;
+  const { x, y } = cellToXY(col, row);
+  if (Math.hypot(px - x, py - y) > CELL * 0.52) return null;
+  return { col, row };
+}
+
+function getStarPoints() {
+  if (BOARD_SIZE === 19) return [[3,3],[3,9],[3,15],[9,3],[9,9],[9,15],[15,3],[15,9],[15,15]];
+  if (BOARD_SIZE === 15) return [[3,3],[3,7],[3,11],[7,3],[7,7],[7,11],[11,3],[11,7],[11,11]];
+  if (BOARD_SIZE === 13) return [[3,3],[3,6],[3,9],[6,3],[6,6],[6,9],[9,3],[9,6],[9,9]];
+  return [[Math.floor(BOARD_SIZE / 2), Math.floor(BOARD_SIZE / 2)]];
+}
+
+function drawBoard() {
+  const size = canvas.width;
+  ctx.clearRect(0, 0, size, size);
+
+  // Board background – warm wood
+  const bg = ctx.createLinearGradient(0, 0, size, size);
+  bg.addColorStop(0, '#c8a458');
+  bg.addColorStop(1, '#b58a35');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, size, size);
+
+  // Subtle wood grain
+  ctx.strokeStyle = 'rgba(0,0,0,0.035)';
+  ctx.lineWidth = 1;
+  for (let y = 0; y < size; y += 7) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(size, y); ctx.stroke();
+  }
+
+  // Grid lines
+  ctx.strokeStyle = '#7a5c1a';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < BOARD_SIZE; i++) {
+    const { x: ax, y: ay } = cellToXY(i, 0);
+    const { x: bx, y: by } = cellToXY(i, BOARD_SIZE - 1);
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+    const { x: cx, y: cy } = cellToXY(0, i);
+    const { x: dx, y: dy } = cellToXY(BOARD_SIZE - 1, i);
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(dx, dy); ctx.stroke();
+  }
+
+  // Star points (hoshi)
+  ctx.fillStyle = '#7a5c1a';
+  getStarPoints().forEach(([c, r]) => {
+    const { x, y } = cellToXY(c, r);
+    ctx.beginPath();
+    ctx.arc(x, y, CELL > 26 ? 4 : 3, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Win line highlight (drawn behind stones)
+  if (winLine.length > 0) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,60,60,0.75)';
+    ctx.lineWidth = CELL * 0.2;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    winLine.forEach(([c, r], i) => {
+      const { x, y } = cellToXY(c, r);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Stones
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      if (board[r][c]) {
+        const isLast = lastMove && lastMove[0] === c && lastMove[1] === r;
+        drawStone(c, r, board[r][c], isLast);
+      }
+    }
+  }
+}
+
+function drawStone(col, row, player, isLast) {
+  const { x, y } = cellToXY(col, row);
+  const r = STONE_R;
+
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.5)';
+  ctx.shadowBlur = 7;
+  ctx.shadowOffsetX = 2;
+  ctx.shadowOffsetY = 3;
+
+  if (player === 'kyle') {
+    // Black stone
+    const g = ctx.createRadialGradient(x - r * 0.32, y - r * 0.32, r * 0.04, x, y, r);
+    g.addColorStop(0, '#666');
+    g.addColorStop(0.35, '#222');
+    g.addColorStop(1, '#000');
+    ctx.fillStyle = g;
+  } else {
+    // White stone
+    const g = ctx.createRadialGradient(x - r * 0.32, y - r * 0.35, r * 0.04, x, y, r);
+    g.addColorStop(0, '#ffffff');
+    g.addColorStop(0.5, '#e8e8e8');
+    g.addColorStop(1, '#bbb');
+    ctx.fillStyle = g;
+  }
+
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Outline for white stone
+  if (player === 'lindsey') {
+    ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // Last-move dot
+  if (isLast) {
+    ctx.fillStyle = player === 'kyle' ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.28)';
+    ctx.beginPath();
+    ctx.arc(x, y, r * 0.26, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function placeStone(col, row) {
+  if (!gameActive || board[row][col]) return;
+  board[row][col] = currentPlayer;
+  lastMove = [col, row];
+
+  const line = checkWin(col, row, currentPlayer);
+  if (line) {
+    winLine = line;
+    gameActive = false;
+    drawBoard();
+    setTimeout(() => endGame(currentPlayer), 500);
+    return;
+  }
+
+  const isDraw = board.every(r => r.every(c => c !== null));
+  if (isDraw) {
+    gameActive = false;
+    drawBoard();
+    setTimeout(() => endGame(null), 400);
+    return;
+  }
+
+  currentPlayer = currentPlayer === 'kyle' ? 'lindsey' : 'kyle';
+  updateHUD();
+  drawBoard();
+}
+
+function checkWin(col, row, player) {
+  const dirs = [[1, 0], [0, 1], [1, 1], [1, -1]];
+  for (const [dc, dr] of dirs) {
+    const line = [[col, row]];
+    for (let i = 1; i < BOARD_SIZE; i++) {
+      const c = col + dc * i, r = row + dr * i;
+      if (c < 0 || c >= BOARD_SIZE || r < 0 || r >= BOARD_SIZE || board[r][c] !== player) break;
+      line.push([c, r]);
+    }
+    for (let i = 1; i < BOARD_SIZE; i++) {
+      const c = col - dc * i, r = row - dr * i;
+      if (c < 0 || c >= BOARD_SIZE || r < 0 || r >= BOARD_SIZE || board[r][c] !== player) break;
+      line.unshift([c, r]);
+    }
+    if (line.length >= 5) return line;
+  }
+  return null;
+}
+
+function endGame(winner) {
+  if (winner) {
+    document.getElementById('winEmoji').textContent = '🏆';
+    document.getElementById('winTitle').textContent = winner === 'kyle' ? 'Kyle Wins!' : 'Lindsey Wins!';
+    document.getElementById('winSub').textContent =
+      (winner === 'kyle' ? 'Black' : 'White') + ' stones form five in a row!';
+    launchConfetti();
+  } else {
+    document.getElementById('winEmoji').textContent = '🤝';
+    document.getElementById('winTitle').textContent = "It's a Draw!";
+    document.getElementById('winSub').textContent = 'The board is full — no winner this time.';
+  }
+  showScreen(winScreen);
+}
+
+function launchConfetti() {
+  const colors = ['#f0c040', '#ff6b35', '#FF6B6B', '#6AB04C', '#10b981', '#22A6B3', '#BE2EDD'];
+  for (let i = 0; i < 80; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.cssText = `
+      left:${Math.random() * 100}vw;
+      background:${colors[Math.floor(Math.random() * colors.length)]};
+      width:${6 + Math.random() * 8}px;height:${6 + Math.random() * 8}px;
+      border-radius:${Math.random() > 0.5 ? '50%' : '2px'};
+      animation-duration:${1.5 + Math.random() * 2}s;
+      animation-delay:${Math.random() * 0.8}s;
+    `;
+    document.body.appendChild(p);
+    p.addEventListener('animationend', () => p.remove());
+  }
+}
+
+function getCanvasPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const sx = canvas.width / rect.width;
+  const sy = canvas.height / rect.height;
+  return {
+    px: (e.clientX - rect.left) * sx,
+    py: (e.clientY - rect.top) * sy,
+  };
+}
+
+canvas.addEventListener('click', e => {
+  if (!gameActive) return;
+  const { px, py } = getCanvasPos(e);
+  const cell = xyToCell(px, py);
+  if (cell) placeStone(cell.col, cell.row);
+});
+
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  if (!gameActive) return;
+  const touch = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  const sx = canvas.width / rect.width;
+  const sy = canvas.height / rect.height;
+  const px = (touch.clientX - rect.left) * sx;
+  const py = (touch.clientY - rect.top) * sy;
+  const cell = xyToCell(px, py);
+  if (cell) placeStone(cell.col, cell.row);
+}, { passive: false });
+
+document.getElementById('startBtn').addEventListener('click', startGame);
+document.getElementById('playAgainBtn').addEventListener('click', () => showScreen(startScreen));
+</script>
+</body>
+</html>
