@@ -617,6 +617,7 @@
     </div>
 
     <button class="play-again-btn" id="playAgainBtn">Play Again 🔄</button>
+    <button class="play-again-btn" id="replayBtn" style="background:linear-gradient(135deg,#22A6B3,#1a8a96);box-shadow:0 4px 20px rgba(34,166,179,0.35);margin-top:0">Same Words Again 🔁</button>
   </div>
 
   <!-- Feedback toast -->
@@ -1205,6 +1206,7 @@ const WORDS = {
 // ═══════════════════════════════════════════════════════
 let cfg = { grade: '2', dir: 'zh2en', mode: 'solo', count: 20, timer: 3 };
 let queue = [], qIdx = 0, scores = { kyle: 0, lindsey: 0 }, streak = 0;
+let lastQueue = [];
 let currentPlayer = 'kyle'; // for versus
 let answeredLog = [];        // { word, correct, player }
 let answered = false;
@@ -1225,6 +1227,25 @@ document.querySelectorAll('.opt-btn').forEach(btn => {
 
 $('startBtn').addEventListener('click', startGame);
 $('playAgainBtn').addEventListener('click', () => showScreen('setupScreen'));
+$('replayBtn').addEventListener('click', replayWithSameWords);
+
+function replayWithSameWords() {
+  queue = shuffle([...lastQueue]);
+  qIdx = 0;
+  scores = { kyle: 0, lindsey: 0 };
+  streak = 0;
+  answeredLog = [];
+  currentPlayer = 'kyle';
+  const versus = cfg.mode === 'versus';
+  $('playerCards').style.display = versus ? 'flex' : 'none';
+  $('soloScore').style.display = versus ? 'none' : 'flex';
+  $('kyleScore').textContent = '0';
+  $('lindseyScore').textContent = '0';
+  $('soloScoreVal').textContent = '0';
+  TIMER_SECS = Number(cfg.timer);
+  showScreen('gameScreen');
+  renderQuestion();
+}
 
 // ═══════════════════════════════════════════════════════
 //  SPEECH
@@ -1326,6 +1347,7 @@ function startGame() {
     queue = pool.slice(0, Math.min(count, pool.length));
   }
   qIdx = 0;
+  lastQueue = [...queue];
   scores = { kyle: 0, lindsey: 0 };
   streak = 0;
   answeredLog = [];
