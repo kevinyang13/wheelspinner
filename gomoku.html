@@ -186,6 +186,8 @@
       display: none;
     }
     .player-card.active .turn-badge { display: block; }
+    .turn-badge.thinking { background: #6366f1; animation: pulse 0.8s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.55; } }
     .vs-sep { color: #445; font-weight: 800; font-size: 0.9rem; flex-shrink: 0; }
 
     #boardCanvas {
@@ -270,6 +272,14 @@
   </div>
 
   <div class="setup-section">
+    <div class="setup-label">Mode</div>
+    <div class="opt-row">
+      <button class="opt-btn selected" data-group="mode" data-val="2p">2 Players</button>
+      <button class="opt-btn" data-group="mode" data-val="ai">vs AI</button>
+    </div>
+  </div>
+
+  <div class="setup-section">
     <div class="setup-label">Board Size</div>
     <div class="opt-row">
       <button class="opt-btn selected" data-group="size" data-val="15">15×15 Standard</button>
@@ -343,6 +353,8 @@ let currentPlayer = 'kyle';
 let gameActive = false;
 let lastMove = null;
 let winLine = [];
+let vsAI = false;
+let aiThinking = false;
 
 // Layout vars (computed in initLayout)
 let CELL = 32;
@@ -363,14 +375,21 @@ function initLayout() {
 }
 
 function startGame() {
+  const modeBtn = document.querySelector('.opt-btn[data-group="mode"].selected');
+  vsAI = modeBtn?.dataset.val === 'ai';
   const sizeBtn = document.querySelector('.opt-btn[data-group="size"].selected');
   BOARD_SIZE = parseInt(sizeBtn?.dataset.val || '15');
   board = Array.from({ length: BOARD_SIZE }, () => Array(BOARD_SIZE).fill(null));
   currentPlayer = 'kyle';
   gameActive = true;
+  aiThinking = false;
   lastMove = null;
   winLine = [];
   showScreen(gameScreen);
+  // Update Lindsey card label for AI mode
+  document.getElementById('lindseyCard').querySelector('.player-name').textContent =
+    vsAI ? 'AI (Lindsey)' : 'Lindsey';
+
   requestAnimationFrame(() => {
     initLayout();
     updateHUD();
@@ -381,6 +400,14 @@ function startGame() {
 function updateHUD() {
   kyleCard.classList.toggle('active', currentPlayer === 'kyle');
   lindseyCard.classList.toggle('active', currentPlayer === 'lindsey');
+  const badge = lindseyCard.querySelector('.turn-badge');
+  if (vsAI && aiThinking) {
+    badge.textContent = 'THINKING…';
+    badge.classList.add('thinking');
+  } else {
+    badge.textContent = 'YOUR TURN';
+    badge.classList.remove('thinking');
+  }
 }
 
 function cellToXY(col, row) {
@@ -518,7 +545,7 @@ function drawStone(col, row, player, isLast) {
 }
 
 function placeStone(col, row) {
-  if (!gameActive || board[row][col]) return;
+  if (!gameActive || board[row][col] || aiThinking) return;
   board[row][col] = currentPlayer;
   lastMove = [col, row];
 
@@ -542,6 +569,12 @@ function placeStone(col, row) {
   currentPlayer = currentPlayer === 'kyle' ? 'lindsey' : 'kyle';
   updateHUD();
   drawBoard();
+
+  if (vsAI && currentPlayer === 'lindsey' && gameActive) {
+    aiThinking = true;
+    updateHUD();
+    setTimeout(runAI, 350 + Math.random() * 250);
+  }
 }
 
 function checkWin(col, row, player) {
@@ -561,6 +594,58 @@ function checkWin(col, row, player) {
     if (line.length >= 5) return line;
   }
   return null;
+}
+
+// Score how good it is to place `player`'s stone at (col,row) in one direction
+function evalWindow(col, row, dc, dr, player) {
+  let count = 1;
+  let open = 0;
+  for (let i = 1; i <= 4; i++) {
+    const c = col + dc * i, r = row + dr * i;
+    if (c < 0 || c >= BOARD_SIZE || r < 0 || r >= BOARD_SIZE) break;
+    if (board[r][c] === player) count++;
+    else { if (board[r][c] === null) open++; break; }
+  }
+  for (let i = 1; i <= 4; i++) {
+    const c = col - dc * i, r = row - dr * i;
+    if (c < 0 || c >= BOARD_SIZE || r < 0 || r >= BOARD_SIZE) break;
+    if (board[r][c] === player) count++;
+    else { if (board[r][c] === null) open++; break; }
+  }
+  if (count >= 5) return 200000;
+  if (open === 0) return 0;
+  const table = { 4: [0, 2000, 20000], 3: [0, 100, 1000], 2: [0, 10, 50], 1: [0, 2, 4] };
+  return table[Math.min(count, 4)]?.[open] ?? 0;
+}
+
+function scoreCell(col, row, player) {
+  const dirs = [[1,0],[0,1],[1,1],[1,-1]];
+  return dirs.reduce((s, [dc, dr]) => s + evalWindow(col, row, dc, dr, player), 0);
+}
+
+function runAI() {
+  if (!gameActive) { aiThinking = false; return; }
+  const mid = (BOARD_SIZE - 1) / 2;
+  let best = -1;
+  let moves = [];
+
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      if (board[r][c]) continue;
+      const atk = scoreCell(c, r, 'lindsey');
+      const def = scoreCell(c, r, 'kyle');
+      // Win immediately if possible, else block forced win, else best combined score
+      const score = atk >= 200000 ? 1e9
+        : def >= 200000 ? 9e8
+        : atk + def * 1.05 + 0.01 * (1 - Math.hypot(c - mid, r - mid) / BOARD_SIZE);
+      if (score > best) { best = score; moves = [[c, r]]; }
+      else if (score === best) moves.push([c, r]);
+    }
+  }
+
+  aiThinking = false;
+  const [col, row] = moves[Math.floor(Math.random() * moves.length)];
+  placeStone(col, row);
 }
 
 function endGame(winner) {
@@ -607,7 +692,7 @@ function getCanvasPos(e) {
 }
 
 canvas.addEventListener('click', e => {
-  if (!gameActive) return;
+  if (!gameActive || aiThinking) return;
   const { px, py } = getCanvasPos(e);
   const cell = xyToCell(px, py);
   if (cell) placeStone(cell.col, cell.row);
@@ -615,7 +700,7 @@ canvas.addEventListener('click', e => {
 
 canvas.addEventListener('touchstart', e => {
   e.preventDefault();
-  if (!gameActive) return;
+  if (!gameActive || aiThinking) return;
   const touch = e.touches[0];
   const rect = canvas.getBoundingClientRect();
   const sx = canvas.width / rect.width;
