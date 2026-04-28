@@ -260,6 +260,22 @@
     .pause-btn:hover { border-color: #f9c22e; color: #f9c22e; }
     .pause-btn.paused { border-color: #2ecc71; color: #2ecc71; background: rgba(46,204,113,0.1); }
 
+    .skip-btn {
+      display: block;
+      margin: 10px auto 0;
+      padding: 7px 22px;
+      border-radius: 10px;
+      border: 1px solid #2a2a3e;
+      background: transparent;
+      color: #556;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .skip-btn:hover:not(:disabled) { color: #aab; border-color: #445; }
+    .skip-btn:disabled { opacity: 0.25; cursor: default; }
+
     /* Paused overlay — covers choices only, not the question card */
     .choices-wrap { position: relative; width: 100%; }
     .game-paused-overlay {
@@ -597,6 +613,8 @@
         <div class="choices-grid" id="choicesGrid"></div>
       </div>
 
+      <button class="skip-btn" id="skipBtn">Skip →</button>
+
     </div>
 
   </div>
@@ -617,6 +635,7 @@
     </div>
 
     <button class="play-again-btn" id="playAgainBtn">Play Again 🔄</button>
+    <button class="play-again-btn" id="replayBtn" style="background:linear-gradient(135deg,#22A6B3,#1a8a96);box-shadow:0 4px 20px rgba(34,166,179,0.35);margin-top:0">Same Words Again 🔁</button>
   </div>
 
   <!-- Feedback toast -->
@@ -1011,7 +1030,30 @@ const WORDS = {
     { zh: '很冷',     py: 'hěn lěng',          en: 'Very cold' },
     { zh: '熱鬧',     py: 'rè nào',            en: 'Lively / Bustling' },
   ],
+  // To restore full list: rename lindsey_full → lindsey (and lindsey → lindsey_lesson8)
   lindsey: [
+    // 第八課
+    { zh: '爬樹',     py: 'pá shù',            en: 'Climb a tree' },
+    { zh: '賽跑',     py: 'sài pǎo',           en: 'Race' },
+    { zh: '跳繩',     py: 'tiào shéng',        en: 'Jump rope' },
+    { zh: '翻跟斗',   py: 'fān gēn dou',       en: 'Somersault' },
+    { zh: '起來',     py: 'qǐ lái',            en: 'Get up / Stand up' },
+    { zh: '妹妹',     py: 'mèi mei',           en: 'Younger sister' },
+    { zh: '游泳',     py: 'yóu yǒng',          en: 'Swim' },
+    { zh: '黑色',     py: 'hēi sè',            en: 'Black' },
+    { zh: '飛盤',     py: 'fēi pán',           en: 'Frisbee' },
+    { zh: '不會',     py: 'bù huì',            en: "Can't / Don't know how" },
+    { zh: '爬山',     py: 'pá shān',           en: 'Hike / Climb a mountain' },
+    { zh: '跑步',     py: 'pǎo bù',            en: 'Run / Jog' },
+    { zh: '跳舞',     py: 'tiào wǔ',           en: 'Dance' },
+    { zh: '一起',     py: 'yī qǐ',             en: 'Together' },
+    { zh: '游泳池',   py: 'yóu yǒng chí',      en: 'Swimming pool' },
+    { zh: '飛機',     py: 'fēi jī',            en: 'Airplane' },
+    { zh: '怎麼辦',   py: 'zěn me bàn',        en: 'What to do / What now?' },
+    { zh: '開會',     py: 'kāi huì',           en: 'Have a meeting' },
+  ],
+
+  lindsey_full: [
     // 第一課
     { zh: '牛肉',     py: 'niú ròu',           en: 'Beef' },
     { zh: '馬路',     py: 'mǎ lù',             en: 'Road / Street' },
@@ -1182,6 +1224,7 @@ const WORDS = {
 // ═══════════════════════════════════════════════════════
 let cfg = { grade: '2', dir: 'zh2en', mode: 'solo', count: 20, timer: 3 };
 let queue = [], qIdx = 0, scores = { kyle: 0, lindsey: 0 }, streak = 0;
+let lastQueue = [];
 let currentPlayer = 'kyle'; // for versus
 let answeredLog = [];        // { word, correct, player }
 let answered = false;
@@ -1201,7 +1244,27 @@ document.querySelectorAll('.opt-btn').forEach(btn => {
 });
 
 $('startBtn').addEventListener('click', startGame);
+$('skipBtn').addEventListener('click', skipQuestion);
 $('playAgainBtn').addEventListener('click', () => showScreen('setupScreen'));
+$('replayBtn').addEventListener('click', replayWithSameWords);
+
+function replayWithSameWords() {
+  queue = shuffle([...lastQueue]);
+  qIdx = 0;
+  scores = { kyle: 0, lindsey: 0 };
+  streak = 0;
+  answeredLog = [];
+  currentPlayer = 'kyle';
+  const versus = cfg.mode === 'versus';
+  $('playerCards').style.display = versus ? 'flex' : 'none';
+  $('soloScore').style.display = versus ? 'none' : 'flex';
+  $('kyleScore').textContent = '0';
+  $('lindseyScore').textContent = '0';
+  $('soloScoreVal').textContent = '0';
+  TIMER_SECS = Number(cfg.timer);
+  showScreen('gameScreen');
+  renderQuestion();
+}
 
 // ═══════════════════════════════════════════════════════
 //  SPEECH
@@ -1303,6 +1366,7 @@ function startGame() {
     queue = pool.slice(0, Math.min(count, pool.length));
   }
   qIdx = 0;
+  lastQueue = [...queue];
   scores = { kyle: 0, lindsey: 0 };
   streak = 0;
   answeredLog = [];
@@ -1435,6 +1499,7 @@ function updateTimerLabel(secs) {
 function timeOut(word) {
   if (answered) return;
   answered = true;
+  $('skipBtn').disabled = true;
 
   // Mark all buttons disabled
   const buttons = $('choicesGrid').querySelectorAll('.choice-btn');
@@ -1461,11 +1526,35 @@ function timeOut(word) {
   }, 1400);
 }
 
+function skipQuestion() {
+  if (answered) return;
+  answered = true;
+  $('skipBtn').disabled = true;
+  stopTimer();
+  streak = 0;
+  const word = queue[qIdx];
+  // Reveal the answer so they can learn
+  if (cfg.dir === 'zh2en') {
+    $('questionContent').innerHTML += `<div class="pinyin" style="margin-top:8px">${word.py}</div>`;
+  }
+  showToast('➡ Skipped', 'wrong');
+  answeredLog.push({ word, correct: false, player: currentPlayer });
+  if (cfg.mode === 'versus') {
+    currentPlayer = currentPlayer === 'kyle' ? 'lindsey' : 'kyle';
+  }
+  setTimeout(() => {
+    qIdx++;
+    if (qIdx >= queue.length) showResults();
+    else renderQuestion();
+  }, 900);
+}
+
 // ═══════════════════════════════════════════════════════
 //  QUESTION RENDERING
 // ═══════════════════════════════════════════════════════
 function renderQuestion() {
   answered = false;
+  $('skipBtn').disabled = false;
   const word = queue[qIdx];
   const total = queue.length;
 
@@ -1541,6 +1630,7 @@ function buildChoices(word) {
 function handleChoice(btn, word) {
   if (answered) return;
   answered = true;
+  $('skipBtn').disabled = true;
   stopTimer();
 
   const correct = btn.dataset.correct === '1';

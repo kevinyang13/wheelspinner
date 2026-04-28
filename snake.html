@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Snake — Kyle vs Lindsey</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #05080f;
+      display: flex; flex-direction: column; align-items: center;
+      min-height: 100vh; padding: 12px 16px 24px;
+      font-family: system-ui, sans-serif; color: #eee;
+      user-select: none; -webkit-user-select: none;
+    }
+    nav {
+      width: 100%; max-width: 680px;
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 10px;
+    }
+    nav a { color: #f0c040; text-decoration: none; font-size: 0.9rem; opacity: 0.8; }
+    nav a:hover { opacity: 1; }
+    nav span { font-size: 1rem; font-weight: bold; }
+
+    #scoreboard {
+      display: flex; gap: 40px; margin-bottom: 12px;
+      font-size: 1rem; font-weight: 700;
+    }
+    .score-kyle    { color: #f0c040; }
+    .score-lindsey { color: #22A6B3; }
+    .score-val { font-size: 1.6rem; display: block; text-align: center; }
+
+    /* ── Game area: canvas + D-pads ── */
+    #game-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 800px;
+      gap: 10px;
+    }
+    #canvas-col {
+      width: 100%; max-width: 600px;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    #canvas-wrap { width: 100%; }
+    canvas {
+      display: block; width: 100%; height: auto;
+      border-radius: 8px;
+      box-shadow: 0 0 60px rgba(80,200,255,0.12), 0 0 20px rgba(0,0,0,0.6);
+      touch-action: none;
+    }
+
+    #controls-hint {
+      margin-top: 8px;
+      display: flex; gap: 40px;
+      font-size: 0.75rem; color: #445; text-align: center;
+    }
+    .hint-kyle    { color: #7a6020; }
+    .hint-lindsey { color: #1a5a62; }
+
+    /* ── D-pad touch controls ── */
+    .dpad-wrap {
+      display: none; /* shown only on touch */
+      flex-direction: column; align-items: center; gap: 2px;
+    }
+    .dpad-label {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+    .dpad-label.kyle    { color: #f0c040; }
+    .dpad-label.lindsey { color: #22A6B3; }
+    .dpad-row { display: flex; gap: 2px; }
+    .dpad-btn {
+      width: 52px; height: 52px;
+      border-radius: 10px;
+      border: 2px solid #223;
+      background: #111828;
+      color: #667;
+      font-size: 1.3rem;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; touch-action: manipulation;
+      transition: background 0.1s, color 0.1s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .dpad-btn:active { background: #1e2d4a; color: #aaa; }
+    .dpad-center { width: 52px; height: 52px; }
+
+    /* ── Overlay ── */
+    #overlay {
+      position: fixed; inset: 0;
+      background: rgba(5,8,15,0.92);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 20px; z-index: 10;
+      padding: 20px;
+    }
+    #overlay h1 {
+      font-size: 2.2rem; font-weight: 900;
+      background: linear-gradient(135deg, #f0c040, #22A6B3);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    #overlay-sub {
+      font-size: 0.95rem; color: #778; text-align: center; line-height: 1.6;
+    }
+    #result-banner {
+      font-size: 1.4rem; font-weight: 800; text-align: center;
+    }
+    .result-kyle    { color: #f0c040; }
+    .result-lindsey { color: #22A6B3; }
+    .result-tie     { color: #aaa; }
+
+    .overlay-scores { display: flex; gap: 32px; font-size: 0.95rem; }
+    .os-kyle    { color: #f0c040; font-weight: 700; }
+    .os-lindsey { color: #22A6B3; font-weight: 700; }
+
+    .btn {
+      padding: 13px 40px; border-radius: 12px;
+      border: 2px solid #22A6B3; background: rgba(34,166,179,0.12);
+      color: #22A6B3; font-size: 1rem; font-weight: 700; cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .btn:hover { background: rgba(34,166,179,0.25); color: #fff; }
+    .btn-row { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+
+    .opt-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+    .opt-btn {
+      padding: 8px 20px; border-radius: 10px;
+      border: 2px solid #334; background: #111828;
+      color: #889; font-size: 0.88rem; cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .opt-btn.sel { border-color: #22A6B3; color: #22A6B3; }
+    .overlay-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #445; }
+
+    /* ── Touch: portrait — D-pads side-by-side below canvas ── */
+    @media (hover: none) and (pointer: coarse) and (orientation: portrait) {
+      #controls-hint { display: none; }
+      #game-area     { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 16px; }
+      #canvas-col    { order: 1; flex: 0 0 100%; }
+      .dpad-wrap     { display: flex; flex: 0 0 auto; }
+    }
+
+    /* ── Touch: landscape — D-pads flank the canvas ── */
+    @media (hover: none) and (pointer: coarse) and (orientation: landscape) {
+      body           { padding: 6px 8px 10px; }
+      #controls-hint { display: none; }
+      #game-area     { flex-direction: row; flex-wrap: nowrap; align-items: center; gap: 8px; }
+      #canvas-col    { order: 2; flex: 1; min-width: 0; max-width: none; }
+      #dpad-kyle     { display: flex; order: 1; flex: 0 0 auto; }
+      #dpad-lindsey  { display: flex; order: 3; flex: 0 0 auto; }
+      /* Scale canvas to viewport height so it doesn't overflow */
+      canvas         { height: calc(100svh - 80px); width: auto; max-width: 100%; }
+      .dpad-btn      { width: 46px; height: 46px; font-size: 1.15rem; }
+      .dpad-center   { width: 46px; height: 46px; }
+      #scoreboard    { margin-bottom: 6px; }
+      .score-val     { font-size: 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html">← Games</a>
+  <span>🐍 Snake</span>
+  <span style="width:80px"></span>
+</nav>
+
+<div id="scoreboard">
+  <div class="score-kyle">Kyle <span class="score-val" id="kyle-score">0</span></div>
+  <div class="score-lindsey">Lindsey <span class="score-val" id="lindsey-score">0</span></div>
+</div>
+
+<div id="game-area">
+
+  <!-- Kyle D-pad (left in landscape, below-left in portrait) -->
+  <div class="dpad-wrap" id="dpad-kyle">
+    <div class="dpad-label kyle">Kyle</div>
+    <div class="dpad-row">
+      <div class="dpad-center"></div>
+      <button class="dpad-btn" data-player="kyle" data-dir="up">↑</button>
+      <div class="dpad-center"></div>
+    </div>
+    <div class="dpad-row">
+      <button class="dpad-btn" data-player="kyle" data-dir="left">←</button>
+      <div class="dpad-center"></div>
+      <button class="dpad-btn" data-player="kyle" data-dir="right">→</button>
+    </div>
+    <div class="dpad-row">
+      <div class="dpad-center"></div>
+      <button class="dpad-btn" data-player="kyle" data-dir="down">↓</button>
+      <div class="dpad-center"></div>
+    </div>
+  </div>
+
+  <!-- Canvas column (center) -->
+  <div id="canvas-col">
+    <div id="canvas-wrap">
+      <canvas id="c" width="600" height="480"></canvas>
+    </div>
+    <div id="controls-hint">
+      <div class="hint-kyle">Kyle: WASD</div>
+      <div class="hint-lindsey" id="hint-lindsey">Lindsey: Arrow Keys</div>
+    </div>
+  </div>
+
+  <!-- Lindsey D-pad (right in landscape, below-right in portrait) -->
+  <div class="dpad-wrap" id="dpad-lindsey">
+    <div class="dpad-label lindsey" id="dpad-lindsey-label">Lindsey</div>
+    <div class="dpad-row">
+      <div class="dpad-center"></div>
+      <button class="dpad-btn" data-player="lindsey" data-dir="up">↑</button>
+      <div class="dpad-center"></div>
+    </div>
+    <div class="dpad-row">
+      <button class="dpad-btn" data-player="lindsey" data-dir="left">←</button>
+      <div class="dpad-center"></div>
+      <button class="dpad-btn" data-player="lindsey" data-dir="right">→</button>
+    </div>
+    <div class="dpad-row">
+      <div class="dpad-center"></div>
+      <button class="dpad-btn" data-player="lindsey" data-dir="down">↓</button>
+      <div class="dpad-center"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Start / Game-over overlay -->
+<div id="overlay">
+  <h1>🐍 Snake</h1>
+  <div id="overlay-sub"></div>
+  <div id="result-banner" style="display:none"></div>
+  <div class="overlay-scores" id="overlay-scores" style="display:none">
+    <span class="os-kyle" id="ov-kyle-score"></span>
+    <span class="os-lindsey" id="ov-lindsey-score"></span>
+  </div>
+  <div>
+    <div class="overlay-label" style="text-align:center;margin-bottom:8px">Mode</div>
+    <div class="opt-row">
+      <button class="opt-btn sel" data-mode="2p">2 Players</button>
+      <button class="opt-btn" data-mode="ai">vs AI</button>
+    </div>
+  </div>
+  <div>
+    <div class="overlay-label" style="text-align:center;margin-bottom:8px">Speed</div>
+    <div class="opt-row">
+      <button class="opt-btn" data-speed="slow">Slow</button>
+      <button class="opt-btn sel" data-speed="normal">Normal</button>
+      <button class="opt-btn" data-speed="fast">Fast</button>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn" id="start-btn">Start Game</button>
+  </div>
+</div>
+
+<script>
+const COLS = 30, ROWS = 24, CELL = 20;
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+
+const overlay        = document.getElementById('overlay');
+const resultBanner   = document.getElementById('result-banner');
+const overlayScores  = document.getElementById('overlay-scores');
+const ovKyleScore    = document.getElementById('ov-kyle-score');
+const ovLindseyScore = document.getElementById('ov-lindsey-score');
+const overlaySub     = document.getElementById('overlay-sub');
+const startBtn       = document.getElementById('start-btn');
+const kyleScoreEl    = document.getElementById('kyle-score');
+const lindseyScoreEl = document.getElementById('lindsey-score');
+const hintLindsey    = document.getElementById('hint-lindsey');
+const dpadLindsey    = document.getElementById('dpad-lindsey');
+const dpadLindseyLabel = document.getElementById('dpad-lindsey-label');
+
+const SPEEDS = { slow: 150, normal: 105, fast: 65 };
+let speed = 'normal';
+let mode  = '2p';
+let gameInterval = null;
+let gameActive   = false;
+
+// ── Option buttons ──
+document.querySelectorAll('[data-mode]').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('[data-mode]').forEach(x => x.classList.remove('sel'));
+    b.classList.add('sel');
+    mode = b.dataset.mode;
+    updateOverlaySub();
+  });
+});
+document.querySelectorAll('[data-speed]').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('[data-speed]').forEach(x => x.classList.remove('sel'));
+    b.classList.add('sel');
+    speed = b.dataset.speed;
+  });
+});
+
+function updateOverlaySub() {
+  if (mode === 'ai') {
+    overlaySub.innerHTML = 'Kyle: <b>WASD / D-pad</b> &nbsp;·&nbsp; Lindsey: <b>AI</b><br>Eat food to grow. Walls wrap — avoid yourself &amp; each other!';
+  } else {
+    overlaySub.innerHTML = 'Kyle: <b>WASD / left D-pad</b> &nbsp;·&nbsp; Lindsey: <b>Arrows / right D-pad</b><br>Eat food to grow. Walls wrap — avoid yourself &amp; each other!';
+  }
+}
+updateOverlaySub();
+
+// ── State ──
+let kyle, lindsey, food;
+
+function initState() {
+  kyle = {
+    body: [{ x: 7, y: 11 }, { x: 6, y: 11 }, { x: 5, y: 11 }],
+    dir: { x: 1, y: 0 }, nextDir: { x: 1, y: 0 },
+    score: 0, color: '#f0c040', darkColor: '#7a6020', dead: false,
+  };
+  lindsey = {
+    body: [{ x: 22, y: 12 }, { x: 23, y: 12 }, { x: 24, y: 12 }],
+    dir: { x: -1, y: 0 }, nextDir: { x: -1, y: 0 },
+    score: 0, color: '#22A6B3', darkColor: '#1a5a62', dead: false,
+    isAI: mode === 'ai',
+  };
+  spawnFood();
+}
+
+function spawnFood() {
+  const occupied = new Set();
+  [...kyle.body, ...lindsey.body].forEach(s => occupied.add(s.x + ',' + s.y));
+  let pos;
+  do {
+    pos = { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) };
+  } while (occupied.has(pos.x + ',' + pos.y));
+  food = pos;
+}
+
+// ── Keyboard input ──
+const KEY_KYLE = {
+  KeyW: { x: 0, y: -1 }, KeyS: { x: 0, y: 1 },
+  KeyA: { x: -1, y: 0 }, KeyD: { x: 1, y: 0 },
+};
+const KEY_LINDSEY = {
+  ArrowUp: { x: 0, y: -1 }, ArrowDown: { x: 0, y: 1 },
+  ArrowLeft: { x: -1, y: 0 }, ArrowRight: { x: 1, y: 0 },
+};
+
+document.addEventListener('keydown', e => {
+  if (!gameActive) return;
+  if (KEY_KYLE[e.code]) {
+    applyDir(kyle, KEY_KYLE[e.code]);
+    e.preventDefault();
+  }
+  if (!lindsey.isAI && KEY_LINDSEY[e.code]) {
+    applyDir(lindsey, KEY_LINDSEY[e.code]);
+    e.preventDefault();
+  }
+});
+
+function applyDir(snake, d) {
+  if (d.x !== -snake.dir.x || d.y !== -snake.dir.y)
+    snake.nextDir = d;
+}
+
+// ── Touch D-pad input ──
+const DIR_MAP = {
+  up: { x: 0, y: -1 }, down: { x: 0, y: 1 },
+  left: { x: -1, y: 0 }, right: { x: 1, y: 0 },
+};
+document.querySelectorAll('.dpad-btn').forEach(btn => {
+  const handler = e => {
+    e.preventDefault();
+    if (!gameActive) return;
+    const d = DIR_MAP[btn.dataset.dir];
+    if (btn.dataset.player === 'kyle') applyDir(kyle, d);
+    if (btn.dataset.player === 'lindsey' && !lindsey.isAI) applyDir(lindsey, d);
+  };
+  btn.addEventListener('touchstart', handler, { passive: false });
+  btn.addEventListener('mousedown',  handler);
+});
+
+// ── Swipe on canvas (fallback for mobile) ──
+let swipeStart = null;
+canvas.addEventListener('touchstart', e => {
+  swipeStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+}, { passive: true });
+canvas.addEventListener('touchend', e => {
+  if (!swipeStart || !gameActive) return;
+  const dx = e.changedTouches[0].clientX - swipeStart.x;
+  const dy = e.changedTouches[0].clientY - swipeStart.y;
+  if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+  let d;
+  if (Math.abs(dx) > Math.abs(dy)) d = dx > 0 ? DIR_MAP.right : DIR_MAP.left;
+  else                              d = dy > 0 ? DIR_MAP.down  : DIR_MAP.up;
+  applyDir(kyle, d);
+  swipeStart = null;
+}, { passive: true });
+
+// ── AI ──
+const ALL_DIRS = [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }];
+
+function wrappedDist(ax, ay, bx, by) {
+  const dx = Math.min(Math.abs(ax - bx), COLS - Math.abs(ax - bx));
+  const dy = Math.min(Math.abs(ay - by), ROWS - Math.abs(ay - by));
+  return dx + dy;
+}
+
+function aiDecide(snake, other) {
+  const head = snake.body[0];
+  const occupied = new Set();
+  snake.body.slice(0, -1).forEach(s => occupied.add(s.x + ',' + s.y));
+  other.body.slice(0, -1).forEach(s => occupied.add(s.x + ',' + s.y));
+
+  const safe = ALL_DIRS.filter(d => {
+    if (d.x === -snake.dir.x && d.y === -snake.dir.y) return false;
+    const nx = (head.x + d.x + COLS) % COLS;
+    const ny = (head.y + d.y + ROWS) % ROWS;
+    return !occupied.has(nx + ',' + ny);
+  });
+
+  if (safe.length === 0) return;
+
+  safe.sort((a, b) => {
+    const na = { x: (head.x + a.x + COLS) % COLS, y: (head.y + a.y + ROWS) % ROWS };
+    const nb = { x: (head.x + b.x + COLS) % COLS, y: (head.y + b.y + ROWS) % ROWS };
+    return wrappedDist(na.x, na.y, food.x, food.y) - wrappedDist(nb.x, nb.y, food.x, food.y);
+  });
+
+  snake.nextDir = (Math.random() < 0.15 && safe.length > 1)
+    ? safe[Math.floor(Math.random() * safe.length)]
+    : safe[0];
+}
+
+// ── Game tick ──
+function tick() {
+  if (lindsey.isAI && !lindsey.dead) aiDecide(lindsey, kyle);
+  moveSnake(kyle);
+  moveSnake(lindsey);
+  checkCollisions();
+  draw();
+  if (kyle.dead || lindsey.dead) endGame();
+}
+
+function moveSnake(snake) {
+  if (snake.dead) return;
+  snake.dir = { ...snake.nextDir };
+  const head = {
+    x: (snake.body[0].x + snake.dir.x + COLS) % COLS,
+    y: (snake.body[0].y + snake.dir.y + ROWS) % ROWS,
+  };
+  const ate = head.x === food.x && head.y === food.y;
+  snake.body.unshift(head);
+  if (ate) { snake.score++; spawnFood(); }
+  else      { snake.body.pop(); }
+}
+
+function checkCollisions() {
+  for (const snake of [kyle, lindsey]) {
+    if (snake.dead) continue;
+    const h = snake.body[0];
+    for (let i = 1; i < snake.body.length; i++) {
+      if (snake.body[i].x === h.x && snake.body[i].y === h.y) {
+        snake.dead = true;
+        snake.collisionAt = { x: h.x, y: h.y };
+        break;
+      }
+    }
+    if (snake.dead) continue;
+    const other = snake === kyle ? lindsey : kyle;
+    for (const seg of other.body) {
+      if (seg.x === h.x && seg.y === h.y) {
+        snake.dead = true;
+        snake.collisionAt = { x: h.x, y: h.y };
+        break;
+      }
+    }
+  }
+}
+
+// ── Drawing ──
+function draw() {
+  ctx.fillStyle = '#0a0e1a';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = '#0f1422';
+  for (let x = 0; x < COLS; x++)
+    for (let y = 0; y < ROWS; y++)
+      ctx.fillRect(x * CELL + CELL / 2 - 1, y * CELL + CELL / 2 - 1, 2, 2);
+
+  drawSnake(kyle);
+  drawSnake(lindsey);
+  drawFood();
+  drawInGameScores();
+
+  kyleScoreEl.textContent    = kyle.score;
+  lindseyScoreEl.textContent = lindsey.score;
+}
+
+function drawInGameScores() {
+  ctx.save();
+  ctx.textBaseline = 'top';
+  ctx.font         = 'bold 13px system-ui, sans-serif';
+
+  // Kyle — top-left
+  ctx.textAlign  = 'left';
+  ctx.fillStyle  = 'rgba(0,0,0,0.45)';
+  ctx.fillRect(4, 4, 76, 20);
+  ctx.fillStyle  = kyle.dead ? '#555' : '#f0c040';
+  ctx.fillText(`Kyle: ${kyle.score}`, 8, 7);
+
+  // Lindsey — top-right
+  ctx.textAlign  = 'right';
+  ctx.fillStyle  = 'rgba(0,0,0,0.45)';
+  ctx.fillRect(canvas.width - 80, 4, 76, 20);
+  ctx.fillStyle  = lindsey.dead ? '#555' : '#22A6B3';
+  ctx.fillText(`Lindsey: ${lindsey.score}`, canvas.width - 8, 7);
+
+  ctx.restore();
+}
+
+function drawSnake(snake) {
+  const color = snake.dead ? '#333' : snake.color;
+  const dark  = snake.dead ? '#222' : snake.darkColor;
+  snake.body.forEach((seg, i) => {
+    const pad = i === 0 ? 1 : 2;
+    ctx.fillStyle = i === 0 ? color : dark;
+    roundRect(seg.x * CELL + pad, seg.y * CELL + pad, CELL - pad * 2, CELL - pad * 2, i === 0 ? 5 : 4);
+    if (i === 0 && !snake.dead) {
+      ctx.shadowColor = color;
+      ctx.shadowBlur  = 10;
+      roundRect(seg.x * CELL + pad, seg.y * CELL + pad, CELL - pad * 2, CELL - pad * 2, 5);
+      ctx.shadowBlur = 0;
+    }
+  });
+  if (snake.isAI && !snake.dead && snake.body.length > 0) {
+    const h = snake.body[0];
+    ctx.fillStyle = 'rgba(34,166,179,0.9)';
+    ctx.font = 'bold 9px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText('AI', h.x * CELL + CELL / 2, h.y * CELL + CELL / 2 + 3);
+  }
+}
+
+function drawFood() {
+  const cx = food.x * CELL + CELL / 2;
+  const cy = food.y * CELL + CELL / 2;
+  const r  = CELL / 2 - 3;
+  ctx.shadowColor = '#ff4466';
+  ctx.shadowBlur  = 12;
+  ctx.fillStyle   = '#ff4466';
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+  ctx.shadowBlur  = 0;
+  ctx.fillStyle   = 'rgba(255,255,255,0.35)';
+  ctx.beginPath(); ctx.arc(cx - 2, cy - 2, r * 0.4, 0, Math.PI * 2); ctx.fill();
+}
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  ctx.fill();
+}
+
+// ── Collision + winner canvas animation ──
+let endAnimFrame = null;
+const END_ANIM_MS = 2500;
+
+function drawCollisionBurst(pos, color, t) {
+  // t: 0→1 over END_ANIM_MS
+  const cx = pos.x * CELL + CELL / 2;
+  const cy = pos.y * CELL + CELL / 2;
+
+  // Three staggered expanding rings
+  for (let i = 0; i < 3; i++) {
+    const delay = i * 0.12;
+    const p = Math.max(0, Math.min(1, (t - delay) / 0.55));
+    if (p <= 0) continue;
+    ctx.save();
+    ctx.globalAlpha = (1 - p) * 0.9;
+    ctx.strokeStyle = color;
+    ctx.lineWidth   = 3 - i * 0.6;
+    ctx.shadowColor = color;
+    ctx.shadowBlur  = 14;
+    ctx.beginPath();
+    ctx.arc(cx, cy, p * 48, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // X mark — fades in quickly and stays
+  const xAlpha = Math.min(t / 0.2, 1);
+  const xSize  = 10;
+  ctx.save();
+  ctx.globalAlpha = xAlpha;
+  ctx.strokeStyle = color;
+  ctx.lineWidth   = 3.5;
+  ctx.lineCap     = 'round';
+  ctx.shadowColor = color;
+  ctx.shadowBlur  = 12;
+  ctx.beginPath();
+  ctx.moveTo(cx - xSize, cy - xSize); ctx.lineTo(cx + xSize, cy + xSize);
+  ctx.moveTo(cx + xSize, cy - xSize); ctx.lineTo(cx - xSize, cy + xSize);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawWinnerOnCanvas(text, color, t) {
+  // Fades in after 0.25 of the animation
+  const alpha = Math.max(0, Math.min(1, (t - 0.25) / 0.25));
+  if (alpha <= 0) return;
+
+  const cx = canvas.width  / 2;
+  const cy = canvas.height / 2;
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+
+  // Dark pill background — measure AFTER font is set
+  ctx.font        = 'bold 32px system-ui, sans-serif';
+  ctx.textAlign   = 'center';
+  ctx.textBaseline= 'middle';
+  const tw = ctx.measureText(text).width + 60;
+  ctx.fillStyle   = 'rgba(5,8,15,0.78)';
+  roundRect(cx - tw / 2, cy - 28, tw, 56, 14);
+
+  // Winner text with glow
+  ctx.shadowColor = color;
+  ctx.shadowBlur  = 24;
+  ctx.fillStyle   = color;
+  ctx.fillText(text, cx, cy);
+
+  ctx.restore();
+}
+
+// ── Game flow ──
+function startGame() {
+  if (endAnimFrame) { cancelAnimationFrame(endAnimFrame); endAnimFrame = null; }
+  initState();
+  const isAI = lindsey.isAI;
+  hintLindsey.textContent   = isAI ? 'Lindsey: AI' : 'Lindsey: Arrow Keys';
+  dpadLindsey.style.display = isAI ? 'none' : '';
+  overlay.style.display     = 'none';
+  gameActive = true;
+  clearInterval(gameInterval);
+  gameInterval = setInterval(tick, SPEEDS[speed]);
+  draw();
+}
+
+function endGame() {
+  clearInterval(gameInterval);
+  gameActive = false;
+
+  const kDead = kyle.dead, lDead = lindsey.dead;
+  let winnerText, winnerColor, bannerClass;
+  if (kDead && lDead) {
+    winnerText = "It's a Tie!"; winnerColor = '#aaa'; bannerClass = 'result-tie';
+  } else if (kDead) {
+    winnerText  = lindsey.isAI ? 'AI Wins!' : 'Lindsey Wins!';
+    winnerColor = '#22A6B3'; bannerClass = 'result-lindsey';
+  } else {
+    winnerText = 'Kyle Wins!'; winnerColor = '#f0c040'; bannerClass = 'result-kyle';
+  }
+
+  const animStart = performance.now();
+  function animateEnd(now) {
+    const t = Math.min((now - animStart) / END_ANIM_MS, 1);
+    draw();
+    for (const snake of [kyle, lindsey]) {
+      if (snake.collisionAt) drawCollisionBurst(snake.collisionAt, snake.color, t);
+    }
+    drawWinnerOnCanvas(winnerText, winnerColor, t);
+
+    if (t < 1) {
+      endAnimFrame = requestAnimationFrame(animateEnd);
+    } else {
+      endAnimFrame = null;
+      showResultOverlay(winnerText, bannerClass);
+    }
+  }
+  endAnimFrame = requestAnimationFrame(animateEnd);
+}
+
+function showResultOverlay(winnerText, bannerClass) {
+  resultBanner.style.display  = '';
+  overlayScores.style.display = '';
+  ovKyleScore.textContent     = `Kyle: ${kyle.score}`;
+  ovLindseyScore.textContent  = `Lindsey: ${lindsey.score}`;
+  resultBanner.className      = bannerClass;
+  resultBanner.textContent    = winnerText;
+  startBtn.textContent        = 'Play Again';
+  overlay.style.display       = 'flex';
+}
+
+startBtn.addEventListener('click', startGame);
+
+initState();
+draw();
+overlay.style.display = 'flex';
+</script>
+</body>
+</html>
