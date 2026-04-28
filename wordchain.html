@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Word Chain</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #0a0c10;
+      color: #eee;
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 12px 16px 40px;
+    }
+
+    nav {
+      width: 100%; max-width: 640px;
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 12px;
+    }
+    nav a { color: #f472b6; text-decoration: none; font-size: 0.9rem; opacity: 0.8; }
+    nav a:hover { opacity: 1; }
+    nav span { font-size: 1rem; font-weight: bold; }
+
+    /* ── Setup ── */
+    #setup-screen {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 28px; padding-top: 12px; width: 100%; max-width: 520px;
+    }
+    .setup-title { font-size: 2.4rem; font-weight: 900; text-align: center; line-height: 1.1; }
+    .setup-title span { display: block; font-size: 0.95rem; color: #556; font-weight: 400; margin-top: 6px; letter-spacing: 1px; }
+
+    .option-group { width: 100%; }
+    .option-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1px; color: #556; margin-bottom: 10px; text-align: center; }
+    .option-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+    .opt-btn {
+      padding: 14px 28px; border-radius: 14px;
+      border: 2px solid #222; background: #111520;
+      color: #889; font-size: 1rem; cursor: pointer; text-align: center;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+      min-width: 140px;
+    }
+    .opt-btn small { display: block; font-size: 0.72rem; color: #445; margin-top: 3px; }
+    .opt-btn:hover { border-color: #f472b6; color: #f472b6; }
+    .opt-btn.sel { border-color: #f472b6; color: #f472b6; background: rgba(244,114,182,0.08); }
+
+    .big-start {
+      padding: 15px 64px; font-size: 1.2rem; font-weight: bold;
+      border: none; border-radius: 32px;
+      background: linear-gradient(135deg, #f472b6, #c026d3);
+      color: #fff; cursor: pointer;
+      box-shadow: 0 4px 20px rgba(244,114,182,0.35);
+      transition: transform 0.1s;
+    }
+    .big-start:hover { transform: scale(1.04); }
+
+    /* ── Game ── */
+    #game-screen { display: none; flex-direction: column; align-items: center; gap: 14px; width: 100%; max-width: 580px; }
+
+    /* Solo score */
+    .solo-score-wrap {
+      width: 100%; background: #111520; border-radius: 14px;
+      padding: 14px 24px; text-align: center;
+    }
+    .solo-score-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #445; }
+    .solo-score-num { font-size: 2.8rem; font-weight: 900; color: #f472b6; line-height: 1.1; }
+    .solo-best { font-size: 0.82rem; color: #445; margin-top: 2px; }
+
+    /* Scoreboard */
+    .scoreboard {
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%; background: #111520; border-radius: 14px; padding: 12px 20px;
+    }
+    .player-box { text-align: center; min-width: 80px; transition: opacity 0.25s; opacity: 0.38; }
+    .player-box .pname { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: #556; }
+    .player-box .pscore { font-size: 1.8rem; font-weight: bold; line-height: 1.1; }
+    .player-box.kyle    .pscore { color: #f0c040; }
+    .player-box.lindsey .pscore { color: #22A6B3; }
+    .player-box.active-player { background: rgba(255,255,255,0.06); border-radius: 10px; padding: 4px 12px; opacity: 1; }
+    .player-box .lives { font-size: 0.9rem; margin-top: 2px; letter-spacing: -2px; }
+    .round-center { text-align: center; flex: 1; }
+    .round-center .chain-count { font-size: 0.82rem; color: #445; }
+    .round-center .rturn { font-size: 1rem; font-weight: bold; color: #eee; margin-top: 2px; }
+
+    /* Timer */
+    .timer-wrap { display: flex; justify-content: center; }
+    .timer-ring { position: relative; width: 64px; height: 64px; }
+    .timer-ring svg { transform: rotate(-90deg); }
+    .timer-track { fill: none; stroke: #1e2a44; stroke-width: 5; }
+    .timer-fill  { fill: none; stroke-width: 5; stroke-linecap: round; transition: stroke-dashoffset 0.9s linear, stroke 0.3s; }
+    .timer-text {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; font-weight: 900;
+    }
+
+    /* Chain display */
+    .chain-wrap {
+      width: 100%; background: #111520; border-radius: 14px;
+      padding: 14px 16px; min-height: 56px; max-height: 110px; overflow-y: auto;
+    }
+    .chain-words { display: flex; flex-wrap: wrap; gap: 3px 2px; align-items: center; }
+    .chain-word { font-size: 0.88rem; }
+    .chain-word .word-body { color: #667; }
+    .chain-word .link-letter { color: #f472b6; font-weight: bold; }
+    .chain-word.last .word-body { color: #ccc; }
+    .chain-word.last .link-letter { color: #f472b6; font-size: 1rem; font-weight: 900; }
+    .chain-arrow { color: #2a3040; font-size: 0.75rem; margin: 0 1px; }
+
+    /* Letter prompt */
+    .letter-prompt {
+      width: 100%; background: #111520; border-radius: 16px;
+      padding: 18px 24px; text-align: center;
+    }
+    .lp-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #445; }
+    .lp-letter {
+      font-size: 3.5rem; font-weight: 900; color: #f472b6; line-height: 1.1; margin: 4px 0;
+      text-shadow: 0 0 24px rgba(244,114,182,0.4);
+    }
+    .lp-hint { font-size: 0.82rem; color: #445; }
+
+    /* Input */
+    .input-wrap { width: 100%; display: flex; flex-direction: column; gap: 10px; }
+    .chain-input {
+      width: 100%; padding: 14px 16px; font-size: 1.3rem; font-weight: bold;
+      border-radius: 12px; border: 2px solid #223; background: #0a0e18;
+      color: #fff; text-align: center; text-transform: lowercase;
+      outline: none; transition: border-color 0.2s; letter-spacing: 2px;
+    }
+    .chain-input:focus { border-color: #f472b6; }
+    .chain-input.err { border-color: #f87171; animation: shake 0.4s; }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%      { transform: translateX(-8px); }
+      40%      { transform: translateX(8px); }
+      60%      { transform: translateX(-6px); }
+      80%      { transform: translateX(6px); }
+    }
+    .submit-btn {
+      width: 100%; padding: 13px; border-radius: 12px; border: none;
+      background: linear-gradient(135deg, #f472b6, #c026d3);
+      color: #fff; font-size: 1rem; font-weight: bold; cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .submit-btn:hover { transform: scale(1.02); }
+
+    .feedback-msg { min-height: 28px; text-align: center; font-size: 1rem; font-weight: bold; }
+    .fb-ok  { color: #4ade80; }
+    .fb-err { color: #f87171; }
+
+    /* ── Results ── */
+    #result-screen {
+      display: none; flex-direction: column; align-items: center;
+      gap: 20px; padding-top: 10px; width: 100%; max-width: 520px;
+    }
+    .result-title { font-size: 2rem; font-weight: 900; color: #f472b6; text-align: center; }
+
+    .winner-banner {
+      width: 100%; background: rgba(244,114,182,0.1); border: 2px solid #f472b6;
+      border-radius: 16px; padding: 16px 24px; text-align: center;
+      font-size: 1.2rem; font-weight: bold; color: #f472b6; line-height: 1.5;
+    }
+
+    .result-stats { display: flex; gap: 16px; width: 100%; flex-wrap: wrap; }
+    .stat-card {
+      flex: 1; min-width: 130px; background: #111520; border-radius: 14px;
+      padding: 16px; text-align: center; border: 2px solid transparent;
+    }
+    .stat-card.kyle    { border-color: #f0c040; }
+    .stat-card.lindsey { border-color: #22A6B3; }
+    .stat-card.winner  { box-shadow: 0 0 24px rgba(244,114,182,0.25); }
+    .stat-name  { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #556; }
+    .stat-score { font-size: 2.8rem; font-weight: 900; line-height: 1; }
+    .stat-card.kyle    .stat-score { color: #f0c040; }
+    .stat-card.lindsey .stat-score { color: #22A6B3; }
+    .stat-sub   { font-size: 0.75rem; color: #445; margin-top: 4px; }
+
+    .result-chain-box {
+      width: 100%; background: #111520; border-radius: 14px; padding: 18px;
+    }
+    .result-chain-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: #445; margin-bottom: 10px; }
+    .result-chain-words { display: flex; flex-wrap: wrap; gap: 3px 2px; align-items: center; }
+    .rcw { font-size: 0.85rem; color: #778; }
+    .rcw-arrow { color: #2a3040; margin: 0 1px; font-size: 0.75rem; }
+
+    .result-btns { display: flex; gap: 12px; }
+    .result-btn-primary {
+      padding: 12px 36px; border-radius: 24px; border: none;
+      background: linear-gradient(135deg, #f472b6, #c026d3);
+      color: #fff; font-size: 1rem; font-weight: bold; cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .result-btn-primary:hover { transform: scale(1.04); }
+    .result-btn-secondary {
+      padding: 12px 28px; border-radius: 24px; font-size: 1rem;
+      border: 2px solid #334; background: transparent; color: #aaa;
+      cursor: pointer; transition: border-color 0.2s, color 0.2s;
+    }
+    .result-btn-secondary:hover { border-color: #f472b6; color: #f472b6; }
+
+    @media (max-width: 480px) {
+      .setup-title { font-size: 1.9rem; }
+      .opt-btn { min-width: 0; flex: 1 1 calc(50% - 6px); padding: 12px 10px; }
+      .big-start { width: 100%; }
+      .result-stats { flex-direction: column; }
+      .result-btns { flex-direction: column; width: 100%; }
+      .result-btn-primary, .result-btn-secondary { width: 100%; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html">← Home</a>
+  <span>🔗 Word Chain</span>
+</nav>
+
+<!-- ── Setup ── -->
+<div id="setup-screen">
+  <div class="setup-title">
+    🔗 Word Chain
+    <span>EACH WORD MUST START WHERE THE LAST ONE ENDS</span>
+  </div>
+
+  <div class="option-group">
+    <div class="option-label">Mode</div>
+    <div class="option-row">
+      <button class="opt-btn sel" data-mode="solo">Solo<small>How long can you go?</small></button>
+      <button class="opt-btn"     data-mode="versus">Kyle vs Lindsey<small>Take turns, 3 lives each</small></button>
+    </div>
+  </div>
+
+  <div class="option-group">
+    <div class="option-label">Speed</div>
+    <div class="option-row">
+      <button class="opt-btn" data-speed="20">Easy<small>20 seconds</small></button>
+      <button class="opt-btn sel" data-speed="12">Normal<small>12 seconds</small></button>
+      <button class="opt-btn" data-speed="8">Hard<small>8 seconds</small></button>
+    </div>
+  </div>
+
+  <button class="big-start" id="startBtn">Start Word Chain 🔗</button>
+</div>
+
+<!-- ── Game ── -->
+<div id="game-screen">
+
+  <div class="solo-score-wrap" id="soloWrap">
+    <div class="solo-score-label">Chain Length</div>
+    <div class="solo-score-num" id="soloScoreEl">0</div>
+    <div class="solo-best" id="soloBestEl">Best: 0</div>
+  </div>
+
+  <div class="scoreboard" id="scoreboard">
+    <div class="player-box kyle active-player" id="kyleBox">
+      <div class="pname">Kyle</div>
+      <div class="pscore" id="kyleScoreEl">0</div>
+      <div class="lives" id="kyleLivesEl">❤️❤️❤️</div>
+    </div>
+    <div class="round-center">
+      <div class="chain-count" id="chainCountEl">Chain: 0</div>
+      <div class="rturn" id="turnEl">Kyle's turn</div>
+    </div>
+    <div class="player-box lindsey" id="lindseyBox">
+      <div class="pname">Lindsey</div>
+      <div class="pscore" id="lindseyScoreEl">0</div>
+      <div class="lives" id="lindseyLivesEl">❤️❤️❤️</div>
+    </div>
+  </div>
+
+  <div class="timer-wrap">
+    <div class="timer-ring">
+      <svg width="64" height="64" viewBox="0 0 64 64">
+        <circle class="timer-track" cx="32" cy="32" r="27"/>
+        <circle class="timer-fill" id="timerArc" cx="32" cy="32" r="27"
+          stroke="#f472b6" stroke-dasharray="169.6" stroke-dashoffset="0"/>
+      </svg>
+      <div class="timer-text" id="timerText">12</div>
+    </div>
+  </div>
+
+  <div class="chain-wrap">
+    <div class="chain-words" id="chainWords">
+      <span style="color:#334;font-size:0.85rem">Chain starts here…</span>
+    </div>
+  </div>
+
+  <div class="letter-prompt">
+    <div class="lp-label">Word must start with</div>
+    <div class="lp-letter" id="letterPrompt">?</div>
+    <div class="lp-hint"   id="letterHint"></div>
+  </div>
+
+  <div class="input-wrap">
+    <input class="chain-input" id="chainInput" type="text"
+      placeholder="type a word…"
+      autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" />
+    <button class="submit-btn" id="submitBtn">Submit →</button>
+  </div>
+  <div class="feedback-msg" id="feedbackMsg"></div>
+</div>
+
+<!-- ── Results ── -->
+<div id="result-screen">
+  <div class="result-title" id="resultTitle">Game Over!</div>
+  <div id="resultStatsEl"></div>
+  <div class="result-chain-box">
+    <div class="result-chain-label">The Chain</div>
+    <div class="result-chain-words" id="resultChainEl"></div>
+  </div>
+  <div class="result-btns">
+    <button class="result-btn-primary"   id="playAgainBtn">Play Again</button>
+    <button class="result-btn-secondary" id="homeBtn">Home</button>
+  </div>
+</div>
+
+<script>
+// ── Word Set ────────────────────────────────────────────────────────
+const WORD_SET = new Set([
+  // A
+  'able','about','above','across','add','after','again','age','ago','agree','air','all','also',
+  'always','angry','animal','ant','any','apple','arm','art','ask','away','ache','acre','arch',
+  'aunt','ace','act','aim','ale','among','angel','ankle','area','afraid','almost','answer',
+  'around','aloe','atlas','atom','avid','avow',
+  // B
+  'back','bad','bag','ball','barn','bear','bed','bell','best','big','bird','black','blow','blue',
+  'boat','book','born','both','box','boy','brave','break','bring','brown','brush','build','burn',
+  'bus','busy','buy','bake','bare','base','bath','bead','bean','beat','beef','bite','bone','bowl',
+  'buck','buff','bulb','bulk','bull','bump','bunk','burp','buzz','before','behind','below',
+  'better','birthday','bring',
+  // C
+  'cake','call','calm','can','car','cat','cave','chip','city','clap','clip','club','coat','coin',
+  'cold','come','cool','corn','cost','cow','crab','crew','crop','crow','cry','curl','cute','cage',
+  'cape','card','care','cash','cast','cent','clam','claw','clay','clog','code','coil','comb',
+  'cone','cope','cord','core','cork','cove','carry','catch','chair','change','clean','climb',
+  'color','count','could',
+  // D
+  'dance','dark','day','deal','dear','deep','desk','did','dig','dish','doll','done','door','down',
+  'draw','drop','drum','dry','duck','dune','dust','dab','dam','dare','dart','date','dawn','daze',
+  'dead','deck','deed','dent','dew','dial','dice','dine','dip','dirt','disk','dive','dome','dove',
+  'drag','drip','dull','dumb','dump','dusk','dog','drink',
+  // E
+  'each','early','earth','east','easy','eight','else','empty','end','enjoy','equal','even','ever',
+  'every','eye','ear','eat','earn','edge','elf','elm','enter','era','eel','egg','ego','epic','evil',
+  'exam',
+  // F
+  'face','fact','fall','farm','fast','feel','feet','fill','find','fire','fish','five','flat','flew',
+  'flip','floor','flow','fly','foam','fold','food','foot','form','four','free','from','full','fun',
+  'funny','fade','fake','fame','fang','fare','fate','fawn','fear','feat','feed','fend','fern','fig',
+  'fume','fuse','fuzz','flower','found','friend',
+  // G
+  'game','give','glad','glow','glue','gold','good','grab','gray','green','grin','grip','grow','gulf',
+  'gust','gain','gate','gift','girl','goal','gown','grace','grain','grand','grape','grass','great',
+  'grit','gale','gap','gas','gem','gore','guy','group',
+  // H
+  'hand','hang','happy','hard','harm','hat','have','head','hear','heart','heat','help','here','high',
+  'hill','hint','hold','home','honey','hood','hook','hope','horn','horse','host','hour','house','huge',
+  'hump','hunt','hack','hag','hail','hair','hall','halt','ham','haze','heap','heel','hem','herd',
+  'hero','hid','hire','hiss','hive','hob','hog','hole','hone','honk','hoot','hose','howl','hub',
+  'hug','hull','hum','hush','heavy','hurry',
+  // I
+  'ice','idea','inch','into','iron','itch','ill','imp','ink','inn','isle','icon','idol','iris','inside',
+  // J
+  'jam','jar','jaw','jelly','jet','job','join','joke','jump','just','jog','joy','jade','jab','jail',
+  'jolt','jot','jug','jut',
+  // K
+  'keep','kid','kind','king','knew','know','kick','kiss','kite','keg','knob','knot','knack',
+  // L
+  'lake','lamp','land','large','last','late','leaf','learn','left','less','life','lift','like','line',
+  'lion','list','little','live','load','lock','long','look','loud','love','luck','lump','lab','lace',
+  'lack','lad','lag','lame','lane','lap','law','lawn','lazy','lead','lean','leap','lend','lens','lid',
+  'lime','limp','lint','lip','lone','lore','loss','louse','lull','lung','lure','lurk','lush','laugh',
+  'leave','light',
+  // M
+  'mad','make','man','many','map','mark','match','mean','meet','milk','mind','mint','miss','mist',
+  'moon','more','most','move','much','must','music','mace','mail','mane','mare','mash','mask','mass',
+  'mat','mate','maze','meal','melt','mesh','mild','mile','mill','mine','mob','mock','mode','mole',
+  'mope','moss','moth','mow','mud','mug','mule','murk','musk','magic','money','morning','mother',
+  // N
+  'name','near','need','nest','never','next','nice','night','nine','none','noon','north','nose','note',
+  'now','nap','net','nod','nut','nail','nab','nag','nave','neck','nerd','newt','nib','nip','nit',
+  'nor','nun','noise',
+  // O
+  'oak','odd','off','often','once','only','open','other','oval','over','own','old','one','out','oar',
+  'oat','ode','ore','orb','ogre','orange',
+  // P
+  'pack','page','pair','park','part','pass','path','peak','pick','pile','pine','pink','plan','plant',
+  'play','plus','point','pool','poor','post','pull','pump','push','put','pride','pure','pace','pain',
+  'pale','palm','pane','pave','pawn','pen','pep','pest','pet','pie','pig','pill','pit','pod','pond',
+  'pore','port','pose','pot','prey','prod','pub','puck','pun','pup','paper','party','pencil','people',
+  'place','please','pretty',
+  // Q
+  'quit','quiz','quest','quick','quiet','quite','quack','quail','quart','quay','queen',
+  // R
+  'race','rain','read','real','rest','rice','ride','ring','road','rock','role','roll','roof','room',
+  'root','rope','rose','rub','rule','run','rush','rack','rage','rake','ramp','rank','raw','ray',
+  'reach','reel','rend','rent','reef','rim','rip','rod','rot','rove','ruin','rum','rump','rung',
+  'rust','rut','right','round','really',
+  // S
+  'said','sail','same','sand','save','seal','seed','seem','sell','send','seven','share','sharp','ship',
+  'short','side','sign','sing','sink','six','size','skin','sky','sleep','slow','small','smell','smile',
+  'snow','soft','some','song','soon','sort','soup','south','speak','spin','spot','star','stay','step',
+  'stop','storm','story','strong','such','suit','sun','swim','swing','sack','sage','sap','sat','scam',
+  'scar','seam','sear','shed','shin','shop','shot','shout','shut','sift','sip','sir','slab','slam',
+  'slap','slay','sled','slim','slip','slit','slob','slot','slum','smack','smoke','snag','snap','snore',
+  'snub','snug','soak','sob','sock','sod','sore','spa','span','spit','spore','spray','spud','spur',
+  'stain','stem','stew','sting','stir','stock','stool','stub','stud','stun','sulk','surf','swap',
+  'swat','sweep','sweet','swig','swoop','sorry','sound','space','spell','spring','start','study',
+  'sweet','sister','sleep','spell','silly',
+  // T
+  'tail','take','talk','tall','team','tell','ten','tent','then','thick','thin','thing','think','third',
+  'those','three','throw','time','tire','today','told','tomb','tool','top','touch','town','tree','trip',
+  'true','trust','turn','twin','tab','tack','tan','tap','tar','taut','tax','tear','test','thaw','tick',
+  'tide','tilt','tin','tip','toll','tone','toot','tot','tow','tram','trap','tray','trek','trim','trot',
+  'tub','tuck','tug','twig','teach','treat','tooth','table',
+  // U
+  'ugly','under','unit','until','upon','urge','use','usual','umbrella',
+  // V
+  'vast','very','vine','void','visit','voice','vote','vain','vale','vane','veil','vent','verb','vat',
+  'van','vow',
+  // W
+  'wait','walk','wall','want','warm','wash','wave','week','well','west','wide','wild','will','wind',
+  'wink','wish','wolf','wood','word','work','world','worth','wrap','write','wad','wage','wake','wane',
+  'ware','wart','wasp','wax','wear','weed','weep','weld','whim','whip','wick','wilt','wipe','wire',
+  'wisp','woe','wok','woo','worm','wren','watch','whole','worry','wrong',
+  // X
+  'xray',
+  // Y
+  'yard','year','yell','yes','yet','yolk','young','yap','yam','yak','yore','yawn','yelp','yours',
+  // Z
+  'zero','zone','zoom','zap','zip','zest','zeal','zing','zinc',
+]);
+
+function normalize(w) { return w.trim().toLowerCase().replace(/[^a-z]/g, ''); }
+
+// ── State ───────────────────────────────────────────────────────────
+let cfg = { mode: 'solo', speed: 12 };
+let game = {};
+let timerInterval = null;
+let bestSolo = parseInt(localStorage.getItem('wordchain-best') || '0');
+
+const STARTERS = [
+  'apple','bear','cake','dark','fire','game','house','iron','jump','king',
+  'leaf','moon','night','open','plant','rain','star','tree','umbrella','wave',
+];
+
+// ── Setup ───────────────────────────────────────────────────────────
+document.querySelectorAll('[data-mode]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-mode]').forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+    cfg.mode = btn.dataset.mode;
+  });
+});
+document.querySelectorAll('[data-speed]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-speed]').forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+    cfg.speed = parseInt(btn.dataset.speed);
+  });
+});
+
+// ── Start ───────────────────────────────────────────────────────────
+document.getElementById('startBtn').addEventListener('click', startGame);
+
+function startGame() {
+  clearInterval(timerInterval);
+  const starter = STARTERS[Math.floor(Math.random() * STARTERS.length)];
+  game = {
+    mode: cfg.mode,
+    chain: [starter],
+    used: new Set([normalize(starter)]),
+    kyleScore: 0,
+    lindseyScore: 0,
+    kyleLives: 3,
+    lindseyLives: 3,
+    currentPlayer: 'Kyle',
+    over: false,
+    failPending: false,
+  };
+
+  const isSolo = cfg.mode === 'solo';
+  document.getElementById('soloWrap').style.display    = isSolo ? ''     : 'none';
+  document.getElementById('scoreboard').style.display  = isSolo ? 'none' : '';
+
+  show('game-screen');
+  renderChain();
+  updatePrompt();
+  updateBoard();
+  document.getElementById('chainInput').value = '';
+  document.getElementById('feedbackMsg').textContent = '';
+  document.getElementById('chainInput').focus();
+  startTimer();
+}
+
+// ── Chain render ────────────────────────────────────────────────────
+function renderChain() {
+  const el = document.getElementById('chainWords');
+  el.innerHTML = '';
+  game.chain.forEach((word, i) => {
+    if (i > 0) {
+      const arr = document.createElement('span');
+      arr.className = 'chain-arrow';
+      arr.textContent = '→';
+      el.appendChild(arr);
+    }
+    const span = document.createElement('span');
+    span.className = 'chain-word' + (i === game.chain.length - 1 ? ' last' : '');
+    if (i === game.chain.length - 1) {
+      span.innerHTML =
+        `<span class="word-body">${word.slice(0,-1)}</span><span class="link-letter">${word.slice(-1)}</span>`;
+    } else {
+      span.innerHTML = `<span class="word-body">${word}</span>`;
+    }
+    el.appendChild(span);
+  });
+  const wrap = el.parentElement;
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+// ── Prompt ──────────────────────────────────────────────────────────
+function updatePrompt() {
+  const last = game.chain[game.chain.length - 1];
+  document.getElementById('letterPrompt').textContent = last.slice(-1).toUpperCase();
+  document.getElementById('letterHint').textContent   = `Last word: "${last}"`;
+}
+
+// ── Board ────────────────────────────────────────────────────────────
+function livesStr(n) {
+  return '❤️'.repeat(Math.max(0,n)) + '🖤'.repeat(Math.max(0, 3 - n));
+}
+
+function updateBoard() {
+  const chainLen = game.chain.length - 1;
+  if (cfg.mode === 'solo') {
+    document.getElementById('soloScoreEl').textContent = chainLen;
+    document.getElementById('soloBestEl').textContent  = `Best: ${bestSolo}`;
+  } else {
+    document.getElementById('kyleScoreEl').textContent    = game.kyleScore;
+    document.getElementById('lindseyScoreEl').textContent = game.lindseyScore;
+    document.getElementById('kyleLivesEl').textContent    = livesStr(game.kyleLives);
+    document.getElementById('lindseyLivesEl').textContent = livesStr(game.lindseyLives);
+    document.getElementById('chainCountEl').textContent   = `Chain: ${chainLen}`;
+    document.getElementById('turnEl').textContent         = `${game.currentPlayer}'s turn`;
+    const isKyle = game.currentPlayer === 'Kyle';
+    document.getElementById('kyleBox').classList.toggle('active-player', isKyle);
+    document.getElementById('lindseyBox').classList.toggle('active-player', !isKyle);
+  }
+}
+
+// ── Timer ────────────────────────────────────────────────────────────
+const CIRC = 2 * Math.PI * 27; // ≈169.6
+
+function startTimer() {
+  game.timeLeft = cfg.speed;
+  renderTimer();
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    if (game.over) { clearInterval(timerInterval); return; }
+    game.timeLeft--;
+    renderTimer();
+    if (game.timeLeft <= 0) {
+      clearInterval(timerInterval);
+      handleFail('Time\'s up! ⏰');
+    }
+  }, 1000);
+}
+
+function renderTimer() {
+  const pct    = game.timeLeft / cfg.speed;
+  const offset = CIRC * (1 - pct);
+  const arc    = document.getElementById('timerArc');
+  arc.style.strokeDashoffset = offset;
+  arc.style.stroke = pct > 0.5 ? '#f472b6' : pct > 0.25 ? '#fb923c' : '#f87171';
+  const txt = document.getElementById('timerText');
+  txt.textContent  = game.timeLeft;
+  txt.style.color  = pct > 0.25 ? '#eee' : '#f87171';
+}
+
+// ── Submit ───────────────────────────────────────────────────────────
+document.getElementById('submitBtn').addEventListener('click', submitWord);
+document.getElementById('chainInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') submitWord();
+});
+
+function submitWord() {
+  if (game.over || game.failPending) return;
+  const raw  = document.getElementById('chainInput').value;
+  const word = normalize(raw);
+  if (!word) return;
+
+  const required = game.chain[game.chain.length - 1].slice(-1);
+
+  if (word[0] !== required) {
+    showErr(`Must start with "${required.toUpperCase()}"!`);
+    return;
+  }
+  if (!WORD_SET.has(word)) {
+    showErr(`"${word}" not in word list!`);
+    return;
+  }
+  if (game.used.has(word)) {
+    showErr(`"${word}" already used!`);
+    return;
+  }
+
+  clearInterval(timerInterval);
+  game.chain.push(word);
+  game.used.add(word);
+
+  if (cfg.mode === 'versus') {
+    if (game.currentPlayer === 'Kyle') game.kyleScore++;
+    else game.lindseyScore++;
+    game.currentPlayer = game.currentPlayer === 'Kyle' ? 'Lindsey' : 'Kyle';
+  }
+
+  document.getElementById('chainInput').value = '';
+  setFb('✅ Nice!', 'fb-ok');
+  setTimeout(() => { if (!game.over) setFb('',''); }, 800);
+
+  renderChain();
+  updatePrompt();
+  updateBoard();
+  startTimer();
+}
+
+function showErr(msg) {
+  const inp = document.getElementById('chainInput');
+  inp.classList.remove('err');
+  void inp.offsetWidth;
+  inp.classList.add('err');
+  inp.value = '';
+  setTimeout(() => inp.classList.remove('err'), 400);
+  setFb(`❌ ${msg}`, 'fb-err');
+  setTimeout(() => { if (!game.over) setFb('',''); }, 1600);
+}
+
+function setFb(msg, cls) {
+  const el = document.getElementById('feedbackMsg');
+  el.textContent = msg;
+  el.className = `feedback-msg ${cls}`;
+}
+
+// ── Fail ─────────────────────────────────────────────────────────────
+function handleFail(reason) {
+  clearInterval(timerInterval);
+  if (cfg.mode === 'solo') { endGame(); return; }
+
+  game.failPending = true;
+  setFb(`💔 ${game.currentPlayer}: ${reason}`, 'fb-err');
+
+  if (game.currentPlayer === 'Kyle') game.kyleLives--;
+  else game.lindseyLives--;
+
+  updateBoard();
+
+  const dead = game.currentPlayer === 'Kyle'
+    ? game.kyleLives <= 0
+    : game.lindseyLives <= 0;
+
+  if (dead) { setTimeout(endGame, 1200); return; }
+
+  game.currentPlayer = game.currentPlayer === 'Kyle' ? 'Lindsey' : 'Kyle';
+  updateBoard();
+  document.getElementById('chainInput').value = '';
+
+  setTimeout(() => {
+    if (game.over) return;
+    game.failPending = false;
+    setFb('', '');
+    startTimer();
+  }, 1500);
+}
+
+// ── End ──────────────────────────────────────────────────────────────
+function endGame() {
+  game.over = true;
+  clearInterval(timerInterval);
+
+  const chainLen = game.chain.length - 1;
+
+  if (cfg.mode === 'solo' && chainLen > bestSolo) {
+    bestSolo = chainLen;
+    localStorage.setItem('wordchain-best', bestSolo);
+  }
+
+  show('result-screen');
+
+  if (cfg.mode === 'solo') {
+    document.getElementById('resultTitle').textContent = `🔗 ${chainLen} word${chainLen===1?'':'s'}!`;
+    document.getElementById('resultStatsEl').innerHTML = `
+      <div class="winner-banner">
+        Chain length: <strong>${chainLen}</strong><br>
+        ${chainLen >= bestSolo && chainLen > 0 ? '🏆 New best!' : `Best: ${bestSolo}`}
+      </div>`;
+  } else {
+    const kWins = game.kyleScore > game.lindseyScore;
+    const tie   = game.kyleScore === game.lindseyScore;
+    document.getElementById('resultTitle').textContent = tie ? "🤝 Tie!" : `🏆 ${kWins ? 'Kyle' : 'Lindsey'} wins!`;
+    document.getElementById('resultStatsEl').innerHTML = `
+      <div class="result-stats">
+        <div class="stat-card kyle${kWins && !tie ? ' winner' : ''}">
+          <div class="stat-name">Kyle</div>
+          <div class="stat-score">${game.kyleScore}</div>
+          <div class="stat-sub">words added</div>
+        </div>
+        <div class="stat-card lindsey${!kWins && !tie ? ' winner' : ''}">
+          <div class="stat-name">Lindsey</div>
+          <div class="stat-score">${game.lindseyScore}</div>
+          <div class="stat-sub">words added</div>
+        </div>
+      </div>
+      <div class="winner-banner" style="margin-top:0">${tie ? "Both tied!" : `${kWins?'Kyle':'Lindsey'} wins! Chain: ${chainLen} words.`}</div>`;
+  }
+
+  const chainEl = document.getElementById('resultChainEl');
+  chainEl.innerHTML = '';
+  game.chain.forEach((word, i) => {
+    if (i > 0) {
+      const arr = document.createElement('span');
+      arr.className = 'rcw-arrow';
+      arr.textContent = '→';
+      chainEl.appendChild(arr);
+    }
+    const s = document.createElement('span');
+    s.className = 'rcw';
+    s.textContent = word;
+    chainEl.appendChild(s);
+  });
+}
+
+// ── Nav buttons ───────────────────────────────────────────────────────
+document.getElementById('playAgainBtn').addEventListener('click', () => show('setup-screen'));
+document.getElementById('homeBtn').addEventListener('click', () => { window.location.href = 'index.html'; });
+
+function show(id) {
+  ['setup-screen','game-screen','result-screen'].forEach(s => {
+    document.getElementById(s).style.display = s === id ? (s === 'setup-screen' ? 'flex' : 'flex') : 'none';
+  });
+}
+</script>
+</body>
+</html>
