@@ -334,6 +334,9 @@
     <button class="action-btn" id="btn-undo">
       <span>↩️</span><span class="ab-label">Undo</span>
     </button>
+    <button class="action-btn" id="btn-redo">
+      <span>↪️</span><span class="ab-label">Redo</span>
+    </button>
     <button class="action-btn" id="btn-erase">
       <span>🧹</span><span class="ab-label">Erase</span>
     </button>
@@ -489,6 +492,7 @@ let solution = null;    // full solved board
 let board = null;       // user working board
 let notes = null;       // 9×9 array of Set
 let history = [];       // [{r, c, prevVal, prevNotes}]
+let future  = [];       // [{r, c, val, noteSet}] for redo
 let selected = null;    // {r, c}
 let pencilMode = false;
 let mistakes = 0;
@@ -534,6 +538,7 @@ function startGame() {
   board = puzzle.map(row => [...row]);
   notes = Array.from({ length: 9 }, () => Array.from({ length: 9 }, () => new Set()));
   history = [];
+  future  = [];
   selected = null;
   pencilMode = false;
   mistakes = 0;
@@ -749,6 +754,7 @@ function placeNumber(num) {
   const prevVal = board[r][c];
   const prevNotes = new Set(notes[r][c]);
   history.push({ r, c, prevVal, prevNotes });
+  future = [];
 
   board[r][c] = num;
   notes[r][c].clear();
@@ -800,6 +806,7 @@ function eraseCell() {
   if (prevVal === 0 && prevNotes.size === 0) return;
 
   history.push({ r, c, prevVal, prevNotes });
+  future = [];
   board[r][c] = 0;
   notes[r][c].clear();
   refreshAllCells();
@@ -812,8 +819,19 @@ function eraseCell() {
 function undoLast() {
   if (!gameActive || history.length === 0) return;
   const { r, c, prevVal, prevNotes } = history.pop();
+  future.push({ r, c, val: board[r][c], noteSet: new Set(notes[r][c]) });
   board[r][c] = prevVal;
   notes[r][c] = new Set(prevNotes);
+  selected = { r, c };
+  refreshAllCells();
+}
+
+function redoLast() {
+  if (!gameActive || future.length === 0) return;
+  const { r, c, val, noteSet } = future.pop();
+  history.push({ r, c, prevVal: board[r][c], prevNotes: new Set(notes[r][c]) });
+  board[r][c] = val;
+  notes[r][c] = new Set(noteSet);
   selected = { r, c };
   refreshAllCells();
 }
@@ -934,6 +952,7 @@ document.getElementById('btn-notes').addEventListener('click', () => {
 });
 
 document.getElementById('btn-undo').addEventListener('click', undoLast);
+document.getElementById('btn-redo').addEventListener('click', redoLast);
 document.getElementById('btn-erase').addEventListener('click', eraseCell);
 document.getElementById('btn-check').addEventListener('click', checkErrors);
 
