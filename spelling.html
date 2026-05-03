@@ -1708,7 +1708,7 @@ function loadQuestion() {
   startTimer(cfg.timer);
   // Auto-speak after short delay
   setTimeout(() => speakWordAndSentence(entry.w, entry.s, cfg.repeats), 350);
-  // input not auto-focused so the answer isn't pre-selected
+  document.getElementById('spellingInput').focus();
 }
 
 function checkAnswer() {
