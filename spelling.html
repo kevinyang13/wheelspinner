@@ -35,14 +35,14 @@
 
     .option-group { width: 100%; }
     .option-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1px; color: #556; margin-bottom: 10px; text-align: center; }
-    .option-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .option-row { display: flex; gap: 8px; justify-content: center; flex-wrap: nowrap; }
 
     .opt-btn {
-      padding: 14px 32px; border-radius: 14px;
+      flex: 1; padding: 12px 8px; border-radius: 14px;
       border: 2px solid #222; background: #111520;
-      color: #889; font-size: 1rem; cursor: pointer; text-align: center;
+      color: #889; font-size: 0.95rem; cursor: pointer; text-align: center;
       transition: border-color 0.2s, color 0.2s, background 0.2s;
-      min-width: 140px;
+      min-width: 0;
     }
     .opt-btn small { display: block; font-size: 0.72rem; color: #445; margin-top: 3px; }
     .opt-btn:hover { border-color: #f0c040; color: #f0c040; }
@@ -77,11 +77,23 @@
 
     /* ── Word card ────────────────────────── */
     .word-card {
+      position: relative;
       background: #111520; border-radius: 20px;
       padding: 28px 32px; width: 100%;
       border: 2px solid #1a2035;
       display: flex; flex-direction: column; align-items: center; gap: 18px;
     }
+
+    /* Pause button */
+    .pause-btn {
+      background: rgba(255,255,255,0.06); border: 2px solid #2a2a3e; color: #aab;
+      border-radius: 10px; width: 40px; height: 40px; font-size: 1rem;
+      cursor: pointer; flex-shrink: 0; transition: all 0.15s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .pause-btn:hover  { border-color: #f0c040; color: #f0c040; }
+    .pause-btn.paused { border-color: #2ecc71; color: #2ecc71; background: rgba(46,204,113,0.1); }
+
 
     .bee-icon { font-size: 2.4rem; line-height: 1; }
 
@@ -165,6 +177,19 @@
       color: #22A6B3; cursor: pointer; transition: background 0.15s;
     }
     .next-btn:hover { background: rgba(34,166,179,0.12); }
+
+    /* Timer */
+    .card-top { display: flex; align-items: center; justify-content: center; gap: 20px; }
+    .timer-ring {
+      width: 52px; height: 52px; border-radius: 50%;
+      border: 3px solid #f0c040;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; font-weight: 900; color: #f0c040;
+      transition: border-color 0.4s, color 0.4s, background 0.4s;
+      line-height: 1;
+    }
+    .timer-ring.warn   { border-color: #ff9f43; color: #ff9f43; }
+    .timer-ring.danger { border-color: #ff6b6b; color: #ff6b6b; background: rgba(255,107,107,0.1); }
 
     /* Streak badge */
     .streak { font-size: 0.85rem; color: #f0c040; font-weight: bold; min-height: 20px; }
@@ -297,6 +322,26 @@
       <button class="opt-btn" data-count="5">5 words</button>
       <button class="opt-btn sel" data-count="10">10 words</button>
       <button class="opt-btn" data-count="15">15 words</button>
+      <button class="opt-btn" data-count="30">30 words</button>
+    </div>
+  </div>
+
+  <div class="option-group">
+    <div class="option-label">Timer</div>
+    <div class="option-row">
+      <button class="opt-btn" data-timer="3">3s</button>
+      <button class="opt-btn" data-timer="5">5s</button>
+      <button class="opt-btn sel" data-timer="15">15s</button>
+      <button class="opt-btn" data-timer="30">30s</button>
+    </div>
+  </div>
+
+  <div class="option-group">
+    <div class="option-label">Repeat word</div>
+    <div class="option-row">
+      <button class="opt-btn" data-repeats="1">1×<small>Once</small></button>
+      <button class="opt-btn" data-repeats="2">2×<small>Twice</small></button>
+      <button class="opt-btn sel" data-repeats="3">3×<small>Three times</small></button>
     </div>
   </div>
 
@@ -333,7 +378,11 @@
   </div>
 
   <div class="word-card">
-    <div class="bee-icon">🐝</div>
+    <div class="card-top">
+      <div class="bee-icon">🐝</div>
+      <div class="timer-ring" id="timerEl">15</div>
+      <button class="pause-btn" id="pauseBtn">⏸</button>
+    </div>
     <div class="hear-row">
       <button class="hear-btn" id="hearBtn">🔊 Hear word</button>
       <button class="hear-btn slow" id="hearSlowBtn">🐢 Slowly</button>
@@ -1394,8 +1443,149 @@ function speak(text, rate=0.88) {
   speechSynthesis.speak(u);
 }
 
+// Play a sequence of items: {text, rate} or {pause: ms}. Uses onend chaining.
+let _speakSeqCancel = false;
+function speakSequence(items, onDone) {
+  if (!window.speechSynthesis) { if (onDone) onDone(); return; }
+  speechSynthesis.cancel();
+  _speakSeqCancel = false;
+  function next(i) {
+    if (_speakSeqCancel) return;
+    if (i >= items.length) { if (onDone) onDone(); return; }
+    const item = items[i];
+    if (item.pause) { setTimeout(() => next(i + 1), item.pause); return; }
+    const u = new SpeechSynthesisUtterance(item.text);
+    u.rate  = item.rate || 0.88;
+    u.pitch = 1.0;
+    if (selectedVoice) u.voice = selectedVoice;
+    u.onend = () => next(i + 1);
+    speechSynthesis.speak(u);
+  }
+  next(0);
+}
+
+// word, 1s pause, sentence, 1s pause … repeated n times
+function speakWordAndSentence(word, sentence, n, rate=0.88) {
+  const items = [];
+  for (let i = 0; i < n; i++) {
+    items.push({ text: word,     rate });
+    items.push({ pause: 1000 });
+    items.push({ text: sentence, rate });
+    if (i < n - 1) items.push({ pause: 1000 });
+  }
+  speakSequence(items);
+}
+
+function speakN(text, rate=0.88, n=1) {
+  const items = [];
+  for (let i = 0; i < n; i++) {
+    items.push({ text, rate });
+    if (i < n - 1) items.push({ pause: 1000 });
+  }
+  speakSequence(items);
+}
+
+// ── Timer ─────────────────────────────────────────────────────────────
+let timerInterval    = null;
+let timerTotal       = 0;
+let timerRemaining   = 0;
+let autoAdvanceTimer = null;
+let isPaused         = false;
+
+function cancelAutoAdvance() {
+  if (autoAdvanceTimer) { clearTimeout(autoAdvanceTimer); autoAdvanceTimer = null; }
+}
+
+function stopTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+}
+
+function tickTimer() {
+  timerRemaining--;
+  const el = document.getElementById('timerEl');
+  el.textContent = timerRemaining;
+  const pct = timerRemaining / timerTotal;
+  el.className = 'timer-ring' + (pct <= 0.25 ? ' danger' : pct <= 0.5 ? ' warn' : '');
+  if (timerRemaining <= 0) { stopTimer(); timeUp(); }
+}
+
+function startTimer(seconds) {
+  stopTimer();
+  timerTotal = timerRemaining = seconds;
+  const el = document.getElementById('timerEl');
+  el.textContent = seconds;
+  el.className = 'timer-ring';
+  timerInterval = setInterval(tickTimer, 1000);
+}
+
+function resumeTimer() {
+  if (timerRemaining > 0 && !timerInterval) {
+    timerInterval = setInterval(tickTimer, 1000);
+  }
+}
+
+function togglePause() {
+  if (game.phase !== 'question') return;
+  isPaused = !isPaused;
+  const btn = document.getElementById('pauseBtn');
+  if (isPaused) {
+    stopTimer();
+    cancelAutoAdvance();
+    _speakSeqCancel = true;
+    speechSynthesis.cancel();
+    btn.textContent = '▶';
+    btn.classList.add('paused');
+  } else {
+    btn.textContent = '⏸';
+    btn.classList.remove('paused');
+    resumeTimer();
+    speakWordAndSentence(currentWord().w, currentWord().s, 1);
+  }
+}
+
+function timeUp() {
+  if (game.phase !== 'question') return;
+  game.phase = 'answered';
+  const entry = currentWord();
+
+  _speakSeqCancel = true;
+  speechSynthesis.cancel();
+
+  document.getElementById('spellingInput').disabled = true;
+  document.getElementById('checkBtn').disabled = true;
+
+  const result = { word: entry.w, typed: '', correct: false, timedOut: true };
+  if (game.currentPlayer === 'Kyle') game.kyleResults.push(result);
+  else game.lindseyResults.push(result);
+  game.streak = 0;
+
+  document.getElementById('feedbackEl').innerHTML =
+    `<div class="fb-wrong">⏰ Time's up!</div>` +
+    `<div class="reveal">The word: <span style="color:#ff9f43;font-weight:bold;letter-spacing:3px">${entry.w}</span></div>`;
+
+  entry.w.split('').forEach((ch, i) => {
+    const b = document.getElementById(`blank-${i}`);
+    if (b) { b.textContent = ch; b.style.color = '#ff9f43'; b.style.borderColor = '#ff9f43'; }
+  });
+
+  document.getElementById('streakEl').textContent = '';
+  updateScoreboard();
+  // Spell out each letter then say full word, then auto-advance
+  setTimeout(() => {
+    const items = [];
+    entry.w.split('').forEach((ch, i) => {
+      items.push({ text: ch, rate: 0.8 });
+      items.push({ pause: 350 });
+    });
+    items.push({ pause: 300 });
+    items.push({ text: entry.w, rate: 0.72 });
+    speakSequence(items, () => { autoAdvanceTimer = setTimeout(nextWord, 800); });
+  }, 400);
+  document.getElementById('nextBtn').style.display = 'inline-block';
+}
+
 // ── State ────────────────────────────────────────────────────────────
-let cfg = { grade: 2, mode: 'solo', count: 10 };
+let cfg = { grade: 2, mode: 'solo', count: 10, timer: 15, repeats: 3 };
 let game = {};
 
 function initGame() {
@@ -1512,13 +1702,18 @@ function loadQuestion() {
 
   updateScoreboard();
 
+  isPaused = false;
+  document.getElementById('pauseBtn').textContent = '⏸';
+  document.getElementById('pauseBtn').classList.remove('paused');
+  startTimer(cfg.timer);
   // Auto-speak after short delay
-  setTimeout(() => speak(entry.w), 350);
+  setTimeout(() => speakWordAndSentence(entry.w, entry.s, cfg.repeats), 350);
   // input not auto-focused so the answer isn't pre-selected
 }
 
 function checkAnswer() {
   if (game.phase !== 'question') return;
+  stopTimer();
   const entry   = currentWord();
   const typed   = document.getElementById('spellingInput').value.trim().toLowerCase();
   if (!typed) return;
@@ -1602,6 +1797,7 @@ function nextWord() {
 
 // ── Results ──────────────────────────────────────────────────────────
 function showResults() {
+  stopTimer();
   document.getElementById('game-screen').style.display  = 'none';
   document.getElementById('result-screen').style.display= 'flex';
 
@@ -1630,7 +1826,7 @@ function showResults() {
 function buildResultCard(cls, name, results, isWinner) {
   const correct = results.filter(r => r.correct).length;
   const words = results.map(r =>
-    `<div><span class="${r.correct ? 'w-correct' : 'w-wrong'}">${r.correct ? '✓' : '✗'}</span> ${r.word}${!r.correct ? ` <em style="color:#445">(you typed: ${r.typed})</em>` : ''}</div>`
+    `<div><span class="${r.correct ? 'w-correct' : 'w-wrong'}">${r.correct ? '✓' : '✗'}</span> ${r.word}${!r.correct ? ` <em style="color:#445">${r.timedOut ? '(⏰ time\'s up)' : `(you typed: ${r.typed})`}</em>` : ''}</div>`
   ).join('');
   return `<div class="result-card ${cls}${isWinner ? ' winner' : ''}">
     <div class="rcard-name">${name}</div>
@@ -1650,9 +1846,11 @@ function setupOptionButtons(selector, key) {
     });
   });
 }
-setupOptionButtons('[data-grade]', 'grade');
-setupOptionButtons('[data-mode]',  'mode');
-setupOptionButtons('[data-count]', 'count');
+setupOptionButtons('[data-grade]',   'grade');
+setupOptionButtons('[data-mode]',    'mode');
+setupOptionButtons('[data-count]',   'count');
+setupOptionButtons('[data-timer]',   'timer');
+setupOptionButtons('[data-repeats]', 'repeats');
 
 document.getElementById('voiceTestBtn').addEventListener('click', () => {
   speak('The quick brown fox jumps over the lazy dog.', 0.88);
@@ -1672,13 +1870,13 @@ document.getElementById('startBtn').addEventListener('click', () => {
 
 // ── Game buttons ──────────────────────────────────────────────────────
 document.getElementById('hearBtn').addEventListener('click', () => {
-  speak(currentWord().w, 0.88);
+  speakWordAndSentence(currentWord().w, currentWord().s, cfg.repeats);
 });
 document.getElementById('hearSlowBtn').addEventListener('click', () => {
-  speak(currentWord().w, 0.58);
+  speakWordAndSentence(currentWord().w, currentWord().s, cfg.repeats, 0.58);
 });
 document.getElementById('hearSentenceBtn').addEventListener('click', () => {
-  speak(currentWord().s, 0.88);
+  speakN(currentWord().s, 0.88, cfg.repeats);
 });
 document.getElementById('checkBtn').addEventListener('click', checkAnswer);
 document.getElementById('spellingInput').addEventListener('keydown', e => {
@@ -1687,7 +1885,8 @@ document.getElementById('spellingInput').addEventListener('keydown', e => {
 document.getElementById('spellingInput').addEventListener('input', e => {
   updateBlanks(e.target.value.toLowerCase());
 });
-document.getElementById('nextBtn').addEventListener('click', nextWord);
+document.getElementById('nextBtn').addEventListener('click', () => { cancelAutoAdvance(); nextWord(); });
+document.getElementById('pauseBtn').addEventListener('click', togglePause);
 
 // ── Results buttons ────────────────────────────────────────────────────
 document.getElementById('playAgainBtn').addEventListener('click', () => {
