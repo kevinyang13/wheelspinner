@@ -247,6 +247,46 @@
     }
     .result-btn-secondary:hover { border-color: #f0c040; color: #f0c040; }
 
+    /* ── Word list button (setup) ─────────── */
+    .wordlist-btn {
+      padding: 11px 28px; border-radius: 24px; font-size: 0.95rem;
+      border: 2px solid #22A6B3; background: transparent;
+      color: #22A6B3; cursor: pointer; transition: background 0.15s;
+    }
+    .wordlist-btn:hover { background: rgba(34,166,179,0.1); }
+
+    /* ── Word list screen ─────────────────── */
+    #wordlist-screen {
+      display: none; flex-direction: column; align-items: center;
+      gap: 20px; width: 100%; max-width: 900px; padding-top: 4px;
+    }
+    .wl-header {
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%;
+    }
+    .wl-title { font-size: 1.6rem; font-weight: 900; color: #22A6B3; }
+    .wl-count { font-size: 0.9rem; color: #556; }
+    .wl-back {
+      padding: 9px 22px; border-radius: 20px; font-size: 0.9rem;
+      border: 2px solid #334; background: transparent; color: #aaa;
+      cursor: pointer; transition: border-color 0.2s, color 0.2s;
+    }
+    .wl-back:hover { border-color: #f0c040; color: #f0c040; }
+    .wl-grid {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px 12px;
+    }
+    .wl-cell {
+      display: flex; align-items: baseline; gap: 6px;
+      padding: 7px 10px; border-radius: 8px;
+      background: #111520; border: 1px solid #1a2035;
+      font-size: 1.1rem;
+    }
+    .wl-num { font-size: 0.7rem; color: #445; min-width: 22px; text-align: right; flex-shrink: 0; }
+    .wl-word { color: #dde; font-weight: 600; }
+
     /* ── Mobile ───────────────────────────── */
     @media (max-width: 480px) {
       body { padding: 10px 12px 32px; }
@@ -358,6 +398,19 @@
   </div>
 
   <button class="big-start" id="startBtn">Start Spelling Bee 🐝</button>
+  <button class="wordlist-btn" id="wordlistBtn">📋 View Lindsey's Word List</button>
+</div>
+
+<!-- ── Word List ──────────────────────────── -->
+<div id="wordlist-screen">
+  <div class="wl-header">
+    <div>
+      <div class="wl-title">📚 Lindsey's Word List</div>
+      <div class="wl-count" id="wlCount"></div>
+    </div>
+    <button class="wl-back" id="wlBackBtn">← Back</button>
+  </div>
+  <div class="wl-grid" id="wlGrid"></div>
 </div>
 
 <!-- ── Game ───────────────────────────────── -->
@@ -1900,6 +1953,23 @@ document.getElementById('playAgainBtn').addEventListener('click', () => {
 });
 document.getElementById('homeBtn').addEventListener('click', () => {
   window.location.href = 'index.html';
+});
+
+// ── Word list screen ──────────────────────────────────────────────────
+function showWordList() {
+  const words = WORDS.lindsey;
+  document.getElementById('wlCount').textContent = `${words.length} words`;
+  document.getElementById('wlGrid').innerHTML = words.map((entry, i) =>
+    `<div class="wl-cell"><span class="wl-num">${i + 1}</span><span class="wl-word">${entry.w}</span></div>`
+  ).join('');
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('wordlist-screen').style.display = 'flex';
+}
+
+document.getElementById('wordlistBtn').addEventListener('click', showWordList);
+document.getElementById('wlBackBtn').addEventListener('click', () => {
+  document.getElementById('wordlist-screen').style.display = 'none';
+  document.getElementById('setup-screen').style.display  = 'flex';
 });
 
 // Trigger voice load on browsers that need an explicit call
