@@ -301,10 +301,10 @@
   <div class="option-group">
     <div class="option-label">Grade Level</div>
     <div class="option-row">
-      <button class="opt-btn sel" data-grade="2">2nd Grade<small>Foundational words</small></button>
+      <button class="opt-btn"     data-grade="2">2nd Grade<small>Foundational words</small></button>
       <button class="opt-btn"     data-grade="3">3rd Grade<small>Challenge words</small></button>
       <button class="opt-btn"     data-grade="kyle">🏆 Kyle<small>Kyle's word list</small></button>
-      <button class="opt-btn"     data-grade="lindsey">📚 Lindsey<small>Lindsey's word list</small></button>
+      <button class="opt-btn sel" data-grade="lindsey">📚 Lindsey<small>Lindsey's word list</small></button>
     </div>
   </div>
 
@@ -320,8 +320,8 @@
     <div class="option-label">Words per round</div>
     <div class="option-row">
       <button class="opt-btn" data-count="5">5 words</button>
-      <button class="opt-btn sel" data-count="10">10 words</button>
-      <button class="opt-btn" data-count="15">15 words</button>
+      <button class="opt-btn"     data-count="10">10 words</button>
+      <button class="opt-btn sel" data-count="15">15 words</button>
       <button class="opt-btn" data-count="30">30 words</button>
     </div>
   </div>
@@ -331,17 +331,17 @@
     <div class="option-row">
       <button class="opt-btn" data-timer="3">3s</button>
       <button class="opt-btn" data-timer="5">5s</button>
-      <button class="opt-btn sel" data-timer="15">15s</button>
-      <button class="opt-btn" data-timer="30">30s</button>
+      <button class="opt-btn"     data-timer="15">15s</button>
+      <button class="opt-btn sel" data-timer="30">30s</button>
     </div>
   </div>
 
   <div class="option-group">
     <div class="option-label">Repeat word</div>
     <div class="option-row">
-      <button class="opt-btn" data-repeats="1">1×<small>Once</small></button>
+      <button class="opt-btn sel" data-repeats="1">1×<small>Once</small></button>
       <button class="opt-btn" data-repeats="2">2×<small>Twice</small></button>
-      <button class="opt-btn sel" data-repeats="3">3×<small>Three times</small></button>
+      <button class="opt-btn"     data-repeats="3">3×<small>Three times</small></button>
     </div>
   </div>
 
@@ -1585,7 +1585,7 @@ function timeUp() {
 }
 
 // ── State ────────────────────────────────────────────────────────────
-let cfg = { grade: 2, mode: 'solo', count: 10, timer: 15, repeats: 3 };
+let cfg = { grade: 'lindsey', mode: 'solo', count: 15, timer: 30, repeats: 1 };
 let game = {};
 
 function initGame() {
