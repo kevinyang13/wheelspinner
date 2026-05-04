@@ -1742,6 +1742,7 @@ function checkAnswer() {
   document.getElementById('streakEl').textContent = game.streak >= 3 ? `🔥 ${game.streak} in a row!` : '';
   updateScoreboard();
   document.getElementById('nextBtn').style.display = 'inline-block';
+  autoAdvanceTimer = setTimeout(nextWord, correct ? 1800 : 2800);
 }
 
 function showFeedback(correct, word, typed) {
