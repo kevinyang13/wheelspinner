@@ -282,8 +282,13 @@
       display: flex; align-items: baseline; gap: 6px;
       padding: 7px 10px; border-radius: 8px;
       background: #111520; border: 1px solid #1a2035;
-      font-size: 1.1rem;
+      font-size: 1.1rem; cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      user-select: none;
     }
+    .wl-cell:hover  { border-color: #22A6B3; background: rgba(34,166,179,0.08); }
+    .wl-cell:active { background: rgba(34,166,179,0.18); }
+    .wl-cell.playing { border-color: #f0c040; background: rgba(240,192,64,0.1); }
     .wl-num { font-size: 0.7rem; color: #445; min-width: 22px; text-align: right; flex-shrink: 0; }
     .wl-word { color: #dde; font-weight: 600; }
 
@@ -1960,8 +1965,21 @@ function showWordList() {
   const words = WORDS.lindsey;
   document.getElementById('wlCount').textContent = `${words.length} words`;
   document.getElementById('wlGrid').innerHTML = words.map((entry, i) =>
-    `<div class="wl-cell"><span class="wl-num">${i + 1}</span><span class="wl-word">${entry.w}</span></div>`
+    `<div class="wl-cell" data-word="${entry.w}"><span class="wl-num">${i + 1}</span><span class="wl-word">${entry.w}</span></div>`
   ).join('');
+  document.getElementById('wlGrid').onclick = (e) => {
+    const cell = e.target.closest('.wl-cell');
+    if (!cell) return;
+    const word = cell.dataset.word;
+    document.querySelectorAll('.wl-cell.playing').forEach(c => c.classList.remove('playing'));
+    cell.classList.add('playing');
+    const u = new SpeechSynthesisUtterance(word);
+    u.rate = 0.88; u.pitch = 1.0;
+    if (selectedVoice) u.voice = selectedVoice;
+    u.onend = () => cell.classList.remove('playing');
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+  };
   document.getElementById('setup-screen').style.display = 'none';
   document.getElementById('wordlist-screen').style.display = 'flex';
 }
