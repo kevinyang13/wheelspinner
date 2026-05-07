@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wisdom Quest – Kyle &amp; Lindsey</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #0f0f1e;
+      color: #eee;
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 0 16px 60px;
+    }
+
+    /* ── Nav ── */
+    .topnav {
+      width: 100%; max-width: 740px;
+      display: flex; align-items: center; gap: 12px;
+      padding: 16px 0 0; margin-bottom: 10px;
+    }
+    .topnav a { color: #a78bfa; text-decoration: none; font-size: 0.85rem; opacity: 0.7; transition: opacity 0.2s; }
+    .topnav a:hover { opacity: 1; }
+    .topnav h2 {
+      font-size: 1.1rem; font-weight: 800;
+      background: linear-gradient(135deg, #f0c040, #a78bfa);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+
+    /* ── Screens ── */
+    .screen { display: none; width: 100%; max-width: 700px; }
+    .screen.active { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+
+    /* ── Setup ── */
+    .setup-title { text-align: center; margin-top: 10px; }
+    .setup-title .big-icon { font-size: 3.5rem; display: block; margin-bottom: 8px; }
+    .setup-title h1 {
+      font-size: 2.2rem; font-weight: 900;
+      background: linear-gradient(135deg, #f0c040, #a78bfa);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .setup-title p { color: #667; font-size: 0.9rem; margin-top: 6px; }
+
+    .option-group { width: 100%; }
+    .option-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 1px; color: #778; text-transform: uppercase; margin-bottom: 8px; }
+    .option-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .opt-btn {
+      flex: 1; min-width: 80px;
+      padding: 11px 14px; border-radius: 12px;
+      border: 2px solid #2a2a3e; background: #16213e;
+      color: #aab; font-size: 0.88rem; font-weight: 600;
+      cursor: pointer; transition: all 0.15s; text-align: center;
+    }
+    .opt-btn:hover { border-color: #a78bfa; color: #eee; }
+    .opt-btn.selected { border-color: #a78bfa; background: rgba(167,139,250,0.15); color: #c4b5fd; }
+
+    .start-btn {
+      width: 100%; padding: 16px; border-radius: 14px; border: none;
+      background: linear-gradient(135deg, #f0c040, #a78bfa);
+      color: #1a1030; font-size: 1.1rem; font-weight: 800;
+      cursor: pointer; transition: transform 0.15s, opacity 0.15s;
+    }
+    .start-btn:hover { transform: scale(1.02); opacity: 0.92; }
+
+    /* ── Player Cards ── */
+    .player-cards { display: flex; gap: 10px; width: 100%; }
+    .player-card {
+      flex: 1; background: #16213e; border-radius: 14px;
+      padding: 12px 16px; border: 2px solid transparent;
+      transition: all 0.25s; text-align: center;
+    }
+    .player-card.kyle    { --pc: #f0c040; }
+    .player-card.lindsey { --pc: #a78bfa; }
+    .player-card.kyle.active    { border-color: #f0c040; box-shadow: 0 0 18px rgba(240,192,64,0.25);  background: rgba(240,192,64,0.08); }
+    .player-card.lindsey.active { border-color: #a78bfa; box-shadow: 0 0 18px rgba(167,139,250,0.25); background: rgba(167,139,250,0.08); }
+    .pc-name  { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px; opacity: 0.6; text-transform: uppercase; }
+    .pc-score { font-size: 1.9rem; font-weight: 900; color: var(--pc); }
+    .pc-streak { font-size: 0.75rem; color: #ff6b35; margin-top: 2px; min-height: 1.2em; }
+
+    /* ── Progress ── */
+    .progress-bar-wrap { width: 100%; background: #1a1a2e; border-radius: 99px; height: 7px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #f0c040, #a78bfa); transition: width 0.4s; }
+
+    .q-counter { font-size: 0.8rem; color: #556; align-self: flex-end; }
+
+    /* ── Question Card ── */
+    .question-card {
+      width: 100%; background: #16213e; border-radius: 20px;
+      padding: 28px 28px 24px; border: 2px solid #2a2a3e;
+      position: relative; overflow: hidden;
+      animation: cardIn 0.35s ease-out;
+    }
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(12px) scale(0.98); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    .cat-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.8px;
+      text-transform: uppercase; padding: 4px 11px; border-radius: 99px;
+      margin-bottom: 16px;
+    }
+    .cat-virtue    { background: rgba(240,192,64,0.15); color: #f0c040; }
+    .cat-quote     { background: rgba(34,211,238,0.15); color: #22d3ee; }
+    .cat-principle { background: rgba(167,139,250,0.15); color: #a78bfa; }
+    .cat-discipline{ background: rgba(74,222,128,0.15);  color: #4ade80; }
+
+    .question-text {
+      font-size: 1.25rem; font-weight: 700; line-height: 1.5;
+      color: #e8e8f0; margin-bottom: 6px;
+    }
+
+    /* ── Answers ── */
+    .answers-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 10px; width: 100%;
+    }
+    @media (max-width: 520px) { .answers-grid { grid-template-columns: 1fr; } }
+
+    .ans-btn {
+      padding: 14px 18px; border-radius: 13px;
+      border: 2px solid #2a2a3e; background: #1a1a2e;
+      color: #bbc; font-size: 0.93rem; font-weight: 600;
+      cursor: pointer; text-align: left; line-height: 1.4;
+      transition: all 0.15s; position: relative; overflow: hidden;
+    }
+    .ans-btn:hover:not(:disabled) { border-color: #a78bfa; background: rgba(167,139,250,0.1); color: #eee; }
+    .ans-btn:disabled { cursor: default; }
+
+    .ans-btn.correct {
+      border-color: #4ade80; background: rgba(74,222,128,0.15);
+      color: #86efac; animation: popIn 0.3s ease-out;
+    }
+    .ans-btn.wrong {
+      border-color: #f87171; background: rgba(248,113,113,0.15);
+      color: #fca5a5;
+    }
+    .ans-btn.reveal-correct {
+      border-color: #4ade80; background: rgba(74,222,128,0.08);
+      color: #86efac;
+    }
+    @keyframes popIn {
+      0% { transform: scale(1); }
+      40% { transform: scale(1.04); }
+      100% { transform: scale(1); }
+    }
+
+    .ans-letter {
+      display: inline-block; width: 22px; height: 22px; border-radius: 50%;
+      background: rgba(255,255,255,0.08); color: #778;
+      font-size: 0.75rem; font-weight: 800; text-align: center; line-height: 22px;
+      margin-right: 8px; flex-shrink: 0;
+    }
+
+    /* ── Explanation Card ── */
+    .explanation-card {
+      width: 100%; border-radius: 16px;
+      padding: 20px 22px; border: 2px solid;
+      animation: slideUp 0.35s ease-out;
+      display: none;
+    }
+    .explanation-card.show { display: block; }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: none; }
+    }
+    .explanation-card.correct-card { border-color: #4ade80; background: rgba(74,222,128,0.06); }
+    .explanation-card.wrong-card   { border-color: #fb923c; background: rgba(251,146,60,0.06); }
+
+    .exp-header { font-size: 0.85rem; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    .exp-header .badge { font-size: 1.1rem; }
+    .exp-person { font-size: 0.75rem; color: #778; font-style: italic; }
+    .exp-text { font-size: 0.93rem; color: #c8c8d8; line-height: 1.6; }
+
+    /* ── Next Button ── */
+    .next-btn {
+      width: 100%; padding: 14px; border-radius: 13px; border: none;
+      background: linear-gradient(135deg, #f0c040, #a78bfa);
+      color: #1a1030; font-size: 1rem; font-weight: 800;
+      cursor: pointer; transition: transform 0.15s, opacity 0.15s;
+      display: none;
+    }
+    .next-btn.show { display: block; }
+    .next-btn:hover { transform: scale(1.02); opacity: 0.92; }
+
+    /* ── Turn Banner ── */
+    .turn-banner {
+      padding: 10px 20px; border-radius: 99px;
+      font-size: 0.9rem; font-weight: 800; text-align: center;
+    }
+    .turn-kyle    { background: rgba(240,192,64,0.15); color: #f0c040; }
+    .turn-lindsey { background: rgba(167,139,250,0.15); color: #a78bfa; }
+
+    /* ── End Screen ── */
+    .end-icon { font-size: 4rem; text-align: center; animation: bounce 0.8s ease; }
+    @keyframes bounce { 0%,100%{transform:translateY(0)} 40%{transform:translateY(-20px)} 70%{transform:translateY(-10px)} }
+
+    .end-title {
+      font-size: 2rem; font-weight: 900; text-align: center;
+      background: linear-gradient(135deg, #f0c040, #a78bfa);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+
+    .score-display {
+      width: 100%; background: #16213e; border-radius: 18px;
+      padding: 22px; text-align: center; border: 2px solid #2a2a3e;
+    }
+    .score-display .big-score { font-size: 3rem; font-weight: 900; color: #f0c040; }
+    .score-display .score-sub { font-size: 0.9rem; color: #667; margin-top: 4px; }
+
+    .stars { font-size: 2rem; text-align: center; letter-spacing: 4px; }
+
+    .end-cards { display: flex; gap: 14px; width: 100%; }
+    .end-card {
+      flex: 1; background: #16213e; border-radius: 16px;
+      padding: 20px; text-align: center; border: 2px solid transparent;
+    }
+    .end-card.winner { border-color: #f0c040; background: rgba(240,192,64,0.08); }
+    .end-card-name { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; opacity: 0.6; }
+    .end-card-score { font-size: 2.4rem; font-weight: 900; }
+    .end-kyle .end-card-score { color: #f0c040; }
+    .end-lindsey .end-card-score { color: #a78bfa; }
+    .end-card-label { font-size: 0.78rem; color: #556; margin-top: 2px; }
+    .winner-crown { font-size: 1.5rem; display: block; margin-bottom: 4px; }
+
+    .play-again-btn {
+      width: 100%; padding: 16px; border-radius: 14px; border: none;
+      background: linear-gradient(135deg, #f0c040, #a78bfa);
+      color: #1a1030; font-size: 1.1rem; font-weight: 800;
+      cursor: pointer; transition: transform 0.15s;
+    }
+    .play-again-btn:hover { transform: scale(1.02); }
+
+    /* ── Result flash ── */
+    .result-flash {
+      position: fixed; top: 30%; left: 50%; transform: translate(-50%,-50%);
+      font-size: 4rem; pointer-events: none;
+      animation: flashOut 0.7s ease-out forwards;
+      z-index: 999;
+    }
+    @keyframes flashOut {
+      0%   { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+      60%  { opacity: 1; transform: translate(-50%,-70%) scale(1.3); }
+      100% { opacity: 0; transform: translate(-50%,-90%) scale(1.1); }
+    }
+
+    .divider { width: 100%; height: 1px; background: #2a2a3e; }
+
+    /* ── Browse Button ── */
+    .browse-btn {
+      width: 100%; padding: 13px; border-radius: 13px;
+      border: 2px solid #2a2a3e; background: transparent;
+      color: #a78bfa; font-size: 0.95rem; font-weight: 700;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .browse-btn:hover { border-color: #a78bfa; background: rgba(167,139,250,0.08); }
+
+    /* ── Browse Screen ── */
+    .browse-tabs {
+      display: flex; gap: 8px; width: 100%; flex-wrap: wrap;
+    }
+    .tab-btn {
+      flex: 1; min-width: 80px; padding: 9px 10px; border-radius: 10px;
+      border: 2px solid #2a2a3e; background: #16213e;
+      color: #778; font-size: 0.82rem; font-weight: 700;
+      cursor: pointer; transition: all 0.15s; text-align: center;
+    }
+    .tab-btn:hover { border-color: #a78bfa; color: #eee; }
+    .tab-btn.active { color: var(--tab-color); border-color: var(--tab-color); background: rgba(255,255,255,0.05); }
+    .tab-virtue    { --tab-color: #f0c040; }
+    .tab-quote     { --tab-color: #22d3ee; }
+    .tab-principle { --tab-color: #a78bfa; }
+    .tab-discipline{ --tab-color: #4ade80; }
+
+    .ref-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 12px; width: 100%;
+    }
+    @media (max-width: 500px) { .ref-grid { grid-template-columns: 1fr; } }
+
+    .ref-card {
+      background: #16213e; border-radius: 16px;
+      padding: 16px 18px; border: 2px solid #2a2a3e;
+      transition: border-color 0.2s, transform 0.15s;
+      cursor: default;
+    }
+    .ref-card:hover { transform: translateY(-2px); }
+    .ref-card.rv { border-color: rgba(240,192,64,0.3); }
+    .ref-card.rq { border-color: rgba(34,211,238,0.3); }
+    .ref-card.rp { border-color: rgba(167,139,250,0.3); }
+    .ref-card.rd { border-color: rgba(74,222,128,0.3); }
+
+    .ref-emoji { font-size: 1.6rem; margin-bottom: 6px; display: block; }
+    .ref-name  { font-size: 1rem; font-weight: 800; margin-bottom: 4px; }
+    .rv .ref-name { color: #f0c040; }
+    .rq .ref-name { color: #22d3ee; }
+    .rp .ref-name { color: #a78bfa; }
+    .rd .ref-name { color: #4ade80; }
+
+    .ref-def  { font-size: 0.8rem; font-weight: 600; color: #ccc; margin-bottom: 6px; line-height: 1.4; }
+    .ref-exp  { font-size: 0.76rem; color: #778; line-height: 1.5; }
+    .ref-attr { font-size: 0.72rem; color: #556; font-style: italic; margin-top: 5px; }
+
+    .browse-back-btn {
+      width: 100%; padding: 13px; border-radius: 13px; border: none;
+      background: linear-gradient(135deg, #f0c040, #a78bfa);
+      color: #1a1030; font-size: 1rem; font-weight: 800;
+      cursor: pointer; transition: transform 0.15s;
+    }
+    .browse-back-btn:hover { transform: scale(1.02); }
+
+    .browse-title {
+      font-size: 1.3rem; font-weight: 900; text-align: center;
+      background: linear-gradient(135deg, #f0c040, #a78bfa);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topnav">
+    <a href="index.html">← Home</a>
+    <span style="color:#2a2a3e">|</span>
+    <h2>🌟 Wisdom Quest</h2>
+  </div>
+
+  <!-- ══════════ SETUP ══════════ -->
+  <div class="screen active" id="screen-setup">
+    <div class="setup-title">
+      <span class="big-icon">🌟</span>
+      <h1>Wisdom Quest</h1>
+      <p>Learn virtues, quotes, and life principles — earn stars for every right answer!</p>
+    </div>
+
+    <div class="option-group">
+      <div class="option-label">Mode</div>
+      <div class="option-row">
+        <button class="opt-btn selected" data-group="mode" data-val="solo">Solo</button>
+        <button class="opt-btn" data-group="mode" data-val="versus">Kyle vs Lindsey</button>
+      </div>
+    </div>
+
+    <div class="option-group">
+      <div class="option-label">Category</div>
+      <div class="option-row">
+        <button class="opt-btn selected" data-group="cat" data-val="all">🌟 All</button>
+        <button class="opt-btn" data-group="cat" data-val="virtue">🦁 Virtues</button>
+        <button class="opt-btn" data-group="cat" data-val="quote">💬 Quotes</button>
+        <button class="opt-btn" data-group="cat" data-val="principle">⚡ Principles</button>
+        <button class="opt-btn" data-group="cat" data-val="discipline">🎯 Discipline</button>
+      </div>
+    </div>
+
+    <div class="option-group">
+      <div class="option-label">Questions</div>
+      <div class="option-row">
+        <button class="opt-btn" data-group="count" data-val="8">8</button>
+        <button class="opt-btn selected" data-group="count" data-val="12">12</button>
+        <button class="opt-btn" data-group="count" data-val="20">20</button>
+        <button class="opt-btn" data-group="count" data-val="all">All</button>
+      </div>
+    </div>
+
+    <button class="start-btn" onclick="startGame()">Start Quest! 🚀</button>
+    <button class="browse-btn" onclick="showBrowse('virtue')">📖 Browse Virtues, Principles &amp; More</button>
+  </div>
+
+  <!-- ══════════ BROWSE ══════════ -->
+  <div class="screen" id="screen-browse">
+    <div class="browse-title">📖 Wisdom Library</div>
+
+    <div class="browse-tabs">
+      <button class="tab-btn tab-virtue active" onclick="renderBrowse('virtue')">🦁 Virtues</button>
+      <button class="tab-btn tab-quote"     onclick="renderBrowse('quote')">💬 Quotes</button>
+      <button class="tab-btn tab-principle" onclick="renderBrowse('principle')">⚡ Principles</button>
+      <button class="tab-btn tab-discipline"onclick="renderBrowse('discipline')">🎯 Discipline</button>
+    </div>
+
+    <div class="ref-grid" id="ref-grid"></div>
+
+    <button class="browse-back-btn" onclick="showSetup()">← Back to Setup</button>
+  </div>
+
+  <!-- ══════════ GAME ══════════ -->
+  <div class="screen" id="screen-game">
+
+    <div class="player-cards" id="player-cards" style="display:none">
+      <div class="player-card kyle active" id="card-kyle">
+        <div class="pc-name">Kyle</div>
+        <div class="pc-score" id="score-kyle">0</div>
+        <div class="pc-streak" id="streak-kyle"></div>
+      </div>
+      <div class="player-card lindsey" id="card-lindsey">
+        <div class="pc-name">Lindsey</div>
+        <div class="pc-score" id="score-lindsey">0</div>
+        <div class="pc-streak" id="streak-lindsey"></div>
+      </div>
+    </div>
+
+    <div id="solo-score-wrap" style="width:100%;display:flex;gap:10px;align-items:center;display:none">
+      <div style="font-size:1.8rem;font-weight:900;color:#f0c040" id="solo-score">0</div>
+      <div style="font-size:0.85rem;color:#556">pts</div>
+      <div style="flex:1"></div>
+      <div style="font-size:0.85rem;color:#ff6b35" id="solo-streak"></div>
+    </div>
+
+    <div class="progress-bar-wrap" style="width:100%">
+      <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+    <div class="q-counter" id="q-counter">Question 1 of 12</div>
+
+    <div id="turn-banner" class="turn-banner turn-kyle" style="display:none">Kyle's Turn</div>
+
+    <div class="question-card" id="question-card">
+      <div class="cat-badge" id="cat-badge">🦁 Virtue</div>
+      <div class="question-text" id="question-text">Loading...</div>
+    </div>
+
+    <div class="answers-grid" id="answers-grid"></div>
+
+    <div class="explanation-card" id="explanation-card">
+      <div class="exp-header">
+        <span class="badge" id="exp-badge">✅</span>
+        <span id="exp-status">Correct!</span>
+        <span class="exp-person" id="exp-person"></span>
+      </div>
+      <div class="exp-text" id="exp-text"></div>
+    </div>
+
+    <button class="next-btn" id="next-btn" onclick="nextQuestion()">Next Question →</button>
+  </div>
+
+  <!-- ══════════ END ══════════ -->
+  <div class="screen" id="screen-end">
+    <div class="end-icon" id="end-icon">🏆</div>
+    <div class="end-title" id="end-title">Quest Complete!</div>
+
+    <div id="end-solo" class="score-display" style="display:none">
+      <div class="big-score" id="end-solo-score">0</div>
+      <div class="score-sub" id="end-solo-sub">out of 12 questions</div>
+      <div class="stars" id="end-solo-stars" style="margin-top:12px">⭐⭐⭐</div>
+    </div>
+
+    <div id="end-versus" class="end-cards" style="display:none">
+      <div class="end-card end-kyle" id="end-card-kyle">
+        <span class="winner-crown" id="crown-kyle" style="display:none">👑</span>
+        <div class="end-card-name">Kyle</div>
+        <div class="end-card-score" id="vc-kyle">0</div>
+        <div class="end-card-label">correct</div>
+      </div>
+      <div class="end-card end-lindsey" id="end-card-lindsey">
+        <span class="winner-crown" id="crown-lindsey" style="display:none">👑</span>
+        <div class="end-card-name">Lindsey</div>
+        <div class="end-card-score" id="vc-lindsey">0</div>
+        <div class="end-card-label">correct</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div id="wisdom-tip" style="width:100%;background:#16213e;border-radius:14px;padding:18px 20px;border:2px solid #2a2a3e;font-size:0.9rem;color:#aab;line-height:1.6;text-align:center"></div>
+
+    <button class="play-again-btn" onclick="showSetup()">Play Again 🌟</button>
+  </div>
+
+  <script>
+    // ────────────────────────────────────────────────
+    //  DATA
+    // ────────────────────────────────────────────────
+    const QUESTIONS = [
+      // ── VIRTUES ──
+      { cat:'virtue', emoji:'🦁', q:'What does COURAGE mean?',
+        a:['Being brave even when scared','Always winning games','Never getting hurt','Being great at sports'],
+        c:0, person:'',
+        exp:'Courage means doing something even when it feels scary — like speaking in front of your class, or standing up for a friend who is being treated unfairly!' },
+
+      { cat:'virtue', emoji:'✅', q:'What does HONESTY mean?',
+        a:['Always getting the best grade','Having lots of friends','Telling the truth even when it\'s hard','Being the best at sports'],
+        c:2, person:'',
+        exp:'Honesty means telling the truth even when it might get you in trouble. People trust honest people — it\'s one of the most important things you can be!' },
+
+      { cat:'virtue', emoji:'⏳', q:'Emma waited calmly for her turn instead of pushing to the front. What virtue did she show?',
+        a:['Courage','Honesty','Patience','Generosity'],
+        c:2, person:'',
+        exp:'Patience means waiting calmly without complaining. It\'s one of the hardest virtues to practice — but it shows real respect for everyone around you!' },
+
+      { cat:'virtue', emoji:'🤲', q:'Jake shared his lunch with a friend who forgot theirs. What virtue did Jake show?',
+        a:['Courage','Integrity','Perseverance','Generosity'],
+        c:3, person:'',
+        exp:'Generosity means sharing what you have with others. When you give without expecting anything back, it makes both you and the other person feel great!' },
+
+      { cat:'virtue', emoji:'💪', q:'What does PERSEVERANCE mean?',
+        a:['Giving up when things are hard','Being perfect at everything','Always finishing first','Keeping trying even after failing'],
+        c:3, person:'',
+        exp:'Perseverance means never giving up! Thomas Edison failed 1,000 times before inventing the lightbulb. He called every failure a step closer to success.' },
+
+      { cat:'virtue', emoji:'⭐', q:'Lily found $10 on the playground and turned it in to the teacher. What virtue did she show?',
+        a:['Patience','Humility','Compassion','Integrity'],
+        c:3, person:'',
+        exp:'Integrity means doing the right thing even when no one is watching. Lily could have kept the money — but she did what was right anyway. That\'s integrity!' },
+
+      { cat:'virtue', emoji:'🤝', q:'What does RESPECT mean?',
+        a:['Only talking to your best friends','Being the loudest in the room','Treating people and things kindly and with care','Getting the best grades'],
+        c:2, person:'',
+        exp:'Respect means treating everyone — including yourself — with kindness and care. You show respect by listening, being polite, and valuing others\' feelings.' },
+
+      { cat:'virtue', emoji:'📋', q:'What does RESPONSIBILITY mean?',
+        a:['Never making mistakes','Always being on time','Being in charge of others','Taking care of your duties and doing what you promised'],
+        c:3, person:'',
+        exp:'Responsibility means doing what you\'re supposed to do — like finishing homework, doing chores, and keeping promises. People who are responsible are trustworthy!' },
+
+      { cat:'virtue', emoji:'🙏', q:'Which virtue means being thankful for what you have?',
+        a:['Courage','Perseverance','Humility','Gratitude'],
+        c:3, person:'',
+        exp:'Gratitude means appreciating the good things in your life — big and small. Studies show that people who practice gratitude every day are happier and healthier!' },
+
+      { cat:'virtue', emoji:'😊', q:'Tom won the game but didn\'t brag about it. What virtue did he show?',
+        a:['Honesty','Patience','Generosity','Humility'],
+        c:3, person:'',
+        exp:'Humility means not bragging even when you do great things. Humble people celebrate others\' successes too, which makes everyone feel included and valued!' },
+
+      { cat:'virtue', emoji:'❤️', q:'Sarah saw her friend crying and sat with her to make her feel better. What virtue did she show?',
+        a:['Courage','Integrity','Responsibility','Compassion'],
+        c:3, person:'',
+        exp:'Compassion means caring about others\' feelings and trying to help when they\'re sad or hurt. It\'s one of the most powerful ways to show someone they matter!' },
+
+      { cat:'virtue', emoji:'💛', q:'What does KINDNESS mean?',
+        a:['Having the most toys','Getting the highest score','Being nice and making others feel good','Being the fastest runner'],
+        c:2, person:'',
+        exp:'Kindness means being friendly, helpful, and caring toward others. Small acts of kindness — like a smile or a kind word — can make a huge difference in someone\'s day!' },
+
+      { cat:'virtue', emoji:'🦸', q:'You see someone being bullied. What does COURAGE look like?',
+        a:['Ignore it and walk away','Join in','Pretend you didn\'t see it','Tell an adult or calmly stand up for the person'],
+        c:3, person:'',
+        exp:'Courage means standing up for what\'s right, even when it\'s scary! Tell a teacher, say "that\'s not cool," or walk the person away to safety. Being an upstander takes real bravery.' },
+
+      { cat:'virtue', emoji:'💬', q:'You accidentally break something at a friend\'s house. What does HONESTY look like?',
+        a:['Hide it and hope no one notices','Blame someone else','Run away','Tell the truth and say you\'re sorry'],
+        c:3, person:'',
+        exp:'Honesty means coming clean even when you\'re afraid. Most people respect honesty far more than a cover-up — and it keeps your friendship and trust intact!' },
+
+      { cat:'virtue', emoji:'🏆', q:'Your teammate made an error that cost your team the game. What shows COMPASSION?',
+        a:['Tell everyone it was their fault','Ignore them for the rest of the day','Be visibly angry','Encourage them and say it\'s okay — everyone makes mistakes'],
+        c:3, person:'',
+        exp:'Compassion means choosing to support people when they feel bad, instead of making them feel worse. A kind word after a mistake can mean everything to someone.' },
+
+      { cat:'virtue', emoji:'📚', q:'You got a low grade on a test even though you tried hard. What shows PERSEVERANCE?',
+        a:['Give up on the subject','Decide you\'re just not smart','Keep studying and try different strategies next time','Copy a friend\'s answers next time'],
+        c:2, person:'',
+        exp:'Perseverance means responding to failure with more effort, not less! Every great learner has failed many times. The key is to learn from what went wrong and try again.' },
+
+      // ── QUOTES ──
+      { cat:'quote', emoji:'💬', q:'"Be the change you wish to see in the world." Who said this?',
+        a:['Abraham Lincoln','Albert Einstein','Martin Luther King Jr.','Mahatma Gandhi'],
+        c:3, person:'Mahatma Gandhi',
+        exp:'Gandhi (1869–1948) led India to independence through peaceful protest. This quote means: if you want kindness, fairness, or love in the world — start by showing it yourself!' },
+
+      { cat:'quote', emoji:'💬', q:'Albert Einstein said: "In the middle of difficulty lies ___."',
+        a:['danger','peace','rest','opportunity'],
+        c:3, person:'Albert Einstein',
+        exp:'Einstein (1879–1955) was one of history\'s greatest scientists. He taught us that hard problems are actually chances to grow, discover, and become smarter!' },
+
+      { cat:'quote', emoji:'💬', q:'"It does not matter how slowly you go as long as you do not stop." Who said this?',
+        a:['Gandhi','Newton','Mother Teresa','Confucius'],
+        c:3, person:'Confucius',
+        exp:'Confucius (551–479 BC) was a famous Chinese philosopher and teacher. He taught that steady, consistent effort beats giving up every time — slow progress is still progress!' },
+
+      { cat:'quote', emoji:'💬', q:'"Fall seven times, stand up eight." This proverb comes from which country?',
+        a:['China','India','Korea','Japan'],
+        c:3, person:'Japanese Proverb',
+        exp:'This Japanese proverb teaches resilience — no matter how many times life knocks you down, keep getting back up! The number of times you rise always matters more than how many times you fell.' },
+
+      { cat:'quote', emoji:'💬', q:'Mother Teresa said: "Kind words can be short and easy to speak, but their echoes are ___."',
+        a:['quiet','loud','forgotten','endless'],
+        c:3, person:'Mother Teresa',
+        exp:'Mother Teresa (1910–1997) spent her life caring for the poorest people in Calcutta. She reminds us that a few kind words cost nothing but can stay with someone for a lifetime!' },
+
+      { cat:'quote', emoji:'💬', q:'"It always seems impossible until it\'s done." Who said this?',
+        a:['Gandhi','Martin Luther King Jr.','Winston Churchill','Nelson Mandela'],
+        c:3, person:'Nelson Mandela',
+        exp:'Nelson Mandela (1918–2013) spent 27 years in prison fighting for equality in South Africa, then became its first democratically elected president. He showed that even "impossible" goals can be achieved!' },
+
+      { cat:'quote', emoji:'💬', q:'"The more that you read, the more things you will know." Who said this?',
+        a:['J.K. Rowling','Mark Twain','Dr. Seuss','Shakespeare'],
+        c:2, person:'Dr. Seuss',
+        exp:'Dr. Seuss (1904–1991) wrote beloved books like "The Cat in the Hat." He knew that reading opens doors to imagination, knowledge, and endless adventures — one page at a time!' },
+
+      { cat:'quote', emoji:'💬', q:'"Believe you can and you\'re halfway there." Who said this?',
+        a:['George Washington','Thomas Jefferson','Abraham Lincoln','Theodore Roosevelt'],
+        c:3, person:'Theodore Roosevelt',
+        exp:'Theodore Roosevelt (1858–1919) was the 26th U.S. President. He believed that self-confidence is one of the most powerful tools you have — your mindset literally shapes your results!' },
+
+      { cat:'quote', emoji:'💬', q:'"You miss 100% of the shots you don\'t take." Who said this?',
+        a:['Michael Jordan','LeBron James','Kobe Bryant','Wayne Gretzky'],
+        c:3, person:'Wayne Gretzky',
+        exp:'Wayne Gretzky is considered the greatest hockey player who ever lived! He reminds us: if you never try, you\'re guaranteed to fail. Take chances — you might surprise yourself!' },
+
+      { cat:'quote', emoji:'💬', q:'"The only way to do great work is to love what you do." This quote teaches that:',
+        a:['Work hard only to get rich','Great work is always easy','Only work when you feel like it','Passion and caring about your work leads to great results'],
+        c:3, person:'Steve Jobs',
+        exp:'Steve Jobs (1955–2011) co-founded Apple and transformed technology, music, and movies. He found something he loved and poured himself into it — that\'s the secret to extraordinary work!' },
+
+      { cat:'quote', emoji:'💬', q:'"Spread love everywhere you go." Who said this?',
+        a:['Gandhi','Dr. Seuss','Mother Teresa','Nelson Mandela'],
+        c:2, person:'Mother Teresa',
+        exp:'Mother Teresa devoted her life to loving and serving the poorest of the poor. She believed love is contagious — when you show it, others feel it and pass it on. Be the one who starts it!' },
+
+      { cat:'quote', emoji:'💬', q:'"In the end, it\'s not the years in your life that count. It\'s the life in your years." Who said this?',
+        a:['Theodore Roosevelt','Nelson Mandela','Abraham Lincoln','Confucius'],
+        c:2, person:'Abraham Lincoln',
+        exp:'Abraham Lincoln (1809–1865) was the 16th U.S. President who helped end slavery. He reminds us: make each day count by living fully, helping others, and doing meaningful things!' },
+
+      { cat:'quote', emoji:'💬', q:'"Do what you can, with what you have, where you are." This teaches us to:',
+        a:['Wait for perfect conditions','Gather as many resources as possible first','Only act when you\'re older','Start making a difference right now, with whatever you have'],
+        c:3, person:'Theodore Roosevelt',
+        exp:'Theodore Roosevelt said this to inspire everyone — including kids! You don\'t need to be rich, famous, or grown-up to do good. Start today, right where you are, with what you already have.' },
+
+      // ── PRINCIPLES ──
+      { cat:'principle', emoji:'⚡', q:'What is the "Golden Rule"?',
+        a:['Always finish your food','Gold is the most valuable thing','The first one there wins','Treat others the way you want to be treated'],
+        c:3, person:'',
+        exp:'The Golden Rule appears in almost every culture and religion in the world! Before doing something to someone else, ask: "Would I want this done to me?" It\'s the simplest guide to treating people right.' },
+
+      { cat:'principle', emoji:'⚡', q:'What does "Actions speak louder than words" mean?',
+        a:['Shouting is better than whispering','Words don\'t matter at all','Action movies are fun','What you DO matters more than what you SAY'],
+        c:3, person:'',
+        exp:'It\'s easy to say "I\'ll help" or "I care" — but what counts is actually doing it. Your actions show people who you really are, not just your promises.' },
+
+      { cat:'principle', emoji:'⚡', q:'What is a "Growth Mindset"?',
+        a:['Growing taller every year','Only doing things you\'re already great at','Believing you can never change','Believing you can get smarter and better with practice'],
+        c:3, person:'',
+        exp:'Dr. Carol Dweck discovered the Growth Mindset: your brain is like a muscle — the more you challenge it, the stronger it gets! Saying "I can\'t do this yet" instead of "I can\'t do this" changes everything.' },
+
+      { cat:'principle', emoji:'⚡', q:'"Practice makes perfect" means:',
+        a:['Only perfect people should practice','You must already be perfect to practice','Practice is usually boring','The more you practice, the better you become'],
+        c:3, person:'',
+        exp:'Every expert was once a beginner! Mozart played piano as a toddler but practiced for thousands of hours. Michael Jordan got cut from his high school team — then practiced until he became the greatest ever.' },
+
+      { cat:'principle', emoji:'⚡', q:'What does "Every mistake is a lesson" mean?',
+        a:['Mistakes are always bad','You should never make mistakes','Only smart people make mistakes','We can learn and grow from our mistakes'],
+        c:3, person:'',
+        exp:'Mistakes are actually your best teachers! When something doesn\'t work, you find out why — and that helps you discover what does. The biggest mistake is being so afraid of mistakes that you never try!' },
+
+      { cat:'principle', emoji:'⚡', q:'"A journey of a thousand miles begins with a single step." What does this teach?',
+        a:['Walking is good exercise','Miles are longer than kilometers','Long journeys are dangerous','Every big achievement starts with taking the first small step'],
+        c:3, person:'Laozi',
+        exp:'Laozi was an ancient Chinese philosopher who wrote the Tao Te Ching. No matter how huge your goal — writing a book, learning an instrument, or building something great — it all starts with step ONE!' },
+
+      { cat:'principle', emoji:'⚡', q:'What does "Pay it forward" mean?',
+        a:['Pay money in advance','Get revenge on someone who was mean','When someone does something nice for you, do something nice for someone else','Only help people who help you first'],
+        c:2, person:'',
+        exp:'"Pay it forward" means spreading kindness like a chain reaction! If someone helps you, instead of just saying thanks — go help someone else. Kindness multiplies when you pass it on!' },
+
+      { cat:'principle', emoji:'⚡', q:'Which principle means you should focus energy only on what you can actually change?',
+        a:['Always win at everything','Control everyone around you','Give up when things are hard','Focus on your own actions and attitude, not things outside your control'],
+        c:3, person:'',
+        exp:'Ancient Stoic philosophers like Marcus Aurelius and Epictetus taught this! You can\'t control the weather, other people, or bad luck — but you CAN control your effort, attitude, and response. That\'s where your real power lives.' },
+
+      // ── DISCIPLINE ──
+      { cat:'discipline', emoji:'🎯', q:'What is a "habit"?',
+        a:['A costume you wear','A type of rabbit','A school subject','Something you do regularly that becomes almost automatic'],
+        c:3, person:'',
+        exp:'Habits are incredibly powerful! Scientists say it takes roughly 21–66 days to form a new habit. Good ones — like reading, exercising, and sleeping early — become automatic and save mental energy over time.' },
+
+      { cat:'discipline', emoji:'🎯', q:'"Small steps every day lead to big achievements." The best example of this is:',
+        a:['Reading 20 books in one day','Studying 10 hours the night before a test','Waiting until the last minute for homework','Practicing piano for 10 minutes every single day'],
+        c:3, person:'',
+        exp:'10 minutes a day = over 60 hours in a year! This is called the compound effect — small, consistent actions add up to massive results over time. Think of it like a snowball rolling downhill, growing bigger with every roll.' },
+
+      { cat:'discipline', emoji:'🎯', q:'What does "delayed gratification" mean?',
+        a:['Getting your reward immediately','Never getting any rewards','Sleeping in late','Waiting for something better instead of taking a smaller reward right now'],
+        c:3, person:'',
+        exp:'In the famous Marshmallow Test, kids who waited for 2 marshmallows instead of eating 1 right away tended to do better in life later on. Patience and self-control are real superpowers you can build!' },
+
+      { cat:'discipline', emoji:'🎯', q:'Which is the best example of GOOD discipline?',
+        a:['Playing video games all night before a big test','Skipping practice because you\'re tired','Eating only dessert for every meal','Finishing homework before watching TV'],
+        c:3, person:'',
+        exp:'Good discipline means doing the important things even when you don\'t feel like it. Doing homework right away actually frees up more time later for fun — and you\'ll sleep better knowing it\'s done!' },
+
+      { cat:'discipline', emoji:'🎯', q:'You want to get better at drawing. What\'s the BEST strategy?',
+        a:['Draw for 8 hours once, then never again','Just hope you get better without practicing','Give up if your first drawings aren\'t great','Draw a little every day and look for what you can improve'],
+        c:3, person:'',
+        exp:'Consistent practice + learning from feedback = real improvement! Every amazing artist started with stick figures. The secret is showing up every single day, even on days you don\'t feel inspired.' },
+
+      { cat:'discipline', emoji:'🎯', q:'Which habit helps your brain learn and your body feel best every day?',
+        a:['Playing phone games until midnight','Eating lots of sugar before bed','Skipping breakfast so you can sleep more','Having a consistent bedtime and morning routine'],
+        c:3, person:'',
+        exp:'Sleep is when your brain consolidates everything you learned and stores memories! A consistent schedule trains your body to know when to rest and wake, leading to sharper focus and better mood every single day.' },
+
+      { cat:'discipline', emoji:'🎯', q:'What does "self-discipline" mean?',
+        a:['Punishing yourself when you make mistakes','Being very strict with other people','Never having fun','Doing what needs to be done even when it\'s hard or not fun'],
+        c:3, person:'',
+        exp:'Self-discipline is the ability to act on your goals even when you don\'t feel like it. It\'s like a muscle — the more you practice it, the stronger it gets. And with it, you can achieve almost anything you set your mind to!' },
+
+      { cat:'discipline', emoji:'🎯', q:'What does "focus on what you can control" mean in daily life?',
+        a:['Try to control everything and everyone','Give up when life is unfair','Control other people\'s choices','Put your energy into your own actions and attitude, not things you can\'t change'],
+        c:3, person:'',
+        exp:'You can\'t always control what happens to you — but you can always control how you respond. This is one of the most powerful life lessons. Where you focus your energy shapes your entire experience!' },
+
+      { cat:'discipline', emoji:'🎯', q:'You\'re working on a hard project and feel like quitting. What does a DISCIPLINED person do?',
+        a:['Quit immediately and play instead','Complain until someone else does it','Wait for motivation to magically appear','Break it into small steps and work on just the next one'],
+        c:3, person:'',
+        exp:'Discipline means you don\'t wait to feel motivated — you take action and motivation often follows! Breaking a big task into tiny steps makes it feel manageable. "Just do the next small thing" is one of the best productivity secrets.' },
+
+      // ── NEW VIRTUE QUESTIONS ──
+      { cat:'virtue', emoji:'🫂', q:'What does EMPATHY mean?',
+        a:['Feeling sorry for yourself','Understanding and sharing the feelings of others','Being very smart','Winning every argument'],
+        c:1, person:'',
+        exp:'Empathy means stepping into someone else\'s shoes and really trying to feel what they feel. It\'s the foundation of every great friendship, team, and community.' },
+
+      { cat:'virtue', emoji:'🌊', q:'What does RESILIENCE mean?',
+        a:['Never failing at anything','Avoiding all hard situations','Bouncing back from setbacks stronger than before','Being very flexible physically'],
+        c:2, person:'',
+        exp:'Resilient people don\'t avoid setbacks — they use them as fuel. Like a rubber band, the more you\'re stretched, the more energy you have to spring back. Hard times build strong people.' },
+
+      { cat:'virtue', emoji:'🔒', q:'What does LOYALTY mean?',
+        a:['Only helping people who help you first','Being faithful and supportive to those you care about','Agreeing with everything your friends say','Never changing your mind'],
+        c:1, person:'',
+        exp:'Loyalty means sticking by people through good times AND bad. It doesn\'t mean covering up wrong behavior — it means being someone others can truly count on.' },
+
+      { cat:'virtue', emoji:'🕊️', q:'Alex\'s friend accidentally lost his favorite book. Alex was upset but chose to let it go and stay friends. What virtue did Alex show?',
+        a:['Patience','Integrity','Forgiveness','Perseverance'],
+        c:2, person:'',
+        exp:'Forgiveness means releasing anger even when you were truly hurt. It\'s a gift you give yourself as much as others — holding onto anger keeps the pain alive inside YOU.' },
+
+      { cat:'virtue', emoji:'🔭', q:'What does CURIOSITY mean?',
+        a:['Being nosy about other people\'s business','A desire to learn, explore, and ask "why?"','Only caring about your own interests','Memorizing lots of facts'],
+        c:1, person:'',
+        exp:'Einstein said he had no special talent — he was just "passionately curious." Curiosity leads to discovery, creativity, and a richer life. Always keep asking questions!' },
+
+      { cat:'virtue', emoji:'☀️', q:'What does OPTIMISM mean?',
+        a:['Pretending bad things don\'t exist','Expecting everything to be perfect','Choosing to believe you can handle challenges and see the good','Being happy all the time'],
+        c:2, person:'',
+        exp:'Optimism isn\'t about pretending problems don\'t exist — it\'s about believing you can handle them. Optimistic people tend to be healthier, more successful, and more fun to be around.' },
+
+      { cat:'virtue', emoji:'🦉', q:'What is the difference between KNOWLEDGE and WISDOM?',
+        a:['They mean exactly the same thing','Wisdom means knowing lots of facts','Knowledge is getting good grades; wisdom is being old','Knowledge is knowing facts; wisdom is knowing what to do with them'],
+        c:3, person:'',
+        exp:'You can know every fact in a book but still make poor decisions. Wisdom grows from experience, reflection, and learning from mistakes — yours and others\'. You can start building it today.' },
+
+      // ── NEW QUOTE QUESTIONS ──
+      { cat:'quote', emoji:'💬', q:'"Darkness cannot drive out darkness; only light can do that." Who said this?',
+        a:['Gandhi','Nelson Mandela','Martin Luther King Jr.','Mother Teresa'],
+        c:2, person:'Martin Luther King Jr.',
+        exp:'MLK Jr. (1929–1968) led the American civil rights movement through peaceful protest. Responding to hate with more hate solves nothing — love and light are the only true answers.' },
+
+      { cat:'quote', emoji:'💬', q:'"We are what we repeatedly do. Excellence is not an act, but a habit." Who said this?',
+        a:['Confucius','Plato','Socrates','Aristotle'],
+        c:3, person:'Aristotle',
+        exp:'Aristotle (384–322 BC) was one of history\'s greatest thinkers. Who you are is defined not by one grand moment, but by the small actions you take every single day.' },
+
+      { cat:'quote', emoji:'💬', q:'"One child, one teacher, one book, one pen can change the world." Who said this?',
+        a:['Malala Yousafzai','Mother Teresa','Eleanor Roosevelt','Michelle Obama'],
+        c:0, person:'Malala Yousafzai',
+        exp:'Malala was shot by the Taliban for going to school, survived, and became the youngest Nobel Peace Prize winner. She proves one brave voice — even a child\'s — can change history.' },
+
+      { cat:'quote', emoji:'💬', q:'"Success is not final, failure is not fatal: it is the courage to continue that counts." Who said this?',
+        a:['Theodore Roosevelt','Nelson Mandela','Winston Churchill','Abraham Lincoln'],
+        c:2, person:'Winston Churchill',
+        exp:'Churchill (1874–1965) led Britain through World War II after many personal failures. Neither success nor failure is permanent — what matters is whether you keep going.' },
+
+      { cat:'quote', emoji:'💬', q:'Maya Angelou said people will never forget ___.',
+        a:['what you said','what you did','what you owned','how you made them feel'],
+        c:3, person:'Maya Angelou',
+        exp:'Maya Angelou (1928–2014) was a celebrated poet and civil rights activist. Feelings last longer than facts — the way you treat people is your most lasting legacy.' },
+
+      { cat:'quote', emoji:'💬', q:'"No act of kindness, no matter how small, is ever wasted." Who said this?',
+        a:['Mother Teresa','Confucius','Aesop','Helen Keller'],
+        c:2, person:'Aesop',
+        exp:'Aesop was an ancient Greek storyteller famous for his fables. Every kind act — a smile, a kind word, a held door — ripples outward in ways you may never fully see.' },
+
+      // ── NEW PRINCIPLE QUESTIONS ──
+      { cat:'principle', emoji:'⚡', q:'What is an "Abundance Mindset"?',
+        a:['Believing there\'s only enough success for a few people','Collecting as much as possible for yourself','Believing there\'s enough success and happiness for everyone','Feeling jealous when others succeed'],
+        c:2, person:'',
+        exp:'People with a scarcity mindset see others\' success as a threat. An abundance mindset says: "If they can do it, so can I!" It makes you more generous, collaborative, and genuinely happy for others.' },
+
+      { cat:'principle', emoji:'⚡', q:'If you get 1% better every day for a whole year, approximately how much better will you be?',
+        a:['About 3 times better','About 10 times better','About 37 times better','About the same'],
+        c:2, person:'',
+        exp:'Tiny improvements compound dramatically over time. 1% better daily for 365 days = 37× improvement. The direction of your daily habits determines your destiny.' },
+
+      { cat:'principle', emoji:'⚡', q:'What does "Lead by Example" mean?',
+        a:['Tell others exactly what to do','Be the first to arrive everywhere','Show the behavior you want to see in others through your own actions','Give orders from a position of power'],
+        c:2, person:'',
+        exp:'The most powerful leadership isn\'t telling people what to do — it\'s doing it yourself. If you want kindness, be kind first. People follow what they see, not just what they\'re told.' },
+
+      { cat:'principle', emoji:'⚡', q:'What is the "Ripple Effect" principle?',
+        a:['Only big actions matter','Your actions only affect the people directly around you','Every action — good or bad — spreads outward and affects more people than you realize','What happens to others doesn\'t concern you'],
+        c:2, person:'',
+        exp:'When you do something kind, that person is more likely to be kind to others. Your actions are like stones dropped in a pond — the ripples travel far beyond what you can see.' },
+
+      // ── NEW DISCIPLINE QUESTIONS ──
+      { cat:'discipline', emoji:'🎯', q:'What is the "2-Minute Rule"?',
+        a:['Take 2-minute breaks between tasks','Only work for 2 minutes at a time','If a task takes under 2 minutes, do it right now','Study for exactly 2 minutes a day'],
+        c:2, person:'',
+        exp:'Tiny tasks pile up and create mental clutter. If it\'s under 2 minutes — answer the text, wash the dish, file the paper — just do it now. Your future self will thank you constantly.' },
+
+      { cat:'discipline', emoji:'🎯', q:'What does "single-tasking" mean?',
+        a:['Only ever having one hobby','Doing one type of work per day','Focusing completely on one task at a time instead of multitasking','Only working on tasks that take one hour'],
+        c:2, person:'',
+        exp:'Multitasking is a myth — your brain switches rapidly between tasks, doing each worse. Research shows single-tasking produces higher quality work in less time. Deep focus is a real superpower.' },
+
+      { cat:'discipline', emoji:'🎯', q:'What does SMART stand for in SMART goals?',
+        a:['Strong, Meaningful, Accurate, Realistic, Timely','Specific, Measurable, Achievable, Relevant, Time-bound','Smart, Motivated, Ambitious, Ready, Tenacious','Simple, Manageable, Attainable, Reasonable, Trackable'],
+        c:1, person:'',
+        exp:'"Get better at math" is vague. "Practice 10 problems every day for 30 days" is SMART. Clear, concrete goals with deadlines are dramatically more likely to be achieved than fuzzy ones.' },
+
+      { cat:'discipline', emoji:'🎯', q:'Why is it helpful to CELEBRATE SMALL WINS on the way to a big goal?',
+        a:['It lets you quit after each small win','Small wins are more important than big ones','It releases good brain chemicals and keeps you motivated for the long journey','Celebrating distracts you from working hard'],
+        c:2, person:'',
+        exp:'Big goals take a long time. Celebrating milestones — 10 days of practice in a row, finishing a chapter — releases dopamine, builds momentum, and keeps motivation alive all the way to the finish.' },
+    ];
+
+    const WISDOM_TIPS = [
+      '"The secret of getting ahead is getting started." — Mark Twain',
+      '"You are braver than you believe, stronger than you seem, and smarter than you think." — A.A. Milne',
+      '"Character is doing the right thing when nobody\'s looking." — J.C. Watts',
+      '"Talent is a gift, but character is a choice." — John C. Maxwell',
+      '"The best way to find yourself is to lose yourself in the service of others." — Gandhi',
+      '"Kindness is a language which the deaf can hear and the blind can see." — Mark Twain',
+      '"You can\'t go back and change the beginning, but you can start where you are and change the ending." — C.S. Lewis',
+      '"Little by little, one travels far." — J.R.R. Tolkien',
+      '"It\'s not about how many times you get knocked down. It\'s about how many times you get up." — Vince Lombardi',
+    ];
+
+    // ────────────────────────────────────────────────
+    //  STATE
+    // ────────────────────────────────────────────────
+    let state = {
+      mode: 'solo', cat: 'all', totalQ: 12,
+      questions: [],
+      qi: 0,
+      scores: [0, 0], streaks: [0, 0],
+      turn: 0,   // 0=Kyle, 1=Lindsey (versus only)
+      answered: false
+    };
+
+    // ────────────────────────────────────────────────
+    //  SETUP OPTION BUTTONS
+    // ────────────────────────────────────────────────
+    document.querySelectorAll('.opt-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const g = btn.dataset.group;
+        document.querySelectorAll(`[data-group="${g}"]`).forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+      });
+    });
+
+    // ────────────────────────────────────────────────
+    //  SHOW SCREEN
+    // ────────────────────────────────────────────────
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+    function showSetup() { showScreen('screen-setup'); }
+
+    // ────────────────────────────────────────────────
+    //  START GAME
+    // ────────────────────────────────────────────────
+    function startGame() {
+      state.mode  = document.querySelector('[data-group="mode"].selected').dataset.val;
+      state.cat   = document.querySelector('[data-group="cat"].selected').dataset.val;
+      const cntVal = document.querySelector('[data-group="count"].selected').dataset.val;
+
+      // Filter
+      let pool = state.cat === 'all' ? [...QUESTIONS] : QUESTIONS.filter(q => q.cat === state.cat);
+      // Shuffle
+      pool = pool.sort(() => Math.random() - 0.5);
+      state.questions = cntVal === 'all' ? pool : pool.slice(0, Math.min(+cntVal, pool.length));
+      state.totalQ = state.questions.length;
+
+      state.qi = 0;
+      state.scores = [0, 0];
+      state.streaks = [0, 0];
+      state.turn = 0;
+      state.answered = false;
+
+      // UI
+      const isVersus = state.mode === 'versus';
+      document.getElementById('player-cards').style.display = isVersus ? 'flex' : 'none';
+      const sw = document.getElementById('solo-score-wrap');
+      sw.style.display = isVersus ? 'none' : 'flex';
+
+      updateScoreUI();
+      showScreen('screen-game');
+      renderQuestion();
+    }
+
+    // ────────────────────────────────────────────────
+    //  RENDER QUESTION
+    // ────────────────────────────────────────────────
+    function renderQuestion() {
+      state.answered = false;
+      const q = state.questions[state.qi];
+
+      // Progress
+      const pct = (state.qi / state.totalQ) * 100;
+      document.getElementById('progress-fill').style.width = pct + '%';
+      document.getElementById('q-counter').textContent = `Question ${state.qi + 1} of ${state.totalQ}`;
+
+      // Turn banner
+      const tb = document.getElementById('turn-banner');
+      if (state.mode === 'versus') {
+        tb.style.display = 'block';
+        tb.textContent = state.turn === 0 ? "Kyle's Turn 🌟" : "Lindsey's Turn 🌟";
+        tb.className = 'turn-banner ' + (state.turn === 0 ? 'turn-kyle' : 'turn-lindsey');
+      } else {
+        tb.style.display = 'none';
+      }
+
+      // Category badge
+      const badgeMap = { virtue:'🦁 Virtue', quote:'💬 Quote', principle:'⚡ Principle', discipline:'🎯 Discipline' };
+      const classMap = { virtue:'cat-virtue', quote:'cat-quote', principle:'cat-principle', discipline:'cat-discipline' };
+      const badge = document.getElementById('cat-badge');
+      badge.textContent = badgeMap[q.cat];
+      badge.className = 'cat-badge ' + classMap[q.cat];
+
+      // Animate question card
+      const card = document.getElementById('question-card');
+      card.style.animation = 'none';
+      card.offsetHeight; // reflow
+      card.style.animation = '';
+
+      document.getElementById('question-text').textContent = q.q;
+
+      // Answers
+      const grid = document.getElementById('answers-grid');
+      grid.innerHTML = '';
+      const letters = ['A','B','C','D'];
+      q.a.forEach((ans, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'ans-btn';
+        btn.innerHTML = `<span class="ans-letter">${letters[i]}</span>${ans}`;
+        btn.onclick = () => handleAnswer(i, btn);
+        grid.appendChild(btn);
+      });
+
+      // Hide explanation & next
+      document.getElementById('explanation-card').className = 'explanation-card';
+      document.getElementById('next-btn').className = 'next-btn';
+    }
+
+    // ────────────────────────────────────────────────
+    //  HANDLE ANSWER
+    // ────────────────────────────────────────────────
+    function handleAnswer(idx, clickedBtn) {
+      if (state.answered) return;
+      state.answered = true;
+
+      const q = state.questions[state.qi];
+      const isCorrect = idx === q.c;
+      const player = state.mode === 'versus' ? state.turn : 0;
+
+      // Disable all buttons
+      document.querySelectorAll('.ans-btn').forEach((btn, i) => {
+        btn.disabled = true;
+        if (i === q.c) btn.classList.add(isCorrect ? 'correct' : 'reveal-correct');
+        if (i === idx && !isCorrect) btn.classList.add('wrong');
+      });
+
+      // Score
+      if (isCorrect) {
+        state.streaks[player]++;
+        const bonus = state.streaks[player] >= 3 ? 25 : 0;
+        state.scores[player] += 100 + bonus;
+        showFlash(state.streaks[player] >= 3 ? '🔥' : '✅');
+      } else {
+        state.streaks[player] = 0;
+        showFlash('❌');
+      }
+      updateScoreUI();
+
+      // Explanation
+      const expCard = document.getElementById('explanation-card');
+      expCard.className = 'explanation-card ' + (isCorrect ? 'correct-card' : 'wrong-card') + ' show';
+      document.getElementById('exp-badge').textContent = isCorrect ? '✅' : '💡';
+      document.getElementById('exp-status').textContent = isCorrect
+        ? (state.streaks[player] >= 3 ? `🔥 ${state.streaks[player]}-Streak!` : 'Correct!')
+        : 'Not quite…';
+      document.getElementById('exp-person').textContent = q.person ? `— ${q.person}` : '';
+      document.getElementById('exp-text').textContent = q.exp;
+
+      // Next button
+      const nextBtn = document.getElementById('next-btn');
+      nextBtn.className = 'next-btn show';
+      const isLast = state.qi >= state.totalQ - 1;
+      nextBtn.textContent = isLast ? 'See Results 🏆' : 'Next Question →';
+    }
+
+    // ────────────────────────────────────────────────
+    //  NEXT QUESTION
+    // ────────────────────────────────────────────────
+    function nextQuestion() {
+      if (state.mode === 'versus') state.turn = 1 - state.turn;
+      state.qi++;
+      if (state.qi >= state.totalQ) { showEnd(); return; }
+      renderQuestion();
+    }
+
+    // ────────────────────────────────────────────────
+    //  UPDATE SCORE UI
+    // ────────────────────────────────────────────────
+    function updateScoreUI() {
+      if (state.mode === 'versus') {
+        document.getElementById('score-kyle').textContent    = state.scores[0];
+        document.getElementById('score-lindsey').textContent = state.scores[1];
+        document.getElementById('streak-kyle').textContent    = state.streaks[0] >= 2 ? `🔥 ${state.streaks[0]} streak!` : '';
+        document.getElementById('streak-lindsey').textContent = state.streaks[1] >= 2 ? `🔥 ${state.streaks[1]} streak!` : '';
+        const kc = document.getElementById('card-kyle');
+        const lc = document.getElementById('card-lindsey');
+        kc.classList.toggle('active', state.turn === 0);
+        lc.classList.toggle('active', state.turn === 1);
+      } else {
+        document.getElementById('solo-score').textContent  = state.scores[0];
+        document.getElementById('solo-streak').textContent = state.streaks[0] >= 2 ? `🔥 ${state.streaks[0]} streak!` : '';
+      }
+    }
+
+    // ────────────────────────────────────────────────
+    //  SHOW END
+    // ────────────────────────────────────────────────
+    function showEnd() {
+      // Wisdom tip
+      const tip = WISDOM_TIPS[Math.floor(Math.random() * WISDOM_TIPS.length)];
+      document.getElementById('wisdom-tip').innerHTML = `<strong style="color:#a78bfa">Wisdom of the Day:</strong><br>${tip}`;
+
+      if (state.mode === 'versus') {
+        document.getElementById('end-solo').style.display   = 'none';
+        document.getElementById('end-versus').style.display = 'flex';
+
+        const s0 = state.scores[0], s1 = state.scores[1];
+        document.getElementById('vc-kyle').textContent    = s0;
+        document.getElementById('vc-lindsey').textContent = s1;
+
+        const tie = s0 === s1;
+        document.getElementById('end-title').textContent  = tie ? "It's a Tie! 🤝" : (s0 > s1 ? 'Kyle Wins! 🏆' : 'Lindsey Wins! 🏆');
+        document.getElementById('end-icon').textContent   = tie ? '🤝' : '🏆';
+        document.getElementById('crown-kyle').style.display    = (!tie && s0 > s1) ? 'block' : 'none';
+        document.getElementById('crown-lindsey').style.display = (!tie && s1 > s0) ? 'block' : 'none';
+        document.getElementById('end-card-kyle').classList.toggle('winner', !tie && s0 > s1);
+        document.getElementById('end-card-lindsey').classList.toggle('winner', !tie && s1 > s0);
+      } else {
+        document.getElementById('end-versus').style.display = 'none';
+        document.getElementById('end-solo').style.display   = 'block';
+
+        const correct = Math.round(state.scores[0] / 100);
+        const pct = correct / state.totalQ;
+        const stars = pct >= 0.9 ? '⭐⭐⭐' : pct >= 0.7 ? '⭐⭐' : '⭐';
+        const title = pct >= 0.9 ? 'Wisdom Master! 🌟' : pct >= 0.7 ? 'Wisdom Seeker! ✨' : 'Keep Learning! 📚';
+        document.getElementById('end-title').textContent      = title;
+        document.getElementById('end-icon').textContent       = pct >= 0.9 ? '🏆' : pct >= 0.7 ? '🌟' : '📚';
+        document.getElementById('end-solo-score').textContent = `${correct} / ${state.totalQ}`;
+        document.getElementById('end-solo-sub').textContent   = `questions correct`;
+        document.getElementById('end-solo-stars').textContent = stars;
+      }
+
+      showScreen('screen-end');
+    }
+
+    // ────────────────────────────────────────────────
+    //  FLASH
+    // ────────────────────────────────────────────────
+    function showFlash(emoji) {
+      const el = document.createElement('div');
+      el.className = 'result-flash';
+      el.textContent = emoji;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 750);
+    }
+
+    // ────────────────────────────────────────────────
+    //  REFERENCE DATA
+    // ────────────────────────────────────────────────
+    const REFERENCE = [
+      // ── VIRTUES ──
+      { cat:'virtue', cls:'rv', emoji:'🦁', name:'Courage',
+        def:'Being brave even when scared.',
+        exp:'Courage doesn\'t mean you\'re not afraid — it means you act even though you are. Standing up for a friend, trying something new, or admitting a mistake all take courage.' },
+      { cat:'virtue', cls:'rv', emoji:'✅', name:'Honesty',
+        def:'Telling the truth even when it\'s hard.',
+        exp:'Honest people build deep trust with others. Even when the truth is scary, honesty shows strength of character — and most people respect it far more than a cover-up.' },
+      { cat:'virtue', cls:'rv', emoji:'⏳', name:'Patience',
+        def:'Waiting calmly without complaining.',
+        exp:'Patience is one of the hardest virtues to practice, especially when you\'re excited or frustrated. It shows respect for others and helps you make better decisions.' },
+      { cat:'virtue', cls:'rv', emoji:'🤲', name:'Generosity',
+        def:'Freely sharing what you have with others.',
+        exp:'Generosity isn\'t just about money — it includes sharing your time, attention, and kindness. Studies show that giving to others actually makes YOU happier too!' },
+      { cat:'virtue', cls:'rv', emoji:'💪', name:'Perseverance',
+        def:'Keeping trying even after failing.',
+        exp:'Thomas Edison failed 1,000 times before inventing the lightbulb. He called every failure a step closer to success. Giving up is the only true failure.' },
+      { cat:'virtue', cls:'rv', emoji:'⭐', name:'Integrity',
+        def:'Doing the right thing even when no one is watching.',
+        exp:'Integrity is the core of good character. When you act with integrity, people know they can trust you — because you do what\'s right, not just what\'s easy or convenient.' },
+      { cat:'virtue', cls:'rv', emoji:'🤝', name:'Respect',
+        def:'Treating people and things kindly and with care.',
+        exp:'Respect means listening when others speak, being polite, and valuing everyone\'s feelings — including people who are different from you. It starts with respecting yourself.' },
+      { cat:'virtue', cls:'rv', emoji:'📋', name:'Responsibility',
+        def:'Taking care of your duties and doing what you promised.',
+        exp:'When you\'re responsible, people can count on you. It means owning your mistakes, doing your chores and homework, and following through on commitments.' },
+      { cat:'virtue', cls:'rv', emoji:'🙏', name:'Gratitude',
+        def:'Being thankful for what you have.',
+        exp:'People who practice gratitude daily are measurably happier and healthier. Appreciating small things — a sunny day, a kind friend — trains your brain to notice the good.' },
+      { cat:'virtue', cls:'rv', emoji:'😊', name:'Humility',
+        def:'Being modest — not bragging about your achievements.',
+        exp:'Humble people know their strengths but don\'t need to show off. They celebrate others\' successes too, which makes everyone feel included and valued.' },
+      { cat:'virtue', cls:'rv', emoji:'❤️', name:'Compassion',
+        def:'Caring about others\' feelings and helping when they hurt.',
+        exp:'Compassion means you don\'t just feel sorry for someone — you actually do something to help. Sitting with a sad friend, sharing, or saying a kind word can change someone\'s whole day.' },
+      { cat:'virtue', cls:'rv', emoji:'💛', name:'Kindness',
+        def:'Being nice and making others feel good.',
+        exp:'Small acts of kindness have big ripple effects. One smile, one kind word, or one offer to help can brighten someone\'s entire day — and it costs you nothing.' },
+      { cat:'virtue', cls:'rv', emoji:'⚖️', name:'Fairness',
+        def:'Treating everyone equally and playing by the rules.',
+        exp:'Fairness means giving everyone a fair chance — not just your friends. It includes sharing, taking turns, and not cheating even when you could get away with it.' },
+      { cat:'virtue', cls:'rv', emoji:'🌱', name:'Self-Control',
+        def:'Managing your emotions and impulses wisely.',
+        exp:'Self-control means pausing before you react in anger, resisting temptation, and choosing long-term good over short-term fun. It\'s one of the most important skills in life.' },
+
+      // ── QUOTES ──
+      { cat:'quote', cls:'rq', emoji:'🌍', name:'Mahatma Gandhi',
+        def:'"Be the change you wish to see in the world."',
+        exp:'Gandhi (1869–1948) led India to independence through peaceful protest. Don\'t wait for others to make the world better — start with your own actions, right now.' },
+      { cat:'quote', cls:'rq', emoji:'🔬', name:'Albert Einstein',
+        def:'"In the middle of difficulty lies opportunity."',
+        exp:'Einstein (1879–1955) failed his first university entrance exam. He taught us that hard problems are actually chances to grow, discover, and become smarter.' },
+      { cat:'quote', cls:'rq', emoji:'📜', name:'Confucius',
+        def:'"It does not matter how slowly you go as long as you do not stop."',
+        exp:'Confucius (551–479 BC) was an ancient Chinese philosopher. Steady, consistent effort always beats giving up — slow progress is still progress!' },
+      { cat:'quote', cls:'rq', emoji:'🌸', name:'Japanese Proverb',
+        def:'"Fall seven times, stand up eight."',
+        exp:'No matter how many times life knocks you down, keep getting up. The number of times you rise will always matter more than how many times you fell.' },
+      { cat:'quote', cls:'rq', emoji:'💕', name:'Mother Teresa',
+        def:'"Kind words can be short and easy to speak, but their echoes are endless."',
+        exp:'Mother Teresa (1910–1997) cared for the poorest people in Calcutta. A few kind words cost nothing but can stay with someone for a lifetime.' },
+      { cat:'quote', cls:'rq', emoji:'✊', name:'Nelson Mandela',
+        def:'"It always seems impossible until it\'s done."',
+        exp:'Mandela spent 27 years in prison fighting for equality in South Africa, then became its president. Even "impossible" goals can be achieved with courage and perseverance.' },
+      { cat:'quote', cls:'rq', emoji:'📚', name:'Dr. Seuss',
+        def:'"The more that you read, the more things you will know."',
+        exp:'Dr. Seuss (1904–1991) wrote beloved books like "The Cat in the Hat." Reading opens doors to imagination, knowledge, and endless adventures — one page at a time!' },
+      { cat:'quote', cls:'rq', emoji:'🇺🇸', name:'Theodore Roosevelt',
+        def:'"Believe you can and you\'re halfway there."',
+        exp:'The 26th U.S. President believed that self-confidence is one of the most powerful tools you have. Your mindset literally shapes the results you get in life.' },
+      { cat:'quote', cls:'rq', emoji:'🏒', name:'Wayne Gretzky',
+        def:'"You miss 100% of the shots you don\'t take."',
+        exp:'The greatest hockey player ever reminds us: if you never try, you\'re guaranteed to fail. Take chances — you might surprise yourself with what you can achieve!' },
+      { cat:'quote', cls:'rq', emoji:'🍎', name:'Steve Jobs',
+        def:'"The only way to do great work is to love what you do."',
+        exp:'Jobs (1955–2011) co-founded Apple and transformed technology. Find something you love and pour yourself into it — passion is the fuel for extraordinary work.' },
+      { cat:'quote', cls:'rq', emoji:'🕊️', name:'Abraham Lincoln',
+        def:'"In the end, it\'s not the years in your life that count. It\'s the life in your years."',
+        exp:'The 16th U.S. President who helped end slavery reminds us: make each day count by living fully, helping others, and doing things that truly matter.' },
+      { cat:'quote', cls:'rq', emoji:'🐾', name:'Laozi',
+        def:'"A journey of a thousand miles begins with a single step."',
+        exp:'The ancient Chinese philosopher behind the Tao Te Ching. No matter how huge your goal, it all begins with step ONE. Start today.' },
+
+      // ── PRINCIPLES ──
+      { cat:'principle', cls:'rp', emoji:'🤝', name:'The Golden Rule',
+        def:'Treat others the way you want to be treated.',
+        exp:'This principle appears in almost every culture and religion on Earth. Before acting toward someone, ask: "Would I want this done to me?" It\'s the simplest guide to being good.' },
+      { cat:'principle', cls:'rp', emoji:'💥', name:'Actions Speak Louder',
+        def:'What you DO matters more than what you SAY.',
+        exp:'It\'s easy to say "I\'ll help" or "I care." What actually counts is doing it. Your actions show people who you really are — not your promises.' },
+      { cat:'principle', cls:'rp', emoji:'🧠', name:'Growth Mindset',
+        def:'Believing you can get smarter and better with practice.',
+        exp:'Dr. Carol Dweck discovered that your brain is like a muscle — the more you challenge it, the stronger it gets. Saying "I can\'t do this YET" changes everything.' },
+      { cat:'principle', cls:'rp', emoji:'🔁', name:'Practice Makes Perfect',
+        def:'The more you practice, the better you become.',
+        exp:'Mozart practiced thousands of hours. Michael Jordan got cut from his high school team, then practiced until he became the greatest ever. Excellence is built, not born.' },
+      { cat:'principle', cls:'rp', emoji:'💡', name:'Mistakes Are Lessons',
+        def:'We learn and grow from our mistakes.',
+        exp:'The biggest mistake is being so afraid of mistakes that you never try. Every error teaches you what doesn\'t work — which leads you to what does.' },
+      { cat:'principle', cls:'rp', emoji:'🔄', name:'Pay It Forward',
+        def:'When someone does something nice for you, do something nice for someone else.',
+        exp:'Kindness multiplies when you pass it on! Instead of just saying thanks — go help someone else. One act of kindness can start a whole chain reaction.' },
+      { cat:'principle', cls:'rp', emoji:'🎯', name:'Control What You Can',
+        def:'Focus on your own actions and attitude, not things outside your control.',
+        exp:'Ancient Stoic philosophers taught this. You can\'t control the weather, other people, or bad luck — but you CAN control your effort, attitude, and response.' },
+      { cat:'principle', cls:'rp', emoji:'🌊', name:'Cause & Effect',
+        def:'Every action has a consequence.',
+        exp:'The choices you make today shape who you become tomorrow. Think before you act — ask "What will happen if I do this?" and make choices your future self will thank you for.' },
+
+      // ── DISCIPLINE ──
+      { cat:'discipline', cls:'rd', emoji:'🔄', name:'Habits',
+        def:'Things you do regularly that become almost automatic.',
+        exp:'Scientists say it takes 21–66 days to form a new habit. Good habits — reading, exercising, sleeping early — eventually happen without much thought, freeing up mental energy.' },
+      { cat:'discipline', cls:'rd', emoji:'🌱', name:'Compound Effect',
+        def:'Small steps every day lead to big achievements.',
+        exp:'10 minutes of practice a day = 60+ hours a year. Small, consistent actions add up to massive results over time. Like a snowball rolling downhill — momentum builds.' },
+      { cat:'discipline', cls:'rd', emoji:'🍬', name:'Delayed Gratification',
+        def:'Waiting for something better instead of taking a smaller reward now.',
+        exp:'In the famous Marshmallow Test, kids who waited for 2 marshmallows instead of eating 1 right away tended to do better in life. Patience and self-control are real superpowers.' },
+      { cat:'discipline', cls:'rd', emoji:'💪', name:'Self-Discipline',
+        def:'Doing what needs to be done even when it\'s hard or not fun.',
+        exp:'Self-discipline is like a muscle — the more you practice it, the stronger it gets. It means acting on your goals even when you don\'t feel like it.' },
+      { cat:'discipline', cls:'rd', emoji:'📅', name:'Consistent Practice',
+        def:'Show up every day, even on the days you don\'t feel inspired.',
+        exp:'Every amazing artist, athlete, and thinker shows up consistently. You don\'t wait to feel motivated — you take action, and motivation often follows.' },
+      { cat:'discipline', cls:'rd', emoji:'😴', name:'Sleep & Routine',
+        def:'A consistent bedtime and morning routine helps you learn and feel better.',
+        exp:'Sleep is when your brain consolidates memories and learning. A consistent schedule trains your body — leading to sharper focus, better mood, and stronger health every day.' },
+      { cat:'discipline', cls:'rd', emoji:'🧩', name:'Break It Down',
+        def:'Break big tasks into small, manageable steps.',
+        exp:'"Just do the next small thing" is one of the best productivity secrets. Big goals feel impossible; the next tiny step always feels doable. Start there.' },
+      { cat:'discipline', cls:'rd', emoji:'🚫', name:'Avoid Procrastination',
+        def:'Do important things now, not later.',
+        exp:'Procrastination feels good in the moment but creates stress and worse results later. The 2-Minute Rule: if something takes under 2 minutes, do it right now.' },
+
+      // ── MORE VIRTUES ──
+      { cat:'virtue', cls:'rv', emoji:'🔒', name:'Loyalty',
+        def:'Being faithful and supportive to those you care about.',
+        exp:'Loyalty means sticking by your friends and family through good times and bad. It doesn\'t mean covering up bad behavior — it means being someone people can truly count on.' },
+      { cat:'virtue', cls:'rv', emoji:'🕊️', name:'Forgiveness',
+        def:'Letting go of anger toward someone who wronged you.',
+        exp:'Forgiveness is a gift you give yourself as much as others. Holding onto anger is like drinking poison and waiting for the other person to get sick. Letting go frees you.' },
+      { cat:'virtue', cls:'rv', emoji:'🫂', name:'Empathy',
+        def:'Understanding and sharing the feelings of others.',
+        exp:'Empathy means stepping into someone else\'s shoes — really trying to feel what they feel. It\'s the foundation of every great friendship, team, and community.' },
+      { cat:'virtue', cls:'rv', emoji:'🌊', name:'Resilience',
+        def:'Bouncing back from hard times stronger than before.',
+        exp:'Resilient people don\'t avoid setbacks — they use them as fuel. Like a rubber band, the more you\'re stretched, the more energy you have to spring back. Hard times build strong people.' },
+      { cat:'virtue', cls:'rv', emoji:'🔭', name:'Curiosity',
+        def:'A desire to learn, explore, and ask "why?"',
+        exp:'Curious people become lifelong learners. Albert Einstein said he had no special talent — he was just passionately curious. Curiosity leads to discovery, creativity, and a richer life.' },
+      { cat:'virtue', cls:'rv', emoji:'☀️', name:'Optimism',
+        def:'Choosing to see the good in situations and people.',
+        exp:'Optimism isn\'t about pretending problems don\'t exist — it\'s about believing you can handle them. Optimistic people tend to be healthier, more successful, and more fun to be around.' },
+      { cat:'virtue', cls:'rv', emoji:'🏆', name:'Trustworthiness',
+        def:'Being someone others can rely on and count on.',
+        exp:'Trust is built drop by drop and lost in buckets. When you consistently do what you say, show up when it matters, and keep secrets, people know they can trust you with anything.' },
+      { cat:'virtue', cls:'rv', emoji:'⚖️', name:'Justice',
+        def:'Standing up for what is right and fair for everyone.',
+        exp:'Justice means not just following rules, but caring that things are fair — for yourself AND for others, especially those who can\'t speak for themselves. It takes both courage and empathy.' },
+      { cat:'virtue', cls:'rv', emoji:'🎯', name:'Determination',
+        def:'Having a firm decision to achieve something and not quitting.',
+        exp:'Determination is the difference between people who dream and people who do. It means deciding that no obstacle is big enough to stop you from reaching your goal.' },
+      { cat:'virtue', cls:'rv', emoji:'🦉', name:'Wisdom',
+        def:'Using knowledge and experience to make good decisions.',
+        exp:'Knowledge is knowing facts; wisdom is knowing what to do with them. Wisdom grows from experience, reflection, and learning from mistakes — yours and others\'. You can start building it today.' },
+
+      // ── MORE QUOTES ──
+      { cat:'quote', cls:'rq', emoji:'✊', name:'Martin Luther King Jr.',
+        def:'"Darkness cannot drive out darkness; only light can do that. Hate cannot drive out hate; only love can do that."',
+        exp:'MLK Jr. (1929–1968) led the American civil rights movement through peaceful protest. He knew that responding to hate with more hate solves nothing — love and light are the only true answers.' },
+      { cat:'quote', cls:'rq', emoji:'🏺', name:'Aristotle',
+        def:'"We are what we repeatedly do. Excellence, then, is not an act, but a habit."',
+        exp:'Aristotle (384–322 BC) was one of history\'s greatest thinkers. He understood that who you are is defined not by one grand moment, but by the small actions you take every single day.' },
+      { cat:'quote', cls:'rq', emoji:'📖', name:'Malala Yousafzai',
+        def:'"One child, one teacher, one book, one pen can change the world."',
+        exp:'Malala (born 1997) was shot by the Taliban for going to school, survived, and became the youngest Nobel Peace Prize winner. She proves that one brave voice — even a child\'s — can change history.' },
+      { cat:'quote', cls:'rq', emoji:'🦁', name:'Winston Churchill',
+        def:'"Success is not final, failure is not fatal: it is the courage to continue that counts."',
+        exp:'Churchill (1874–1965) led Britain through World War II after many personal failures. He knew that neither success nor failure is permanent — what matters is whether you keep going.' },
+      { cat:'quote', cls:'rq', emoji:'🌹', name:'Eleanor Roosevelt',
+        def:'"The future belongs to those who believe in the beauty of their dreams."',
+        exp:'Eleanor Roosevelt (1884–1962) was a shy child who became one of the world\'s most influential women. She shows us that believing in your dreams isn\'t naive — it\'s the starting point of every great achievement.' },
+      { cat:'quote', cls:'rq', emoji:'🧠', name:'Ralph Waldo Emerson',
+        def:'"To be yourself in a world that is constantly trying to make you something else is the greatest accomplishment."',
+        exp:'Emerson (1803–1882) was an American philosopher who championed individuality. Being truly yourself — not following the crowd — takes real courage and is worth more than any trophy.' },
+      { cat:'quote', cls:'rq', emoji:'🐜', name:'Aesop',
+        def:'"No act of kindness, no matter how small, is ever wasted."',
+        exp:'Aesop was an ancient Greek storyteller famous for his fables. This truth stands: every kind act — a smile, a held door, a kind word — ripples outward in ways you may never fully see.' },
+      { cat:'quote', cls:'rq', emoji:'⚡', name:'Benjamin Franklin',
+        def:'"Tell me and I forget, teach me and I may remember, involve me and I learn."',
+        exp:'Franklin (1706–1790) was a scientist, inventor, diplomat, and Founding Father. He understood that real learning happens when you\'re actively doing — not just listening or reading.' },
+      { cat:'quote', cls:'rq', emoji:'👁️', name:'Helen Keller',
+        def:'"Alone we can do so little; together we can do so much."',
+        exp:'Helen Keller (1880–1968) was deaf and blind from infancy yet became a world-famous author and activist. With her teacher Annie Sullivan\'s help, she proved that partnership and teamwork multiply what any one person can do.' },
+      { cat:'quote', cls:'rq', emoji:'🌿', name:'Maya Angelou',
+        def:'"I\'ve learned that people will forget what you said, people will forget what you did, but people will never forget how you made them feel."',
+        exp:'Maya Angelou (1928–2014) was a celebrated poet, memoirist, and civil rights activist. Feelings last longer than facts — the way you treat people is your most lasting legacy.' },
+
+      // ── MORE PRINCIPLES ──
+      { cat:'principle', cls:'rp', emoji:'💎', name:'Abundance Mindset',
+        def:'There\'s enough success and happiness for everyone — life isn\'t a competition.',
+        exp:'People with a scarcity mindset see others\' success as a threat. An abundance mindset says: "If they can do it, so can I!" This makes you more generous, collaborative, and genuinely happy for others.' },
+      { cat:'principle', cls:'rp', emoji:'📈', name:'The 1% Rule',
+        def:'Getting just 1% better every day leads to being 37 times better in a year.',
+        exp:'Tiny improvements compound dramatically over time. 1% better daily for 365 days = 37× improvement. 1% worse daily = almost nothing left. The direction of your daily habits determines your destiny.' },
+      { cat:'principle', cls:'rp', emoji:'👂', name:'Empathy Before Advice',
+        def:'Understand how someone feels before trying to fix their problem.',
+        exp:'When someone is upset, they usually need to feel heard before they\'re ready for solutions. Saying "That sounds really hard" often helps more than jumping straight to "Here\'s what you should do."' },
+      { cat:'principle', cls:'rp', emoji:'🪞', name:'Lead by Example',
+        def:'Show the behavior you want to see in others through your own actions.',
+        exp:'The most powerful form of leadership isn\'t telling people what to do — it\'s doing it yourself. If you want kindness, be kind. If you want effort, give effort. People follow what they see, not what they\'re told.' },
+      { cat:'principle', cls:'rp', emoji:'🔓', name:'Forgiveness Frees You',
+        def:'Letting go of anger releases YOU more than the other person.',
+        exp:'Holding a grudge keeps the pain alive inside you, not in the person who hurt you. Forgiveness doesn\'t mean what they did was okay — it means you choose peace over punishment.' },
+      { cat:'principle', cls:'rp', emoji:'💜', name:'The Platinum Rule',
+        def:'Treat others the way THEY want to be treated — not just the way you\'d want.',
+        exp:'The Golden Rule is great, but different people need different things. Some want hugs; others want space. Some want advice; others want just to be heard. Ask what someone needs before assuming.' },
+      { cat:'principle', cls:'rp', emoji:'🌐', name:'Ripple Effect',
+        def:'Every action — good or bad — spreads outward and affects more people than you realize.',
+        exp:'When you do something kind, that person is more likely to be kind to others. When you\'re rude, that mood can spread too. Your actions are like stones dropped in a pond — the ripples go far.' },
+      { cat:'principle', cls:'rp', emoji:'🔍', name:'Assume Positive Intent',
+        def:'When something is unclear, assume the best about what someone meant.',
+        exp:'Most people aren\'t trying to hurt you — they\'re just busy, distracted, or clumsy with words. Assuming good intent keeps friendships strong and arguments from starting over misunderstandings.' },
+
+      // ── MORE DISCIPLINE ──
+      { cat:'discipline', cls:'rd', emoji:'⏱️', name:'The 2-Minute Rule',
+        def:'If a task takes less than 2 minutes — do it immediately.',
+        exp:'Tiny tasks pile up and create mental clutter. Answering a text, washing a dish, filing a paper — if it\'s under 2 minutes, just do it now. Your future self will thank you constantly.' },
+      { cat:'discipline', cls:'rd', emoji:'🤝', name:'Accountability',
+        def:'Tell others your goals to stay on track.',
+        exp:'When you share your goals publicly, you\'re far more likely to follow through. An accountability partner — a friend, sibling, or parent — can check in and celebrate progress with you.' },
+      { cat:'discipline', cls:'rd', emoji:'🎯', name:'Single-Tasking',
+        def:'Focus completely on one thing at a time.',
+        exp:'Multitasking is a myth — your brain switches rapidly between tasks, doing each worse. Research shows single-tasking produces higher quality work in less time. Deep focus is a superpower.' },
+      { cat:'discipline', cls:'rd', emoji:'🎉', name:'Celebrate Small Wins',
+        def:'Acknowledge your progress, not just the final goal.',
+        exp:'Big goals take time. Celebrating small milestones — finishing a chapter, practicing 10 days in a row — releases dopamine, builds momentum, and keeps motivation alive for the long journey.' },
+      { cat:'discipline', cls:'rd', emoji:'📝', name:'SMART Goals',
+        def:'Goals that are Specific, Measurable, Achievable, Relevant, and Time-bound.',
+        exp:'"Get better at math" is vague. "Practice 10 math problems every day for 30 days" is SMART. Clear, concrete goals with deadlines are dramatically more likely to be achieved than fuzzy ones.' },
+      { cat:'discipline', cls:'rd', emoji:'🌬️', name:'Mindfulness',
+        def:'Being fully present in the moment — not in the past or future.',
+        exp:'Mindfulness means paying full attention to what you\'re doing right now. It reduces stress, sharpens focus, and helps you enjoy life more. Even 5 slow deep breaths can reset an anxious mind.' },
+      { cat:'discipline', cls:'rd', emoji:'🌅', name:'Morning Routine',
+        def:'Starting the day with purpose and intention.',
+        exp:'How you start your morning shapes the whole day. Even a simple routine — water, stretch, plan 3 tasks — puts you in control rather than just reacting to whatever happens.' },
+      { cat:'discipline', cls:'rd', emoji:'📵', name:'Digital Boundaries',
+        def:'Limiting screen time protects focus, sleep, and real-world connections.',
+        exp:'Phones are designed to be addictive. Setting boundaries — no phone at dinner, off an hour before bed, no scrolling first thing in the morning — protects your brain and your relationships.' },
+    ];
+
+    // ────────────────────────────────────────────────
+    //  BROWSE
+    // ────────────────────────────────────────────────
+    function showBrowse(cat) {
+      showScreen('screen-browse');
+      renderBrowse(cat || 'virtue');
+    }
+
+    function renderBrowse(cat) {
+      // Update tabs
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.toggle('active', b.getAttribute('onclick').includes(`'${cat}'`));
+      });
+
+      const grid = document.getElementById('ref-grid');
+      grid.innerHTML = '';
+      REFERENCE.filter(r => r.cat === cat).forEach(r => {
+        const card = document.createElement('div');
+        card.className = `ref-card ${r.cls}`;
+        card.innerHTML = `
+          <span class="ref-emoji">${r.emoji}</span>
+          <div class="ref-name">${r.name}</div>
+          <div class="ref-def">${r.def}</div>
+          <div class="ref-exp">${r.exp}</div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+  </script>
+</body>
+</html>
