@@ -16,7 +16,25 @@
       "Bash(gh repo *)",
       "Bash(git init *)",
       "Bash(git add *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(git remote *)",
+      "Bash(git push *)",
+      "Bash(git -C /Users/kevinyang/dev/WheelSpinner diff --stat)",
+      "Bash(git -C /Users/kevinyang/dev/WheelSpinner diff --stat HEAD)",
+      "Bash(git -C /Users/kevinyang/dev/WheelSpinner add .gitignore)",
+      "Bash(git -C /Users/kevinyang/dev/WheelSpinner commit -m ' *)",
+      "Bash(git -C /Users/kevinyang/dev/WheelSpinner push origin master)",
+      "Bash(git pull *)",
+      "Bash(git stash *)",
+      "Bash(git rebase *)",
+      "Bash(git fetch *)",
+      "Bash(git merge *)",
+      "Bash(git -C /Users/kevinyang/dev/WheelSpinner add spelling.html)",
+      "Bash(python3 -c \"import sys; print\\(repr\\(sys.stdin.read\\(\\)\\)\\)\")",
+      "Bash(git -C /Users/kevinyang/dev/WheelSpinner add spelling.html index.html sudoku.html)",
+      "Bash(git -C /Users/kevinyang/dev/WheelSpinner add sudoku.html)",
+      "Bash(awk '/^\\\\s*lindsey: \\\\[/,/^\\\\s*\\\\]/' /Users/kevinyang/dev/WheelSpinner/spelling.html)",
+      "Bash(python3 -)"
     ]
   }
 }
