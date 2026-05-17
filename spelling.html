@@ -1867,6 +1867,11 @@ function showResults() {
   const ks = game.kyleScore, ls = game.lindseyScore;
   const kTotal = game.kyleResults.length, lTotal = game.lindseyResults.length;
 
+  // Save score for game unlock system
+  const kpct = kTotal ? Math.round(ks / kTotal * 100) : 0;
+  const lpct = lTotal ? Math.round(ls / lTotal * 100) : 0;
+  localStorage.setItem('ws_spelling_pct', String(cfg.mode === 'solo' ? kpct : Math.max(kpct, lpct)));
+
   if (cfg.mode === 'solo') {
     document.getElementById('resultTitle').textContent = '🐝 Round Complete!';
     document.getElementById('winnerBanner').textContent = `Kyle scored ${ks} out of ${kTotal}!`;

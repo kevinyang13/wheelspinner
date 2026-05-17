@@ -160,6 +160,55 @@
       transform: translateX(0);
     }
 
+    /* ── Section labels ── */
+    .section-label {
+      width: 100%;
+      max-width: 900px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #445;
+      margin-bottom: 12px;
+      padding-left: 4px;
+    }
+    .section-label + .section-label { margin-top: 32px; }
+
+    /* ── Unlock banner ── */
+    .unlock-banner {
+      width: 100%;
+      max-width: 900px;
+      padding: 12px 20px;
+      border-radius: 12px;
+      margin-bottom: 28px;
+      font-size: 0.88rem;
+      text-align: center;
+      background: rgba(46,204,113,0.1);
+      border: 1px solid rgba(46,204,113,0.25);
+      color: #aaffcc;
+    }
+    .unlock-banner.banner-admin {
+      background: rgba(240,192,64,0.08);
+      border-color: rgba(240,192,64,0.2);
+      color: #f0c040;
+      font-size: 0.75rem;
+    }
+
+    /* ── Lock teaser card ── */
+    .card-lock-teaser {
+      --card-accent: #445;
+      --card-shadow: rgba(0,0,0,0);
+      --card-glow: none;
+      cursor: default;
+      opacity: 0.65;
+    }
+    .card-lock-teaser:hover {
+      transform: none !important;
+      border-color: transparent !important;
+      box-shadow: none !important;
+    }
+    .card-lock-teaser:hover::before { opacity: 0 !important; }
+
     /* Footer */
     footer {
       margin-top: 56px;
@@ -177,46 +226,11 @@
     <p>Pick a game and play!</p>
   </div>
 
-  <div class="game-grid">
+  <div class="section-label" id="learning-label">📚 Learning Games</div>
 
-    <a href="wheel.html" class="game-card card-wheel">
-      <div class="card-icon">🎡</div>
-      <div class="card-title">Wheel Spinner</div>
-      <div class="card-desc">Spin the 3D wheel to randomly pick an activity for Kyle or Lindsey. Tracks spin history.</div>
-      <div class="card-tags">
-        <span class="tag">Kyle</span>
-        <span class="tag">Lindsey</span>
-        <span class="tag">Spinner</span>
-        <span class="tag">History</span>
-      </div>
-      <div class="card-arrow">→</div>
-    </a>
+  <div class="game-grid" id="learning-grid">
 
-    <a href="memory.html" class="game-card card-memory">
-      <div class="card-icon">🃏</div>
-      <div class="card-title">Memory Match</div>
-      <div class="card-desc">Flip cards to find matching pairs. Kyle vs Lindsey — take turns and score points!</div>
-      <div class="card-tags">
-        <span class="tag">2 Players</span>
-        <span class="tag">Easy / Medium / Hard</span>
-        <span class="tag">Versus</span>
-      </div>
-      <div class="card-arrow">→</div>
-    </a>
-
-    <a href="pingpong.html" class="game-card card-pingpong">
-      <div class="card-icon">🏓</div>
-      <div class="card-title">Ping Pong</div>
-      <div class="card-desc">Kyle vs Lindsey (or AI) in a neon table tennis match. First to 7 wins!</div>
-      <div class="card-tags">
-        <span class="tag">2 Players</span>
-        <span class="tag">vs AI</span>
-        <span class="tag">Arcade</span>
-      </div>
-      <div class="card-arrow">→</div>
-    </a>
-
-    <a href="spelling.html" class="game-card card-spelling">
+    <a href="spelling.html" class="game-card card-spelling" data-category="learning">
       <div class="card-icon">🐝</div>
       <div class="card-title">Spelling Bee</div>
       <div class="card-desc">Practice 2nd & 3rd grade spelling words with text-to-speech. Solo or Kyle vs Lindsey!</div>
@@ -229,7 +243,7 @@
       <div class="card-arrow">→</div>
     </a>
 
-    <a href="chinese.html" class="game-card card-chinese">
+    <a href="chinese.html" class="game-card card-chinese" data-category="learning">
       <div class="card-icon">🀄</div>
       <div class="card-title">Chinese Reading</div>
       <div class="card-desc">Quiz yourself on 2nd & 3rd grade Chinese words and phrases. Chinese↔English, solo or versus!</div>
@@ -242,7 +256,7 @@
       <div class="card-arrow">→</div>
     </a>
 
-    <a href="math.html" class="game-card card-math">
+    <a href="math.html" class="game-card card-math" data-category="learning">
       <div class="card-icon">🔢</div>
       <div class="card-title">Math Challenge</div>
       <div class="card-desc">Addition, subtraction & multiplication for grades 3–5. Solo or Kyle vs Lindsey with a countdown timer!</div>
@@ -255,103 +269,7 @@
       <div class="card-arrow">→</div>
     </a>
 
-    <a href="simon.html" class="game-card card-simon">
-      <div class="card-icon">🔵</div>
-      <div class="card-title">Simon Says</div>
-      <div class="card-desc">Watch the color sequence, then repeat it. Players alternate — one mistake costs a life!</div>
-      <div class="card-tags">
-        <span class="tag">2 Players</span>
-        <span class="tag">Memory</span>
-        <span class="tag">Alternating</span>
-      </div>
-      <div class="card-arrow">→</div>
-    </a>
-
-    <a href="snake.html" class="game-card card-snake">
-      <div class="card-icon">🐍</div>
-      <div class="card-title">Snake</div>
-      <div class="card-desc">Kyle (WASD) vs Lindsey (Arrows) — eat food to grow, avoid walls and each other. Last snake alive wins!</div>
-      <div class="card-tags">
-        <span class="tag">2 Players</span>
-        <span class="tag">Arcade</span>
-        <span class="tag">Versus</span>
-      </div>
-      <div class="card-arrow">→</div>
-    </a>
-
-    <a href="gomoku.html" class="game-card card-gomoku">
-      <div class="card-icon">⚫</div>
-      <div class="card-title">五子棋 Gomoku</div>
-      <div class="card-desc">Classic Chinese board game on a Weiqi/Go board. Kyle (Black) vs Lindsey (White) — get five in a row to win!</div>
-      <div class="card-tags">
-        <span class="tag">2 Players</span>
-        <span class="tag">Strategy</span>
-        <span class="tag">Five in a Row</span>
-      </div>
-      <div class="card-arrow">→</div>
-    </a>
-
-    <a href="pinball.html" class="game-card card-pinball">
-      <div class="card-icon">🎰</div>
-      <div class="card-title">Pinball</div>
-      <div class="card-desc">Classic neon pinball with bumpers, slingshots, flippers, and combo scoring. High score saved!</div>
-      <div class="card-tags">
-        <span class="tag">1 Player</span>
-        <span class="tag">Arcade</span>
-        <span class="tag">High Score</span>
-      </div>
-      <div class="card-arrow">→</div>
-    </a>
-
-    <a href="whackamole.html" class="game-card card-whack">
-      <div class="card-icon">🦕</div>
-      <div class="card-title">Dino Whack</div>
-      <div class="card-desc">Dinosaurs are escaping! Each player owns one side — whack the most dinos in 60 seconds. Watch out for eggs!</div>
-      <div class="card-tags">
-        <span class="tag">2 Players</span>
-        <span class="tag">60 Sec</span>
-        <span class="tag">Reflex</span>
-      </div>
-      <div class="card-arrow">→</div>
-    </a>
-
-    <a href="balloon.html" class="game-card card-balloon">
-      <div class="card-icon">🎈</div>
-      <div class="card-title">Balloon Pop</div>
-      <div class="card-desc">Hold to pump, release to add air. Bigger pumps = more points but more risk. Don't pop it!</div>
-      <div class="card-tags">
-        <span class="tag">2 Players</span>
-        <span class="tag">Risk / Reward</span>
-        <span class="tag">Party</span>
-      </div>
-      <div class="card-arrow">→</div>
-    </a>
-
-    <a href="hotpotato.html" class="game-card card-hotpotato">
-      <div class="card-icon">🥔</div>
-      <div class="card-title">Hot Potato</div>
-      <div class="card-desc">Pass the burning potato before it explodes! Kyle vs Lindsey — last one standing wins.</div>
-      <div class="card-tags">
-        <span class="tag">2 Players</span>
-        <span class="tag">Party</span>
-        <span class="tag">Reflex</span>
-      </div>
-      <div class="card-arrow">→</div>
-    </a>
-
-    <a href="sudoku.html" class="game-card card-sudoku">
-      <div class="card-icon">🔢</div>
-      <div class="card-title">Sudoku</div>
-      <div class="card-desc">Fill the 9×9 grid so every row, column, and box has digits 1–9. Easy, Medium, or Hard!</div>
-      <div class="card-tags">
-        <span class="tag">1 Player</span>
-        <span class="tag">Easy / Medium / Hard</span>
-        <span class="tag">Logic</span>
-      </div>
-      <div class="card-arrow">→</div>
-    </a>
-
-    <a href="wisdom.html" class="game-card card-wisdom">
+    <a href="wisdom.html" class="game-card card-wisdom" data-category="learning">
       <div class="card-icon">🌟</div>
       <div class="card-title">Wisdom Quest</div>
       <div class="card-desc">Learn virtues, famous quotes & life principles through fun quizzes. Solo or Kyle vs Lindsey!</div>
@@ -364,7 +282,7 @@
       <div class="card-arrow">→</div>
     </a>
 
-    <a href="wordchain.html" class="game-card card-wordchain">
+    <a href="wordchain.html" class="game-card card-wordchain" data-category="learning">
       <div class="card-icon">🔗</div>
       <div class="card-title">Word Chain</div>
       <div class="card-desc">Each word must start where the last one ends. Build the longest chain before time runs out!</div>
@@ -377,9 +295,239 @@
       <div class="card-arrow">→</div>
     </a>
 
+    <a href="sudoku.html" class="game-card card-sudoku" data-category="learning">
+      <div class="card-icon">🔢</div>
+      <div class="card-title">Sudoku</div>
+      <div class="card-desc">Fill the 9×9 grid so every row, column, and box has digits 1–9. Easy, Medium, or Hard!</div>
+      <div class="card-tags">
+        <span class="tag">1 Player</span>
+        <span class="tag">Easy / Medium / Hard</span>
+        <span class="tag">Logic</span>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
+  </div>
+
+  <div class="section-label" id="playing-label" style="margin-top:36px">🎮 Playing Games</div>
+
+  <div class="game-grid" id="playing-grid">
+
+    <a href="wheel.html" class="game-card card-wheel" data-category="playing">
+      <div class="card-icon">🎡</div>
+      <div class="card-title">Wheel Spinner</div>
+      <div class="card-desc">Spin the 3D wheel to randomly pick an activity for Kyle or Lindsey. Tracks spin history.</div>
+      <div class="card-tags">
+        <span class="tag">Kyle</span>
+        <span class="tag">Lindsey</span>
+        <span class="tag">Spinner</span>
+        <span class="tag">History</span>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <a href="memory.html" class="game-card card-memory" data-category="playing">
+      <div class="card-icon">🃏</div>
+      <div class="card-title">Memory Match</div>
+      <div class="card-desc">Flip cards to find matching pairs. Kyle vs Lindsey — take turns and score points!</div>
+      <div class="card-tags">
+        <span class="tag">2 Players</span>
+        <span class="tag">Easy / Medium / Hard</span>
+        <span class="tag">Versus</span>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <a href="pingpong.html" class="game-card card-pingpong" data-category="playing">
+      <div class="card-icon">🏓</div>
+      <div class="card-title">Ping Pong</div>
+      <div class="card-desc">Kyle vs Lindsey (or AI) in a neon table tennis match. First to 7 wins!</div>
+      <div class="card-tags">
+        <span class="tag">2 Players</span>
+        <span class="tag">vs AI</span>
+        <span class="tag">Arcade</span>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <a href="simon.html" class="game-card card-simon" data-category="playing">
+      <div class="card-icon">🔵</div>
+      <div class="card-title">Simon Says</div>
+      <div class="card-desc">Watch the color sequence, then repeat it. Players alternate — one mistake costs a life!</div>
+      <div class="card-tags">
+        <span class="tag">2 Players</span>
+        <span class="tag">Memory</span>
+        <span class="tag">Alternating</span>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <a href="snake.html" class="game-card card-snake" data-category="playing">
+      <div class="card-icon">🐍</div>
+      <div class="card-title">Snake</div>
+      <div class="card-desc">Kyle (WASD) vs Lindsey (Arrows) — eat food to grow, avoid walls and each other. Last snake alive wins!</div>
+      <div class="card-tags">
+        <span class="tag">2 Players</span>
+        <span class="tag">Arcade</span>
+        <span class="tag">Versus</span>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <a href="gomoku.html" class="game-card card-gomoku" data-category="playing">
+      <div class="card-icon">⚫</div>
+      <div class="card-title">五子棋 Gomoku</div>
+      <div class="card-desc">Classic Chinese board game on a Weiqi/Go board. Kyle (Black) vs Lindsey (White) — get five in a row to win!</div>
+      <div class="card-tags">
+        <span class="tag">2 Players</span>
+        <span class="tag">Strategy</span>
+        <span class="tag">Five in a Row</span>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <a href="pinball.html" class="game-card card-pinball" data-category="playing">
+      <div class="card-icon">🎰</div>
+      <div class="card-title">Pinball</div>
+      <div class="card-desc">Classic neon pinball with bumpers, slingshots, flippers, and combo scoring. High score saved!</div>
+      <div class="card-tags">
+        <span class="tag">1 Player</span>
+        <span class="tag">Arcade</span>
+        <span class="tag">High Score</span>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <a href="whackamole.html" class="game-card card-whack" data-category="playing">
+      <div class="card-icon">🦕</div>
+      <div class="card-title">Dino Whack</div>
+      <div class="card-desc">Dinosaurs are escaping! Each player owns one side — whack the most dinos in 60 seconds. Watch out for eggs!</div>
+      <div class="card-tags">
+        <span class="tag">2 Players</span>
+        <span class="tag">60 Sec</span>
+        <span class="tag">Reflex</span>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <a href="balloon.html" class="game-card card-balloon" data-category="playing">
+      <div class="card-icon">🎈</div>
+      <div class="card-title">Balloon Pop</div>
+      <div class="card-desc">Hold to pump, release to add air. Bigger pumps = more points but more risk. Don't pop it!</div>
+      <div class="card-tags">
+        <span class="tag">2 Players</span>
+        <span class="tag">Risk / Reward</span>
+        <span class="tag">Party</span>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <a href="hotpotato.html" class="game-card card-hotpotato" data-category="playing">
+      <div class="card-icon">🥔</div>
+      <div class="card-title">Hot Potato</div>
+      <div class="card-desc">Pass the burning potato before it explodes! Kyle vs Lindsey — last one standing wins.</div>
+      <div class="card-tags">
+        <span class="tag">2 Players</span>
+        <span class="tag">Party</span>
+        <span class="tag">Reflex</span>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
   </div>
 
   <footer>Kyle &amp; Lindsey · 2025</footer>
+
+<script>
+(function () {
+  const THRESHOLD  = 80;
+  const FUN_LIMIT  = 3;
+  const adminMode  = new URLSearchParams(location.search).has('admin');
+
+  // ── Read state ────────────────────────────────────────────
+  let chinesePct  = parseInt(localStorage.getItem('ws_chinese_pct')  || '0', 10);
+  let spellingPct = parseInt(localStorage.getItem('ws_spelling_pct') || '0', 10);
+  let funPlayed   = parseInt(localStorage.getItem('ws_fun_played')   || '0', 10);
+  let unlocked    = localStorage.getItem('ws_unlocked') === '1';
+
+  // Re-lock when plays exhausted; clear scores so kids must re-earn
+  if (unlocked && funPlayed >= FUN_LIMIT) {
+    unlocked = false;
+    funPlayed = 0;
+    localStorage.setItem('ws_unlocked',  '0');
+    localStorage.setItem('ws_fun_played', '0');
+    localStorage.removeItem('ws_chinese_pct');
+    localStorage.removeItem('ws_spelling_pct');
+    chinesePct  = 0;
+    spellingPct = 0;
+  }
+
+  // Auto-unlock when both study scores reach threshold
+  if (!unlocked && chinesePct >= THRESHOLD && spellingPct >= THRESHOLD) {
+    unlocked  = true;
+    funPlayed = 0;
+    localStorage.setItem('ws_unlocked',  '1');
+    localStorage.setItem('ws_fun_played', '0');
+  }
+
+  const canPlay = adminMode || unlocked;
+
+  // ── Apply lock / unlock to playing-game cards ─────────────
+  document.querySelectorAll('[data-category="playing"]').forEach(card => {
+    if (!canPlay) {
+      card.style.display = 'none';
+    } else {
+      card.addEventListener('click', () => {
+        funPlayed++;
+        localStorage.setItem('ws_fun_played', String(funPlayed));
+      });
+    }
+  });
+
+  // ── Playing Games section visibility ─────────────────────
+  const playingLabel = document.getElementById('playing-label');
+  const playingGrid  = document.getElementById('playing-grid');
+
+  if (!canPlay) {
+    // Hide section label; inject teaser card in its place
+    playingLabel.style.display = 'none';
+    playingGrid.style.display  = 'none';
+
+    const cOk = chinesePct  >= THRESHOLD;
+    const sOk = spellingPct >= THRESHOLD;
+
+    const teaser = document.createElement('div');
+    teaser.className = 'game-card card-lock-teaser';
+    teaser.style.marginTop = '36px';
+    teaser.innerHTML = `
+      <div class="card-icon">🔒</div>
+      <div class="card-title" style="color:#556">10 Playing Games Locked</div>
+      <div class="card-desc">Score 80%+ on <strong style="color:#e53935">Chinese Reading</strong> and <strong style="color:#f9c22e">Spelling Bee</strong> to unlock all playing games!</div>
+      <div class="card-tags">
+        <span class="tag">${cOk ? '✅' : '❌'} Chinese: ${chinesePct}%</span>
+        <span class="tag">${sOk ? '✅' : '❌'} Spelling: ${spellingPct}%</span>
+      </div>
+    `;
+
+    // Insert teaser after the learning grid
+    const learningGrid = document.getElementById('learning-grid');
+    learningGrid.insertAdjacentElement('afterend', teaser);
+
+  } else if (!adminMode) {
+    const remaining = FUN_LIMIT - funPlayed;
+    const banner = document.createElement('div');
+    banner.className = 'unlock-banner';
+    banner.innerHTML = `🎉 Playing games unlocked! &nbsp;<strong>${remaining}</strong> play${remaining !== 1 ? 's' : ''} remaining — then study again!`;
+    playingLabel.insertAdjacentElement('beforebegin', banner);
+
+  } else {
+    const badge = document.createElement('div');
+    badge.className = 'unlock-banner banner-admin';
+    badge.textContent = '🔑 Admin mode — all games unlocked';
+    playingLabel.insertAdjacentElement('beforebegin', badge);
+  }
+})();
+</script>
 
 </body>
 </html>

@@ -1720,6 +1720,17 @@ function showResults() {
   const correct = answeredLog.filter(l => l.correct).length;
   const pct = Math.round((correct / total) * 100);
 
+  // Save score for game unlock system
+  let savePct = pct;
+  if (cfg.mode === 'versus') {
+    const maxPct = Math.max(...['kyle', 'lindsey'].map(p => {
+      const pl = answeredLog.filter(l => l.player === p);
+      return pl.length ? Math.round(pl.filter(l => l.correct).length / pl.length * 100) : 0;
+    }));
+    savePct = maxPct;
+  }
+  localStorage.setItem('ws_chinese_pct', String(savePct));
+
   // Icon & title
   const resultIcon = $('resultIcon');
   const resultTitle = $('resultTitle');
