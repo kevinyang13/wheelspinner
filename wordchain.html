@@ -524,6 +524,7 @@ async function submitWord() {
   if (!valid) {
     showErr(`"${word}" is not a valid English word!`);
     startTimer(savedTime);  // resume with remaining time
+    document.getElementById('chainInput').focus();
     return;
   }
 
@@ -537,6 +538,7 @@ async function submitWord() {
   }
 
   document.getElementById('chainInput').value = '';
+  document.getElementById('chainInput').focus();
   setFb('✅ Nice!', 'fb-ok');
   setTimeout(() => { if (!game.over) setFb('',''); }, 800);
 
