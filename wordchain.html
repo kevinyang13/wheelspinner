@@ -319,121 +319,21 @@
 </div>
 
 <script>
-// ── Word Set ────────────────────────────────────────────────────────
-const WORD_SET = new Set([
-  // A
-  'able','about','above','across','add','after','again','age','ago','agree','air','all','also',
-  'always','angry','animal','ant','any','apple','arm','art','ask','away','ache','acre','arch',
-  'aunt','ace','act','aim','ale','among','angel','ankle','area','afraid','almost','answer',
-  'around','aloe','atlas','atom','avid','avow',
-  // B
-  'back','bad','bag','ball','barn','bear','bed','bell','best','big','bird','black','blow','blue',
-  'boat','book','born','both','box','boy','brave','break','bring','brown','brush','build','burn',
-  'bus','busy','buy','bake','bare','base','bath','bead','bean','beat','beef','bite','bone','bowl',
-  'buck','buff','bulb','bulk','bull','bump','bunk','burp','buzz','before','behind','below',
-  'better','birthday','bring',
-  // C
-  'cake','call','calm','can','car','cat','cave','chip','city','clap','clip','club','coat','coin',
-  'cold','come','cool','corn','cost','cow','crab','crew','crop','crow','cry','curl','cute','cage',
-  'cape','card','care','cash','cast','cent','clam','claw','clay','clog','code','coil','comb',
-  'cone','cope','cord','core','cork','cove','carry','catch','chair','change','clean','climb',
-  'color','count','could',
-  // D
-  'dance','dark','day','deal','dear','deep','desk','did','dig','dish','doll','done','door','down',
-  'draw','drop','drum','dry','duck','dune','dust','dab','dam','dare','dart','date','dawn','daze',
-  'dead','deck','deed','dent','dew','dial','dice','dine','dip','dirt','disk','dive','dome','dove',
-  'drag','drip','dull','dumb','dump','dusk','dog','drink',
-  // E
-  'each','early','earth','east','easy','eight','else','empty','end','enjoy','equal','even','ever',
-  'every','eye','ear','eat','earn','edge','elf','elm','enter','era','eel','egg','ego','epic','evil',
-  'exam',
-  // F
-  'face','fact','fall','farm','fast','feel','feet','fill','find','fire','fish','five','flat','flew',
-  'flip','floor','flow','fly','foam','fold','food','foot','form','four','free','from','full','fun',
-  'funny','fade','fake','fame','fang','fare','fate','fawn','fear','feat','feed','fend','fern','fig',
-  'fume','fuse','fuzz','flower','found','friend',
-  // G
-  'game','give','glad','glow','glue','gold','good','grab','gray','green','grin','grip','grow','gulf',
-  'gust','gain','gate','gift','girl','goal','gown','grace','grain','grand','grape','grass','great',
-  'grit','gale','gap','gas','gem','gore','guy','group',
-  // H
-  'hand','hang','happy','hard','harm','hat','have','head','hear','heart','heat','help','here','high',
-  'hill','hint','hold','home','honey','hood','hook','hope','horn','horse','host','hour','house','huge',
-  'hump','hunt','hack','hag','hail','hair','hall','halt','ham','haze','heap','heel','hem','herd',
-  'hero','hid','hire','hiss','hive','hob','hog','hole','hone','honk','hoot','hose','howl','hub',
-  'hug','hull','hum','hush','heavy','hurry',
-  // I
-  'ice','idea','inch','into','iron','itch','ill','imp','ink','inn','isle','icon','idol','iris','inside',
-  // J
-  'jam','jar','jaw','jelly','jet','job','join','joke','jump','just','jog','joy','jade','jab','jail',
-  'jolt','jot','jug','jut',
-  // K
-  'keep','kid','kind','king','knew','know','kick','kiss','kite','keg','knob','knot','knack',
-  // L
-  'lake','lamp','land','large','last','late','leaf','learn','left','less','life','lift','like','line',
-  'lion','list','little','live','load','lock','long','look','loud','love','luck','lump','lab','lace',
-  'lack','lad','lag','lame','lane','lap','law','lawn','lazy','lead','lean','leap','lend','lens','lid',
-  'lime','limp','lint','lip','lone','lore','loss','louse','lull','lung','lure','lurk','lush','laugh',
-  'leave','light',
-  // M
-  'mad','make','man','many','map','mark','match','mean','meet','milk','mind','mint','miss','mist',
-  'moon','more','most','move','much','must','music','mace','mail','mane','mare','mash','mask','mass',
-  'mat','mate','maze','meal','melt','mesh','mild','mile','mill','mine','mob','mock','mode','mole',
-  'mope','moss','moth','mow','mud','mug','mule','murk','musk','magic','money','morning','mother',
-  // N
-  'name','near','need','nest','never','next','nice','night','nine','none','noon','north','nose','note',
-  'now','nap','net','nod','nut','nail','nab','nag','nave','neck','nerd','newt','nib','nip','nit',
-  'nor','nun','noise',
-  // O
-  'oak','odd','off','often','once','only','open','other','oval','over','own','old','one','out','oar',
-  'oat','ode','ore','orb','ogre','orange',
-  // P
-  'pack','page','pair','park','part','pass','path','peak','pick','pile','pine','pink','plan','plant',
-  'play','plus','point','pool','poor','post','pull','pump','push','put','pride','pure','pace','pain',
-  'pale','palm','pane','pave','pawn','pen','pep','pest','pet','pie','pig','pill','pit','pod','pond',
-  'pore','port','pose','pot','prey','prod','pub','puck','pun','pup','paper','party','pencil','people',
-  'place','please','pretty',
-  // Q
-  'quit','quiz','quest','quick','quiet','quite','quack','quail','quart','quay','queen',
-  // R
-  'race','rain','read','real','rest','rice','ride','ring','road','rock','role','roll','roof','room',
-  'root','rope','rose','rub','rule','run','rush','rack','rage','rake','ramp','rank','raw','ray',
-  'reach','reel','rend','rent','reef','rim','rip','rod','rot','rove','ruin','rum','rump','rung',
-  'rust','rut','right','round','really',
-  // S
-  'said','sail','same','sand','save','seal','seed','seem','sell','send','seven','share','sharp','ship',
-  'short','side','sign','sing','sink','six','size','skin','sky','sleep','slow','small','smell','smile',
-  'snow','soft','some','song','soon','sort','soup','south','speak','spin','spot','star','stay','step',
-  'stop','storm','story','strong','such','suit','sun','swim','swing','sack','sage','sap','sat','scam',
-  'scar','seam','sear','shed','shin','shop','shot','shout','shut','sift','sip','sir','slab','slam',
-  'slap','slay','sled','slim','slip','slit','slob','slot','slum','smack','smoke','snag','snap','snore',
-  'snub','snug','soak','sob','sock','sod','sore','spa','span','spit','spore','spray','spud','spur',
-  'stain','stem','stew','sting','stir','stock','stool','stub','stud','stun','sulk','surf','swap',
-  'swat','sweep','sweet','swig','swoop','sorry','sound','space','spell','spring','start','study',
-  'sweet','sister','sleep','spell','silly',
-  // T
-  'tail','take','talk','tall','team','tell','ten','tent','then','thick','thin','thing','think','third',
-  'those','three','throw','time','tire','today','told','tomb','tool','top','touch','town','tree','trip',
-  'true','trust','turn','twin','tab','tack','tan','tap','tar','taut','tax','tear','test','thaw','tick',
-  'tide','tilt','tin','tip','toll','tone','toot','tot','tow','tram','trap','tray','trek','trim','trot',
-  'tub','tuck','tug','twig','teach','treat','tooth','table',
-  // U
-  'ugly','under','unit','until','upon','urge','use','usual','umbrella',
-  // V
-  'vast','very','vine','void','visit','voice','vote','vain','vale','vane','veil','vent','verb','vat',
-  'van','vow',
-  // W
-  'wait','walk','wall','want','warm','wash','wave','week','well','west','wide','wild','will','wind',
-  'wink','wish','wolf','wood','word','work','world','worth','wrap','write','wad','wage','wake','wane',
-  'ware','wart','wasp','wax','wear','weed','weep','weld','whim','whip','wick','wilt','wipe','wire',
-  'wisp','woe','wok','woo','worm','wren','watch','whole','worry','wrong',
-  // X
-  'xray',
-  // Y
-  'yard','year','yell','yes','yet','yolk','young','yap','yam','yak','yore','yawn','yelp','yours',
-  // Z
-  'zero','zone','zoom','zap','zip','zest','zeal','zing','zinc',
-]);
+// ── Dictionary validation ────────────────────────────────────────────
+const wordCache = {};  // word → true | false
+
+async function isValidWord(word) {
+  if (word in wordCache) return wordCache[word];
+  try {
+    const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+    wordCache[word] = res.ok;
+    return res.ok;
+  } catch {
+    // Network unavailable — fail open so offline play still works
+    wordCache[word] = true;
+    return true;
+  }
+}
 
 function normalize(w) { return w.trim().toLowerCase().replace(/[^a-z]/g, ''); }
 
@@ -481,6 +381,7 @@ function startGame() {
     currentPlayer: 'Kyle',
     over: false,
     failPending: false,
+    checking: false,
   };
 
   const isSolo = cfg.mode === 'solo';
@@ -555,8 +456,8 @@ function updateBoard() {
 // ── Timer ────────────────────────────────────────────────────────────
 const CIRC = 2 * Math.PI * 27; // ≈169.6
 
-function startTimer() {
-  game.timeLeft = cfg.speed;
+function startTimer(resumeTime) {
+  game.timeLeft = resumeTime !== undefined ? resumeTime : cfg.speed;
   renderTimer();
   clearInterval(timerInterval);
   timerInterval = setInterval(() => {
@@ -587,8 +488,8 @@ document.getElementById('chainInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') submitWord();
 });
 
-function submitWord() {
-  if (game.over || game.failPending) return;
+async function submitWord() {
+  if (game.over || game.failPending || game.checking) return;
   const raw  = document.getElementById('chainInput').value;
   const word = normalize(raw);
   if (!word) return;
@@ -599,16 +500,33 @@ function submitWord() {
     showErr(`Must start with "${required.toUpperCase()}"!`);
     return;
   }
-  if (!WORD_SET.has(word)) {
-    showErr(`"${word}" not in word list!`);
-    return;
-  }
   if (game.used.has(word)) {
     showErr(`"${word}" already used!`);
     return;
   }
 
+  // Pause timer while checking — don't penalize for network latency
   clearInterval(timerInterval);
+  const savedTime = game.timeLeft;
+  game.checking = true;
+  setFb('Checking…', '');
+  document.getElementById('chainInput').disabled = true;
+  document.getElementById('submitBtn').disabled  = true;
+
+  const valid = await isValidWord(word);
+
+  game.checking = false;
+  document.getElementById('chainInput').disabled = false;
+  document.getElementById('submitBtn').disabled  = false;
+
+  if (game.over) return;
+
+  if (!valid) {
+    showErr(`"${word}" is not a valid English word!`);
+    startTimer(savedTime);  // resume with remaining time
+    return;
+  }
+
   game.chain.push(word);
   game.used.add(word);
 
