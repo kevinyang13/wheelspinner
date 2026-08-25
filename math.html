@@ -77,30 +77,32 @@
     .modal-backdrop {
       display: none; position: fixed; inset: 0; z-index: 50;
       background: rgba(8,8,16,0.86); backdrop-filter: blur(3px);
-      align-items: center; justify-content: center; padding: 16px;
+      align-items: center; justify-content: center; padding: 8px;
     }
     .modal-backdrop.show { display: flex; }
     .modal-box {
       background: #16213e; border: 2px solid #2a2a3e; border-radius: 16px;
-      width: 100%; max-width: 620px; max-height: 90vh;
+      width: 100%; max-width: none; max-height: 96vh;
       display: flex; flex-direction: column; overflow: hidden;
     }
     .modal-head {
       display: flex; align-items: center; justify-content: space-between;
       gap: 12px; padding: 14px 16px; border-bottom: 1px solid #2a2a3e;
     }
-    .modal-head h3 { font-size: 1.05rem; font-weight: 800; color: #eee; }
+    .modal-head h3 { font-size: 1.25rem; font-weight: 800; color: #eee; }
     .modal-close {
       background: none; border: none; color: #889; cursor: pointer;
       font-size: 1.4rem; line-height: 1; padding: 2px 6px; transition: color 0.15s;
     }
     .modal-close:hover { color: #eee; }
-    .modal-body { padding: 14px; overflow: auto; }
+    .modal-body { padding: 18px; overflow: auto; }
 
-    .times-table { border-collapse: collapse; width: 100%; min-width: 460px; }
+    .times-table { border-collapse: collapse; width: 100%; min-width: 560px; }
     .times-table th, .times-table td {
       border: 1px solid #2a2a3e; text-align: center;
-      padding: 5px 2px; font-size: 0.78rem; font-variant-numeric: tabular-nums;
+      padding: clamp(8px, 1.1vw, 18px) 4px;
+      font-size: clamp(0.85rem, 1.5vw, 1.6rem);
+      font-variant-numeric: tabular-nums;
     }
     .times-table th { background: #1b2545; color: #7ec8ff; font-weight: 800; }
     .times-table th.corner { background: #101a33; color: #667; }
@@ -108,7 +110,11 @@
     .times-table td.diag { color: #f9c22e; font-weight: 800; }
     .times-table .hl { background: rgba(61,158,255,0.16); color: #fff; }
     .times-table th.hl { background: rgba(61,158,255,0.3); }
-    .modal-hint { color: #667; font-size: 0.78rem; margin-top: 10px; text-align: center; }
+    .modal-hint { color: #667; font-size: 0.85rem; margin-top: 14px; text-align: center; }
+    @media (max-width: 600px) {
+      .times-table th, .times-table td { padding: 7px 2px; font-size: 0.85rem; }
+      .times-table { min-width: 470px; }
+    }
 
     /* ── Player Cards ── */
     .player-cards { display: flex; gap: 10px; width: 100%; }
