@@ -97,6 +97,33 @@
     .modal-close:hover { color: #eee; }
     .modal-body { padding: 18px; overflow: auto; }
 
+    .view-toggle { display: flex; gap: 4px; background: #101a33; border-radius: 10px; padding: 3px; }
+    .view-btn {
+      border: none; background: none; cursor: pointer; border-radius: 8px;
+      padding: 6px 14px; color: #889; font-size: 0.85rem; font-weight: 700;
+      transition: background 0.15s, color 0.15s;
+    }
+    .view-btn:hover { color: #ccd; }
+    .view-btn.active { background: rgba(61,158,255,0.2); color: #7ec8ff; }
+
+    .list-view { display: none; }
+    .list-view.show { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+    .table-card { border: 1px solid #2a2a3e; border-radius: 12px; overflow: hidden; background: #101a33; }
+    .table-card h4 {
+      background: #1b2545; color: #7ec8ff; font-size: 0.95rem; font-weight: 800;
+      padding: 8px 12px; text-align: center;
+    }
+    .table-card ul { list-style: none; padding: 6px 0; }
+    .table-card li {
+      display: flex; justify-content: space-between; gap: 8px;
+      padding: 4px 12px; color: #ccd; font-size: 0.95rem;
+      font-variant-numeric: tabular-nums;
+    }
+    .table-card li:nth-child(odd) { background: rgba(255,255,255,0.02); }
+    .table-card li .eq-a { color: #889; }
+    .table-card li .eq-b { color: #eee; font-weight: 800; }
+    .table-card li.square .eq-b { color: #f9c22e; }
+
     .times-table { border-collapse: collapse; width: 100%; min-width: 480px; }
     .times-table th, .times-table td {
       border: 1px solid #2a2a3e; text-align: center;
@@ -114,6 +141,9 @@
     @media (max-width: 600px) {
       .times-table th, .times-table td { padding: 7px 2px; font-size: 0.85rem; }
       .times-table { min-width: 400px; }
+      .modal-head { flex-wrap: wrap; padding: 10px 12px; gap: 8px; }
+      .modal-head h3 { font-size: 1rem; }
+      .view-btn { padding: 5px 10px; font-size: 0.8rem; }
     }
 
     /* ── Player Cards ── */
@@ -347,11 +377,16 @@
     <div class="modal-box">
       <div class="modal-head">
         <h3>✖️ Multiplication Table (1–10)</h3>
+        <div class="view-toggle">
+          <button class="view-btn active" id="gridViewBtn">▦ Grid</button>
+          <button class="view-btn" id="listViewBtn">☰ List</button>
+        </div>
         <button class="modal-close" id="tableClose" aria-label="Close">✕</button>
       </div>
       <div class="modal-body">
         <table class="times-table" id="timesTable"></table>
-        <div class="modal-hint">Hover or tap a square to light up its row and column.</div>
+        <div class="list-view" id="listView"></div>
+        <div class="modal-hint" id="tableHint">Hover or tap a square to light up its row and column.</div>
       </div>
     </div>
   </div>
@@ -499,6 +534,37 @@ function buildTimesTable() {
   t.addEventListener('mouseleave', clearHl);
   t.addEventListener('click',     e => { if (e.target.dataset.r && e.target.dataset.c) highlight(e.target); });
 }
+
+function buildListView() {
+  const wrap = $('listView');
+  if (wrap.children.length) return;                // build once
+  let html = '';
+  for (let n = 1; n <= TABLE_MAX; n++) {
+    html += `<div class="table-card"><h4>${n} × Table</h4><ul>`;
+    for (let m = 1; m <= TABLE_MAX; m++) {
+      html += `<li${n === m ? ' class="square"' : ''}>` +
+              `<span class="eq-a">${n} × ${m} =</span>` +
+              `<span class="eq-b">${n * m}</span></li>`;
+    }
+    html += '</ul></div>';
+  }
+  wrap.innerHTML = html;
+}
+
+function setView(view) {
+  const list = view === 'list';
+  if (list) buildListView(); else buildTimesTable();
+  $('timesTable').style.display = list ? 'none' : '';
+  $('listView').classList.toggle('show', list);
+  $('gridViewBtn').classList.toggle('active', !list);
+  $('listViewBtn').classList.toggle('active', list);
+  $('tableHint').textContent = list
+    ? 'Every table from 1 to 10 — squares are highlighted in gold.'
+    : 'Hover or tap a square to light up its row and column.';
+}
+
+$('gridViewBtn').addEventListener('click', () => setView('grid'));
+$('listViewBtn').addEventListener('click', () => setView('list'));
 
 function openTable() {
   buildTimesTable();
