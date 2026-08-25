@@ -97,7 +97,7 @@
     .modal-close:hover { color: #eee; }
     .modal-body { padding: 18px; overflow: auto; }
 
-    .times-table { border-collapse: collapse; width: 100%; min-width: 560px; }
+    .times-table { border-collapse: collapse; width: 100%; min-width: 480px; }
     .times-table th, .times-table td {
       border: 1px solid #2a2a3e; text-align: center;
       padding: clamp(8px, 1.1vw, 18px) 4px;
@@ -113,7 +113,7 @@
     .modal-hint { color: #667; font-size: 0.85rem; margin-top: 14px; text-align: center; }
     @media (max-width: 600px) {
       .times-table th, .times-table td { padding: 7px 2px; font-size: 0.85rem; }
-      .times-table { min-width: 470px; }
+      .times-table { min-width: 400px; }
     }
 
     /* ── Player Cards ── */
@@ -346,7 +346,7 @@
   <div class="modal-backdrop" id="tableModal">
     <div class="modal-box">
       <div class="modal-head">
-        <h3>✖️ Multiplication Table (1–12)</h3>
+        <h3>✖️ Multiplication Table (1–10)</h3>
         <button class="modal-close" id="tableClose" aria-label="Close">✕</button>
       </div>
       <div class="modal-body">
@@ -471,7 +471,7 @@ $('playAgainBtn').addEventListener('click', () => showScreen('setupScreen'));
 // ═══════════════════════════════════════════════════
 //  MULTIPLICATION TABLE MODAL
 // ═══════════════════════════════════════════════════
-const TABLE_MAX = 12;
+const TABLE_MAX = 10;
 
 function buildTimesTable() {
   const t = $('timesTable');
