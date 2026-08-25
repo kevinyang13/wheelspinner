@@ -106,8 +106,46 @@
     .view-btn:hover { color: #ccd; }
     .view-btn.active { background: rgba(61,158,255,0.2); color: #7ec8ff; }
 
+    .mask-toggle {
+      display: flex; align-items: center; gap: 8px; cursor: pointer;
+      color: #889; font-size: 0.85rem; font-weight: 700; user-select: none;
+      transition: color 0.15s;
+    }
+    .mask-toggle:hover { color: #ccd; }
+    .mask-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+    .mask-toggle .switch {
+      width: 38px; height: 21px; border-radius: 11px; background: #101a33;
+      border: 1px solid #2a2a3e; position: relative; transition: background 0.2s, border-color 0.2s;
+    }
+    .mask-toggle .switch::after {
+      content: ''; position: absolute; top: 2px; left: 2px;
+      width: 15px; height: 15px; border-radius: 50%;
+      background: #667; transition: transform 0.2s, background 0.2s;
+    }
+    .mask-toggle input:checked + .switch { background: rgba(167,139,250,0.25); border-color: #a78bfa; }
+    .mask-toggle input:checked + .switch::after { transform: translateX(17px); background: #a78bfa; }
+    .mask-toggle input:checked ~ .switch-label { color: #a78bfa; }
+
+    .times-table td.masked, .table-card li.masked .eq-b {
+      color: #a78bfa !important; font-weight: 900;
+      background: rgba(167,139,250,0.12);
+    }
+    .times-table td.masked, .table-card li.masked { cursor: pointer; }
+    .times-table td.masked:hover, .table-card li.masked:hover .eq-b {
+      background: rgba(167,139,250,0.28); color: #fff !important;
+    }
+    .times-table td.revealed, .table-card li.revealed .eq-b {
+      color: #2ecc71 !important; font-weight: 900;
+      background: rgba(46,204,113,0.12);
+    }
+
+    .times-table td.dimmed, .table-card li.dimmed .eq-b {
+      color: #39394f !important; font-weight: 600; background: none;
+    }
+    .table-card li.dimmed .eq-a { color: #33334a; }
+
     .list-view { display: none; }
-    .list-view.show { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+    .list-view.show { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
     .table-card { border: 1px solid #2a2a3e; border-radius: 12px; overflow: hidden; background: #101a33; }
     .table-card h4 {
       background: #1b2545; color: #7ec8ff; font-size: 0.95rem; font-weight: 800;
@@ -144,6 +182,9 @@
       .modal-head { flex-wrap: wrap; padding: 10px 12px; gap: 8px; }
       .modal-head h3 { font-size: 1rem; }
       .view-btn { padding: 5px 10px; font-size: 0.8rem; }
+      .list-view.show { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      .table-card h4 { font-size: 0.85rem; padding: 6px 4px; }
+      .table-card li { padding: 3px 8px; font-size: 0.82rem; }
     }
 
     /* ── Player Cards ── */
@@ -381,6 +422,16 @@
           <button class="view-btn active" id="gridViewBtn">▦ Grid</button>
           <button class="view-btn" id="listViewBtn">☰ List</button>
         </div>
+        <label class="mask-toggle">
+          <input type="checkbox" id="maskToggle" />
+          <span class="switch"></span>
+          <span class="switch-label">🙈 Hide 10</span>
+        </label>
+        <label class="mask-toggle">
+          <input type="checkbox" id="dimToggle" />
+          <span class="switch"></span>
+          <span class="switch-label">➖ Hide rest</span>
+        </label>
         <button class="modal-close" id="tableClose" aria-label="Close">✕</button>
       </div>
       <div class="modal-body">
@@ -517,7 +568,7 @@ function buildTimesTable() {
   for (let r = 1; r <= TABLE_MAX; r++) {
     html += `<tr><th data-r="${r}">${r}</th>`;
     for (let c = 1; c <= TABLE_MAX; c++) {
-      html += `<td data-r="${r}" data-c="${c}"${r === c ? ' class="diag"' : ''}>${r * c}</td>`;
+      html += `<td data-r="${r}" data-c="${c}" data-v="${r * c}"${r === c ? ' class="diag"' : ''}>${r * c}</td>`;
     }
     html += '</tr>';
   }
@@ -542,14 +593,96 @@ function buildListView() {
   for (let n = 1; n <= TABLE_MAX; n++) {
     html += `<div class="table-card"><h4>${n} × Table</h4><ul>`;
     for (let m = 1; m <= TABLE_MAX; m++) {
-      html += `<li${n === m ? ' class="square"' : ''}>` +
+      html += `<li data-r="${n}" data-c="${m}"${n === m ? ' class="square"' : ''}>` +
               `<span class="eq-a">${n} × ${m} =</span>` +
-              `<span class="eq-b">${n * m}</span></li>`;
+              `<span class="eq-b" data-v="${n * m}">${n * m}</span></li>`;
     }
     html += '</ul></div>';
   }
   wrap.innerHTML = html;
 }
+
+// ── Mask mode: hide 10 random answers ──
+const MASK_COUNT = 10;
+const MASK_MIN = 2;                       // skip the 1x and 10x rows/columns
+const MASK_MAX = TABLE_MAX - 1;
+let maskedKeys = new Set();
+let revealedKeys = new Set();
+
+function pickMasks() {
+  maskedKeys = new Set();
+  revealedKeys = new Set();
+  while (maskedKeys.size < MASK_COUNT) {
+    maskedKeys.add(`${rand(MASK_MIN, MASK_MAX)}-${rand(MASK_MIN, MASK_MAX)}`);
+  }
+}
+
+// Returns what a cell should show: '?' (one of the chosen 10),
+// '-' (everything else, when "Hide rest" is on), or its real value.
+function cellState(key, value) {
+  const picked = maskedKeys.has(key);
+  if ($('maskToggle').checked && picked) {
+    return revealedKeys.has(key)
+      ? { text: value, cls: 'revealed' }
+      : { text: '?', cls: 'masked' };
+  }
+  if ($('dimToggle').checked && !picked)  return { text: '−', cls: 'dimmed' };
+  return { text: value, cls: null };
+}
+
+function applyMasks() {
+  $('timesTable').querySelectorAll('td[data-v]').forEach(td => {
+    const { text, cls } = cellState(`${td.dataset.r}-${td.dataset.c}`, td.dataset.v);
+    td.textContent = text;
+    td.classList.toggle('masked', cls === 'masked');
+    td.classList.toggle('dimmed', cls === 'dimmed');
+    td.classList.toggle('revealed', cls === 'revealed');
+  });
+
+  $('listView').querySelectorAll('li[data-r]').forEach(li => {
+    const val = li.querySelector('.eq-b');
+    const { text, cls } = cellState(`${li.dataset.r}-${li.dataset.c}`, val.dataset.v);
+    val.textContent = text;
+    li.classList.toggle('masked', cls === 'masked');
+    li.classList.toggle('dimmed', cls === 'dimmed');
+    li.classList.toggle('revealed', cls === 'revealed');
+  });
+
+  const hint = $('tableHint');
+  if ($('maskToggle').checked || $('dimToggle').checked) {
+    hint.textContent = 'Practice mode — tap a ? to check that one, or flip the switches off to reveal everything.';
+  } else {
+    hint.textContent = $('listView').classList.contains('show')
+      ? 'Every table from 1 to 10 — squares are highlighted in gold.'
+      : 'Hover or tap a square to light up its row and column.';
+  }
+}
+
+// Either switch needs a chosen 10. Pick a fresh set only when going from
+// all-off to on, so flipping the second switch keeps the same squares.
+function revealCell(el) {
+  const key = `${el.dataset.r}-${el.dataset.c}`;
+  if (!maskedKeys.has(key) || revealedKeys.has(key)) return;
+  revealedKeys.add(key);
+  applyMasks();
+}
+
+$('timesTable').addEventListener('click', e => {
+  const td = e.target.closest('td.masked');
+  if (td) revealCell(td);
+});
+$('listView').addEventListener('click', e => {
+  const li = e.target.closest('li.masked');
+  if (li) revealCell(li);
+});
+
+['maskToggle', 'dimToggle'].forEach(id => {
+  $(id).addEventListener('change', () => {
+    const other = id === 'maskToggle' ? 'dimToggle' : 'maskToggle';
+    if ($(id).checked && !$(other).checked) pickMasks();
+    applyMasks();
+  });
+});
 
 function setView(view) {
   const list = view === 'list';
@@ -558,9 +691,7 @@ function setView(view) {
   $('listView').classList.toggle('show', list);
   $('gridViewBtn').classList.toggle('active', !list);
   $('listViewBtn').classList.toggle('active', list);
-  $('tableHint').textContent = list
-    ? 'Every table from 1 to 10 — squares are highlighted in gold.'
-    : 'Hover or tap a square to light up its row and column.';
+  applyMasks();   // also refreshes the hint for this view
 }
 
 $('gridViewBtn').addEventListener('click', () => setView('grid'));
@@ -568,6 +699,7 @@ $('listViewBtn').addEventListener('click', () => setView('list'));
 
 function openTable() {
   buildTimesTable();
+  applyMasks();
   $('tableModal').classList.add('show');
 }
 function closeTable() { $('tableModal').classList.remove('show'); }
