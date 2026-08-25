@@ -65,6 +65,51 @@
     }
     .start-btn:hover { transform: scale(1.02); opacity: 0.92; }
 
+    /* ── Multiplication table link + modal ── */
+    .table-link {
+      background: none; border: none; cursor: pointer;
+      color: #a78bfa; font-size: 0.9rem; font-weight: 700;
+      text-decoration: underline; text-underline-offset: 3px;
+      padding: 2px 4px; transition: color 0.15s;
+    }
+    .table-link:hover { color: #c4b0ff; }
+
+    .modal-backdrop {
+      display: none; position: fixed; inset: 0; z-index: 50;
+      background: rgba(8,8,16,0.86); backdrop-filter: blur(3px);
+      align-items: center; justify-content: center; padding: 16px;
+    }
+    .modal-backdrop.show { display: flex; }
+    .modal-box {
+      background: #16213e; border: 2px solid #2a2a3e; border-radius: 16px;
+      width: 100%; max-width: 620px; max-height: 90vh;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .modal-head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; padding: 14px 16px; border-bottom: 1px solid #2a2a3e;
+    }
+    .modal-head h3 { font-size: 1.05rem; font-weight: 800; color: #eee; }
+    .modal-close {
+      background: none; border: none; color: #889; cursor: pointer;
+      font-size: 1.4rem; line-height: 1; padding: 2px 6px; transition: color 0.15s;
+    }
+    .modal-close:hover { color: #eee; }
+    .modal-body { padding: 14px; overflow: auto; }
+
+    .times-table { border-collapse: collapse; width: 100%; min-width: 460px; }
+    .times-table th, .times-table td {
+      border: 1px solid #2a2a3e; text-align: center;
+      padding: 5px 2px; font-size: 0.78rem; font-variant-numeric: tabular-nums;
+    }
+    .times-table th { background: #1b2545; color: #7ec8ff; font-weight: 800; }
+    .times-table th.corner { background: #101a33; color: #667; }
+    .times-table td { color: #ccd; font-weight: 600; }
+    .times-table td.diag { color: #f9c22e; font-weight: 800; }
+    .times-table .hl { background: rgba(61,158,255,0.16); color: #fff; }
+    .times-table th.hl { background: rgba(61,158,255,0.3); }
+    .modal-hint { color: #667; font-size: 0.78rem; margin-top: 10px; text-align: center; }
+
     /* ── Player Cards ── */
     .player-cards { display: flex; gap: 10px; width: 100%; }
     .player-card {
@@ -287,6 +332,22 @@
     </div>
 
     <button class="start-btn" id="startBtn">Start Game 🚀</button>
+    <button class="table-link" id="tableLink">✖️ View Multiplication Table</button>
+  </div>
+
+
+  <!-- ══════════════ MULTIPLICATION TABLE MODAL ══════════════ -->
+  <div class="modal-backdrop" id="tableModal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>✖️ Multiplication Table (1–12)</h3>
+        <button class="modal-close" id="tableClose" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <table class="times-table" id="timesTable"></table>
+        <div class="modal-hint">Hover or tap a square to light up its row and column.</div>
+      </div>
+    </div>
   </div>
 
   <!-- ══════════════ GAME ══════════════ -->
@@ -400,6 +461,49 @@ document.querySelectorAll('.opt-btn').forEach(btn => {
 
 $('startBtn').addEventListener('click', startGame);
 $('playAgainBtn').addEventListener('click', () => showScreen('setupScreen'));
+
+// ═══════════════════════════════════════════════════
+//  MULTIPLICATION TABLE MODAL
+// ═══════════════════════════════════════════════════
+const TABLE_MAX = 12;
+
+function buildTimesTable() {
+  const t = $('timesTable');
+  if (t.rows.length) return;                       // build once
+  let html = '<tr><th class="corner">×</th>';
+  for (let c = 1; c <= TABLE_MAX; c++) html += `<th data-c="${c}">${c}</th>`;
+  html += '</tr>';
+  for (let r = 1; r <= TABLE_MAX; r++) {
+    html += `<tr><th data-r="${r}">${r}</th>`;
+    for (let c = 1; c <= TABLE_MAX; c++) {
+      html += `<td data-r="${r}" data-c="${c}"${r === c ? ' class="diag"' : ''}>${r * c}</td>`;
+    }
+    html += '</tr>';
+  }
+  t.innerHTML = html;
+
+  const clearHl = () => t.querySelectorAll('.hl').forEach(e => e.classList.remove('hl'));
+  const highlight = cell => {
+    clearHl();
+    const r = cell.dataset.r, c = cell.dataset.c;
+    t.querySelectorAll(`td[data-r="${r}"], th[data-r="${r}"]`).forEach(e => e.classList.add('hl'));
+    t.querySelectorAll(`td[data-c="${c}"], th[data-c="${c}"]`).forEach(e => e.classList.add('hl'));
+  };
+  t.addEventListener('mouseover', e => { if (e.target.dataset.r && e.target.dataset.c) highlight(e.target); });
+  t.addEventListener('mouseleave', clearHl);
+  t.addEventListener('click',     e => { if (e.target.dataset.r && e.target.dataset.c) highlight(e.target); });
+}
+
+function openTable() {
+  buildTimesTable();
+  $('tableModal').classList.add('show');
+}
+function closeTable() { $('tableModal').classList.remove('show'); }
+
+$('tableLink').addEventListener('click', openTable);
+$('tableClose').addEventListener('click', closeTable);
+$('tableModal').addEventListener('click', e => { if (e.target.id === 'tableModal') closeTable(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTable(); });
 
 // ═══════════════════════════════════════════════════
 //  PROBLEM GENERATION
