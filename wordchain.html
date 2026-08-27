@@ -320,19 +320,37 @@
 
 <script>
 // ── Dictionary validation ────────────────────────────────────────────
-const wordCache = {};  // word → true | false
+// words.dict.txt holds ~133k words (2-10 letters) front-coded against the
+// previous entry: one digit for "reuse this many leading characters", then
+// the rest of the word in lowercase. Sorted input makes it compress well —
+// 245KB over the wire, fetched once, then every lookup is an in-memory hit.
+// Regenerate with: awk 'length>=2 && length<=10 && /^[a-z]+$/' \
+//   /usr/share/dict/words   (plus the modern-word supplement), sorted.
+let DICT = null;
+
+const dictReady = fetch('words.dict.txt')
+  .then(res => res.ok ? res.text() : Promise.reject(res.status))
+  .then(text => { DICT = decodeDict(text); })
+  .catch(() => { DICT = null; });   // offline: fall back to accepting words
+
+function decodeDict(enc) {
+  const set = new Set();
+  let prev = '', i = 0;
+  while (i < enc.length) {
+    const shared = enc.charCodeAt(i) - 48;   // '0'-'9'
+    let j = ++i;
+    while (j < enc.length && enc.charCodeAt(j) >= 97) j++;   // a-z run
+    const word = prev.slice(0, shared) + enc.slice(i, j);
+    set.add(word);
+    prev = word;
+    i = j;
+  }
+  return set;
+}
 
 async function isValidWord(word) {
-  if (word in wordCache) return wordCache[word];
-  try {
-    const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
-    wordCache[word] = res.ok;
-    return res.ok;
-  } catch {
-    // Network unavailable — fail open so offline play still works
-    wordCache[word] = true;
-    return true;
-  }
+  if (!DICT) await dictReady;
+  return DICT ? DICT.has(word) : true;   // no dictionary → let play continue
 }
 
 function normalize(w) { return w.trim().toLowerCase().replace(/[^a-z]/g, ''); }
@@ -505,25 +523,32 @@ async function submitWord() {
     return;
   }
 
-  // Pause timer while checking — don't penalize for network latency
-  clearInterval(timerInterval);
+  // Once the dictionary is in memory the check is instant, so the input
+  // only freezes on the rare submit that lands before it finishes loading.
+  const waiting = !DICT;
   const savedTime = game.timeLeft;
-  game.checking = true;
-  setFb('Checking…', '');
-  document.getElementById('chainInput').disabled = true;
-  document.getElementById('submitBtn').disabled  = true;
+
+  if (waiting) {
+    clearInterval(timerInterval);
+    game.checking = true;
+    setFb('Loading dictionary…', '');
+    document.getElementById('chainInput').disabled = true;
+    document.getElementById('submitBtn').disabled  = true;
+  }
 
   const valid = await isValidWord(word);
 
-  game.checking = false;
-  document.getElementById('chainInput').disabled = false;
-  document.getElementById('submitBtn').disabled  = false;
+  if (waiting) {
+    game.checking = false;
+    document.getElementById('chainInput').disabled = false;
+    document.getElementById('submitBtn').disabled  = false;
+  }
 
   if (game.over) return;
 
   if (!valid) {
     showErr(`"${word}" is not a valid English word!`);
-    startTimer(savedTime);  // resume with remaining time
+    if (waiting) startTimer(savedTime);   // resume with remaining time
     document.getElementById('chainInput').focus();
     return;
   }
