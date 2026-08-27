@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Speed Typing</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #0a0c10;
+      color: #eee;
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 12px 16px 40px;
+    }
+
+    nav {
+      width: 100%; max-width: 640px;
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 12px;
+    }
+    nav a { color: #2dd4bf; text-decoration: none; font-size: 0.9rem; opacity: 0.8; }
+    nav a:hover { opacity: 1; }
+    nav span { font-size: 1rem; font-weight: bold; }
+
+    /* ── Setup ── */
+    #setup-screen {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 28px; padding-top: 12px; width: 100%; max-width: 520px;
+    }
+    .setup-title { font-size: 2.4rem; font-weight: 900; text-align: center; line-height: 1.1; }
+    .setup-title span { display: block; font-size: 0.95rem; color: #556; font-weight: 400; margin-top: 6px; letter-spacing: 1px; }
+
+    .option-group { width: 100%; }
+    .option-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1px; color: #556; margin-bottom: 10px; text-align: center; }
+    .option-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+    .opt-btn {
+      padding: 14px 28px; border-radius: 14px;
+      border: 2px solid #222; background: #111520;
+      color: #889; font-size: 1rem; cursor: pointer; text-align: center;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+      min-width: 140px;
+    }
+    .opt-btn small { display: block; font-size: 0.72rem; color: #445; margin-top: 3px; }
+    .opt-btn:hover { border-color: #2dd4bf; color: #2dd4bf; }
+    .opt-btn.sel { border-color: #2dd4bf; color: #2dd4bf; background: rgba(45,212,191,0.08); }
+
+    .big-start {
+      padding: 15px 64px; font-size: 1.2rem; font-weight: bold;
+      border: none; border-radius: 32px;
+      background: linear-gradient(135deg, #2dd4bf, #0ea5e9);
+      color: #04222a; cursor: pointer;
+      box-shadow: 0 4px 20px rgba(45,212,191,0.35);
+      transition: transform 0.1s;
+    }
+    .big-start:hover { transform: scale(1.04); }
+
+    /* ── Game ── */
+    #game-screen { display: none; flex-direction: column; align-items: center; gap: 14px; width: 100%; max-width: 640px; }
+
+    /* Scoreboard */
+    .scoreboard {
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%; background: #111520; border-radius: 14px; padding: 12px 20px;
+    }
+    .player-box { text-align: center; min-width: 88px; transition: opacity 0.25s; opacity: 0.38; }
+    .player-box .pname { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: #556; }
+    .player-box .pscore { font-size: 1.8rem; font-weight: bold; line-height: 1.1; }
+    .player-box.kyle    .pscore { color: #f0c040; }
+    .player-box.lindsey .pscore { color: #22A6B3; }
+    .player-box.active-player { background: rgba(255,255,255,0.06); border-radius: 10px; padding: 4px 12px; opacity: 1; }
+    .player-box .psub { font-size: 0.72rem; color: #445; margin-top: 2px; }
+    .round-center { text-align: center; flex: 1; }
+    .round-center .round-count { font-size: 0.82rem; color: #445; }
+    .round-center .rturn { font-size: 1rem; font-weight: bold; color: #eee; margin-top: 2px; }
+
+    /* Solo stat strip */
+    .solo-score-wrap {
+      width: 100%; background: #111520; border-radius: 14px;
+      padding: 14px 24px; text-align: center;
+    }
+    .solo-score-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #445; }
+    .solo-score-num { font-size: 2.8rem; font-weight: 900; color: #2dd4bf; line-height: 1.1; }
+    .solo-best { font-size: 0.82rem; color: #445; margin-top: 2px; }
+
+    /* Live stats */
+    .live-stats { display: flex; gap: 10px; width: 100%; }
+    .live-stat {
+      flex: 1; background: #111520; border-radius: 12px; padding: 10px 8px; text-align: center;
+    }
+    .ls-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1px; color: #445; }
+    .ls-value { font-size: 1.5rem; font-weight: 900; color: #eee; line-height: 1.2; }
+    .ls-value.good { color: #4ade80; }
+    .ls-value.warn { color: #f87171; }
+
+    /* Sentence */
+    .sentence-box {
+      width: 100%; background: #111520; border-radius: 16px;
+      padding: 20px 22px; font-size: 1.35rem; line-height: 1.7;
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      letter-spacing: 0.5px; word-break: break-word;
+    }
+    .ch { color: #556; transition: color 0.05s; }
+    .ch.done  { color: #2dd4bf; }
+    .ch.wrong { color: #fff; background: rgba(248,113,113,0.55); border-radius: 3px; }
+    .ch.wrong.space { background: rgba(248,113,113,0.75); }
+    .ch.cursor { border-bottom: 3px solid #2dd4bf; }
+
+    /* Input */
+    .type-input {
+      width: 100%; padding: 14px 16px; font-size: 1.15rem;
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      border-radius: 12px; border: 2px solid #223; background: #0a0e18;
+      color: #fff; outline: none; transition: border-color 0.2s;
+      resize: none; line-height: 1.5;
+    }
+    .type-input:focus { border-color: #2dd4bf; }
+    .type-input:disabled { opacity: 0.5; }
+
+    .hint-row {
+      width: 100%; display: flex; justify-content: space-between; align-items: center;
+      font-size: 0.8rem; color: #445; gap: 12px;
+    }
+    .skip-btn {
+      border: 2px solid #223; background: transparent; color: #667;
+      border-radius: 10px; padding: 7px 16px; font-size: 0.8rem; cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .skip-btn:hover { border-color: #2dd4bf; color: #2dd4bf; }
+
+    .feedback-msg { min-height: 28px; text-align: center; font-size: 1rem; font-weight: bold; }
+    .fb-ok  { color: #4ade80; }
+    .fb-err { color: #f87171; }
+
+    /* ── Results ── */
+    #result-screen {
+      display: none; flex-direction: column; align-items: center;
+      gap: 20px; padding-top: 10px; width: 100%; max-width: 560px;
+    }
+    .result-title { font-size: 2rem; font-weight: 900; color: #2dd4bf; text-align: center; }
+
+    .winner-banner {
+      width: 100%; background: rgba(45,212,191,0.1); border: 2px solid #2dd4bf;
+      border-radius: 16px; padding: 16px 24px; text-align: center;
+      font-size: 1.2rem; font-weight: bold; color: #2dd4bf; line-height: 1.5;
+    }
+
+    .result-stats { display: flex; gap: 16px; width: 100%; flex-wrap: wrap; }
+    .stat-card {
+      flex: 1; min-width: 130px; background: #111520; border-radius: 14px;
+      padding: 16px; text-align: center; border: 2px solid transparent;
+    }
+    .stat-card.kyle    { border-color: #f0c040; }
+    .stat-card.lindsey { border-color: #22A6B3; }
+    .stat-card.winner  { box-shadow: 0 0 24px rgba(45,212,191,0.25); }
+    .stat-name  { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #556; }
+    .stat-score { font-size: 2.8rem; font-weight: 900; line-height: 1; }
+    .stat-card.kyle    .stat-score { color: #f0c040; }
+    .stat-card.lindsey .stat-score { color: #22A6B3; }
+    .stat-sub   { font-size: 0.75rem; color: #445; margin-top: 4px; }
+
+    .round-table {
+      width: 100%; background: #111520; border-radius: 14px; padding: 16px 18px;
+    }
+    .rt-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: #445; margin-bottom: 10px; }
+    .rt-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 7px 0; border-top: 1px solid #1a2030; font-size: 0.85rem;
+    }
+    .rt-row:first-of-type { border-top: none; }
+    .rt-who { min-width: 62px; font-weight: bold; }
+    .rt-who.kyle { color: #f0c040; }
+    .rt-who.lindsey { color: #22A6B3; }
+    .rt-text { flex: 1; color: #667; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .rt-wpm { color: #2dd4bf; font-weight: bold; min-width: 62px; text-align: right; }
+    .rt-acc { color: #556; min-width: 48px; text-align: right; }
+
+    .result-btns { display: flex; gap: 12px; }
+    .result-btn-primary {
+      padding: 12px 36px; border-radius: 24px; border: none;
+      background: linear-gradient(135deg, #2dd4bf, #0ea5e9);
+      color: #04222a; font-size: 1rem; font-weight: bold; cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .result-btn-primary:hover { transform: scale(1.04); }
+    .result-btn-secondary {
+      padding: 12px 28px; border-radius: 24px; font-size: 1rem;
+      border: 2px solid #334; background: transparent; color: #aaa;
+      cursor: pointer; transition: border-color 0.2s, color 0.2s;
+    }
+    .result-btn-secondary:hover { border-color: #2dd4bf; color: #2dd4bf; }
+
+    @media (max-width: 480px) {
+      .setup-title { font-size: 1.9rem; }
+      .opt-btn { min-width: 0; flex: 1 1 calc(50% - 6px); padding: 12px 10px; }
+      .big-start { width: 100%; }
+      .sentence-box { font-size: 1.1rem; padding: 16px; }
+      .result-stats { flex-direction: column; }
+      .result-btns { flex-direction: column; width: 100%; }
+      .result-btn-primary, .result-btn-secondary { width: 100%; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html">← Home</a>
+  <span>⌨️ Speed Typing</span>
+</nav>
+
+<!-- ── Setup ── -->
+<div id="setup-screen">
+  <div class="setup-title">
+    ⌨️ Speed Typing
+    <span>TYPE THE SENTENCE — FAST AND CLEAN</span>
+  </div>
+
+  <div class="option-group">
+    <div class="option-label">Mode</div>
+    <div class="option-row">
+      <button class="opt-btn sel" data-mode="solo">Solo<small>Beat your best speed</small></button>
+      <button class="opt-btn"     data-mode="versus">Kyle vs Lindsey<small>Take turns, best average wins</small></button>
+    </div>
+  </div>
+
+  <div class="option-group">
+    <div class="option-label">Difficulty</div>
+    <div class="option-row">
+      <button class="opt-btn sel" data-level="easy">Easy<small>Short, simple words</small></button>
+      <button class="opt-btn"     data-level="normal">Normal<small>Longer sentences</small></button>
+      <button class="opt-btn"     data-level="hard">Hard<small>Punctuation &amp; numbers</small></button>
+    </div>
+  </div>
+
+  <div class="option-group">
+    <div class="option-label">Sentences</div>
+    <div class="option-row">
+      <button class="opt-btn"     data-rounds="3">3<small>Quick round</small></button>
+      <button class="opt-btn sel" data-rounds="5">5<small>Standard</small></button>
+      <button class="opt-btn"     data-rounds="8">8<small>Marathon</small></button>
+    </div>
+  </div>
+
+  <button class="big-start" id="startBtn">Start Typing ⌨️</button>
+</div>
+
+<!-- ── Game ── -->
+<div id="game-screen">
+
+  <div class="solo-score-wrap" id="soloWrap">
+    <div class="solo-score-label">Best Sentence So Far</div>
+    <div class="solo-score-num" id="soloScoreEl">0 <span style="font-size:1.1rem;color:#445">wpm</span></div>
+    <div class="solo-best" id="soloBestEl">All-time best: 0 wpm</div>
+  </div>
+
+  <div class="scoreboard" id="scoreboard">
+    <div class="player-box kyle active-player" id="kyleBox">
+      <div class="pname">Kyle</div>
+      <div class="pscore" id="kyleScoreEl">0</div>
+      <div class="psub" id="kyleSubEl">avg wpm</div>
+    </div>
+    <div class="round-center">
+      <div class="round-count" id="roundCountEl">Sentence 1 of 5</div>
+      <div class="rturn" id="turnEl">Kyle's turn</div>
+    </div>
+    <div class="player-box lindsey" id="lindseyBox">
+      <div class="pname">Lindsey</div>
+      <div class="pscore" id="lindseyScoreEl">0</div>
+      <div class="psub" id="lindseySubEl">avg wpm</div>
+    </div>
+  </div>
+
+  <div class="live-stats">
+    <div class="live-stat">
+      <div class="ls-label">Time</div>
+      <div class="ls-value" id="timeEl">0.0s</div>
+    </div>
+    <div class="live-stat">
+      <div class="ls-label">Speed</div>
+      <div class="ls-value" id="wpmEl">0</div>
+    </div>
+    <div class="live-stat">
+      <div class="ls-label">Accuracy</div>
+      <div class="ls-value" id="accEl">100%</div>
+    </div>
+  </div>
+
+  <div class="sentence-box" id="sentenceBox"></div>
+
+  <textarea class="type-input" id="typeInput" rows="2"
+    placeholder="start typing here…"
+    autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false"></textarea>
+
+  <div class="hint-row">
+    <span id="hintEl">Typos turn red — fix them with backspace to keep your accuracy up.</span>
+    <button class="skip-btn" id="skipBtn">Skip →</button>
+  </div>
+
+  <div class="feedback-msg" id="feedbackMsg"></div>
+</div>
+
+<!-- ── Results ── -->
+<div id="result-screen">
+  <div class="result-title" id="resultTitle">Nice typing!</div>
+  <div id="resultStatsEl"></div>
+  <div class="round-table">
+    <div class="rt-label">Every Sentence</div>
+    <div id="resultRowsEl"></div>
+  </div>
+  <div class="result-btns">
+    <button class="result-btn-primary"   id="playAgainBtn">Play Again</button>
+    <button class="result-btn-secondary" id="homeBtn">Home</button>
+  </div>
+</div>
+
+<script>
+// ── Sentence pools ───────────────────────────────────────────────────
+const SENTENCES = {
+  easy: [
+    'The cat sat on a warm rug.',
+    'We ride our bikes to the park.',
+    'My dog likes to chase the ball.',
+    'Green apples taste very sweet.',
+    'She reads a book every night.',
+    'The bus stops at our corner.',
+    'Ten ducks swim in the pond.',
+    'Dad makes pancakes on Sunday.',
+    'A big moon lights the yard.',
+    'We plant seeds in the garden.',
+    'The train goes over the bridge.',
+    'Blue socks are under my bed.',
+    'He draws a red house and a tree.',
+    'Our class went to the zoo today.',
+    'Rain taps softly on the window.',
+  ],
+  normal: [
+    'The curious fox slipped through the tall grass without making a sound.',
+    'Every Saturday morning we walk to the bakery for warm bread and juice.',
+    'Reading a good story can take you somewhere you have never been before.',
+    'The soccer team practiced in the rain until the field turned to mud.',
+    'My grandmother keeps a jar of buttons that she has collected for years.',
+    'A hummingbird hovered by the window and then darted away into the trees.',
+    'We built a fort out of blankets and pretended it was a secret castle.',
+    'The science teacher showed us how a volcano erupts using baking soda.',
+    'Snow covered the whole neighborhood and school was cancelled for a day.',
+    'He practiced the piano every afternoon until the song sounded perfect.',
+    'The library smells like old paper and it is the quietest place in town.',
+    'Our puppy chewed a hole in the couch and then looked completely innocent.',
+    'They packed sandwiches and lemonade for the long drive to the mountains.',
+    'A paper airplane sailed across the classroom and landed on the desk.',
+    'The astronaut described how strange it feels to float while you sleep.',
+  ],
+  hard: [
+    'On March 3, 2024, the team recorded 47 observations — a new record for the season!',
+    '"Quick," she whispered, "grab the flashlight; the power just went out again."',
+    'The recipe calls for 2 cups of flour, 1/2 cup of sugar, and exactly 3 eggs.',
+    'Jupiter, the largest planet, has at least 95 moons — Ganymede is the biggest.',
+    'He typed 82 words per minute, but his accuracy dropped to 91% under pressure.',
+    'Zebras, giraffes, and hippos gathered near the river at 6:15 in the morning.',
+    '"Is it 40 degrees or 4 degrees?" asked Max, zipping his jacket up to his chin.',
+    'The museum opened in 1927; today it holds over 12,000 artifacts and 300 paintings.',
+    'Practice makes progress — not perfection — so keep going, even when it is hard!',
+    'She solved 15 puzzles in 8 minutes, beating her brother\'s record by 42 seconds.',
+    'Warning: the trail is steep, narrow, and slippery after heavy rain or snowfall.',
+    'My password hint was "blue+dragon7" but I still could not remember the last digit.',
+    'The rocket lifted off at 9:32 a.m., reaching 17,500 miles per hour in minutes.',
+    'Whales, the ocean\'s gentle giants, can dive nearly 2,000 feet without a breath.',
+    'Q: How many seconds are in one day? A: 86,400 — check the math yourself!',
+  ],
+};
+
+// ── State ───────────────────────────────────────────────────────────
+let cfg  = { mode: 'solo', level: 'easy', rounds: 5 };
+let game = {};
+let tickInterval = null;
+let bestWpm = parseInt(localStorage.getItem('typing-best') || '0');
+
+const $ = id => document.getElementById(id);
+
+// ── Setup ───────────────────────────────────────────────────────────
+[['mode', 'data-mode'], ['level', 'data-level'], ['rounds', 'data-rounds']].forEach(([key, attr]) => {
+  document.querySelectorAll(`[${attr}]`).forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll(`[${attr}]`).forEach(b => b.classList.remove('sel'));
+      btn.classList.add('sel');
+      const raw = btn.getAttribute(attr);
+      cfg[key] = key === 'rounds' ? parseInt(raw) : raw;
+    });
+  });
+});
+
+$('startBtn').addEventListener('click', startGame);
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ── Start ───────────────────────────────────────────────────────────
+function startGame() {
+  clearInterval(tickInterval);
+
+  // In versus each player types every sentence, so the round count doubles.
+  const perPlayer = cfg.rounds;
+  const total     = cfg.mode === 'versus' ? perPlayer * 2 : perPlayer;
+  const pool      = shuffle(SENTENCES[cfg.level]);
+  const picks     = Array.from({ length: perPlayer }, (_, i) => pool[i % pool.length]);
+
+  game = {
+    mode: cfg.mode,
+    sentences: cfg.mode === 'versus' ? picks.flatMap(s => [s, s]) : picks,
+    total,
+    idx: 0,
+    currentPlayer: 'Kyle',
+    results: [],          // { player, text, wpm, acc, seconds }
+    startTime: null,
+    errors: 0,
+    typed: 0,
+    over: false,
+  };
+
+  const isSolo = cfg.mode === 'solo';
+  $('soloWrap').style.display   = isSolo ? ''     : 'none';
+  $('scoreboard').style.display = isSolo ? 'none' : '';
+  $('soloScoreEl').innerHTML    = '0 <span style="font-size:1.1rem;color:#445">wpm</span>';
+  $('soloBestEl').textContent   = `All-time best: ${bestWpm} wpm`;
+
+  show('game-screen');
+  loadSentence();
+}
+
+// ── One sentence ────────────────────────────────────────────────────
+function loadSentence() {
+  game.startTime = null;
+  game.errors = 0;
+  game.typed  = 0;
+
+  const inp = $('typeInput');
+  inp.value = '';
+  inp.disabled = false;
+
+  $('feedbackMsg').textContent = '';
+  $('timeEl').textContent = '0.0s';
+  $('wpmEl').textContent  = '0';
+  $('accEl').textContent  = '100%';
+  $('accEl').className    = 'ls-value';
+
+  const perPlayer = game.mode === 'versus' ? game.total / 2 : game.total;
+  const shown = game.mode === 'versus' ? Math.floor(game.idx / 2) + 1 : game.idx + 1;
+  $('roundCountEl').textContent = `Sentence ${shown} of ${perPlayer}`;
+  $('turnEl').textContent = `${game.currentPlayer}'s turn`;
+  updateBoard();
+
+  renderSentence('');
+  inp.focus();
+}
+
+function renderSentence(typed) {
+  const target = game.sentences[game.idx];
+  const box = $('sentenceBox');
+  box.innerHTML = '';
+
+  for (let i = 0; i < target.length; i++) {
+    const span = document.createElement('span');
+    const ch = target[i];
+    span.textContent = ch === ' ' ? ' ' : ch;
+    span.className = 'ch';
+
+    if (i < typed.length) {
+      span.classList.add(typed[i] === ch ? 'done' : 'wrong');
+      if (ch === ' ' && typed[i] !== ch) span.classList.add('space');
+    } else if (i === typed.length) {
+      span.classList.add('cursor');
+    }
+    box.appendChild(span);
+  }
+}
+
+// ── Typing ──────────────────────────────────────────────────────────
+$('typeInput').addEventListener('input', onType);
+$('typeInput').addEventListener('paste', e => e.preventDefault());
+$('typeInput').addEventListener('drop',  e => e.preventDefault());
+$('typeInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') e.preventDefault();      // Enter never submits early
+});
+$('skipBtn').addEventListener('click', () => finishSentence(true));
+
+// Real typing arrives a character at a time; a sudden jump means text was
+// dropped or auto-filled in, which would fake an impossible speed.
+const MAX_BURST = 8;
+
+function onType() {
+  if (game.over) return;
+  const target = game.sentences[game.idx];
+  const inp = $('typeInput');
+  let typed = inp.value;
+
+  if (typed.length - game.typed > MAX_BURST) {
+    typed = typed.slice(0, game.typed);
+    inp.value = typed;
+    setFb('✋ Type it out — no pasting!', 'fb-err');
+    renderSentence(typed);
+    return;
+  }
+
+  if (game.startTime === null && typed.length > 0) {
+    game.startTime = performance.now();
+    tickInterval = setInterval(updateLiveStats, 100);
+  }
+
+  // A keystroke that lands on the wrong character counts once, even if the
+  // player later fixes it — that is what keeps accuracy honest.
+  if (typed.length > game.typed) {
+    for (let i = game.typed; i < typed.length; i++) {
+      if (typed[i] !== target[i]) game.errors++;
+    }
+  }
+  game.typed = typed.length;
+
+  renderSentence(typed);
+  updateLiveStats();
+
+  if (typed.length >= target.length) finishSentence(false);
+}
+
+function statsFor(typed, target, elapsedMs) {
+  const seconds = Math.max(elapsedMs / 1000, 0.001);
+  let correct = 0;
+  for (let i = 0; i < Math.min(typed.length, target.length); i++) {
+    if (typed[i] === target[i]) correct++;
+  }
+  const wpm = Math.round((correct / 5) / (seconds / 60));
+  const keystrokes = game.typed + game.errors;
+  const acc = keystrokes === 0 ? 100 : Math.round((game.typed - game.errors) / game.typed * 100);
+  return { seconds, correct, wpm, acc: Math.max(0, acc) };
+}
+
+function updateLiveStats() {
+  if (game.startTime === null) return;
+  const target  = game.sentences[game.idx];
+  const typed   = $('typeInput').value;
+  const elapsed = performance.now() - game.startTime;
+  const { seconds, wpm, acc } = statsFor(typed, target, elapsed);
+
+  $('timeEl').textContent = seconds.toFixed(1) + 's';
+  $('wpmEl').textContent  = wpm;
+  $('accEl').textContent  = acc + '%';
+  $('accEl').className    = 'ls-value ' + (acc >= 95 ? 'good' : acc < 80 ? 'warn' : '');
+}
+
+// ── Finish one sentence ─────────────────────────────────────────────
+function finishSentence(skipped) {
+  clearInterval(tickInterval);
+  const target = game.sentences[game.idx];
+  const typed  = $('typeInput').value;
+  const elapsed = game.startTime === null ? 0 : performance.now() - game.startTime;
+  const { seconds, wpm, acc } = skipped || game.startTime === null
+    ? { seconds: 0, wpm: 0, acc: 0 }
+    : statsFor(typed, target, elapsed);
+
+  game.results.push({ player: game.currentPlayer, text: target, wpm, acc, seconds });
+
+  $('typeInput').disabled = true;
+
+  if (skipped) {
+    setFb('⏭ Skipped', 'fb-err');
+  } else {
+    const note = acc === 100 ? 'Perfect! ' : '';
+    setFb(`✅ ${note}${wpm} wpm · ${acc}%`, 'fb-ok');
+  }
+
+  if (game.mode === 'solo') {
+    const best = Math.max(...game.results.map(r => r.wpm), 0);
+    $('soloScoreEl').innerHTML = `${best} <span style="font-size:1.1rem;color:#445">wpm</span>`;
+  } else {
+    game.currentPlayer = game.currentPlayer === 'Kyle' ? 'Lindsey' : 'Kyle';
+  }
+
+  updateBoard();
+
+  setTimeout(() => {
+    game.idx++;
+    if (game.idx >= game.total) endGame();
+    else loadSentence();
+  }, 1100);
+}
+
+function avgFor(player, field) {
+  const rows = game.results.filter(r => r.player === player);
+  if (!rows.length) return 0;
+  return Math.round(rows.reduce((sum, r) => sum + r[field], 0) / rows.length);
+}
+
+function updateBoard() {
+  if (game.mode !== 'versus') return;
+  $('kyleScoreEl').textContent    = avgFor('Kyle', 'wpm');
+  $('lindseyScoreEl').textContent = avgFor('Lindsey', 'wpm');
+  $('kyleSubEl').textContent      = `avg wpm · ${avgFor('Kyle', 'acc')}%`;
+  $('lindseySubEl').textContent   = `avg wpm · ${avgFor('Lindsey', 'acc')}%`;
+  $('kyleBox').classList.toggle('active-player',    game.currentPlayer === 'Kyle');
+  $('lindseyBox').classList.toggle('active-player', game.currentPlayer === 'Lindsey');
+}
+
+function setFb(msg, cls) {
+  const el = $('feedbackMsg');
+  el.textContent = msg;
+  el.className = `feedback-msg ${cls}`;
+}
+
+// ── End ─────────────────────────────────────────────────────────────
+function endGame() {
+  game.over = true;
+  clearInterval(tickInterval);
+  show('result-screen');
+
+  if (game.mode === 'solo') {
+    const best = Math.max(...game.results.map(r => r.wpm), 0);
+    const avgW = Math.round(game.results.reduce((s, r) => s + r.wpm, 0) / game.results.length);
+    const avgA = Math.round(game.results.reduce((s, r) => s + r.acc, 0) / game.results.length);
+    const isRecord = best > bestWpm;
+    if (isRecord) {
+      bestWpm = best;
+      localStorage.setItem('typing-best', bestWpm);
+    }
+
+    $('resultTitle').textContent = `⌨️ ${avgW} wpm average`;
+    $('resultStatsEl').innerHTML = `
+      <div class="winner-banner">
+        Fastest sentence: <strong>${best} wpm</strong><br>
+        Accuracy: <strong>${avgA}%</strong><br>
+        ${isRecord ? '🏆 New personal best!' : `Personal best: ${bestWpm} wpm`}
+      </div>`;
+  } else {
+    const kW = avgFor('Kyle', 'wpm'), lW = avgFor('Lindsey', 'wpm');
+    const kWins = kW > lW, tie = kW === lW;
+    $('resultTitle').textContent = tie ? '🤝 Dead heat!' : `🏆 ${kWins ? 'Kyle' : 'Lindsey'} wins!`;
+    $('resultStatsEl').innerHTML = `
+      <div class="result-stats">
+        <div class="stat-card kyle${kWins && !tie ? ' winner' : ''}">
+          <div class="stat-name">Kyle</div>
+          <div class="stat-score">${kW}</div>
+          <div class="stat-sub">avg wpm · ${avgFor('Kyle', 'acc')}% accurate</div>
+        </div>
+        <div class="stat-card lindsey${!kWins && !tie ? ' winner' : ''}">
+          <div class="stat-name">Lindsey</div>
+          <div class="stat-score">${lW}</div>
+          <div class="stat-sub">avg wpm · ${avgFor('Lindsey', 'acc')}% accurate</div>
+        </div>
+      </div>
+      <div class="winner-banner" style="margin-top:0">
+        ${tie ? 'Both typed at the same speed!' : `${kWins ? 'Kyle' : 'Lindsey'} is faster by ${Math.abs(kW - lW)} wpm.`}
+      </div>`;
+  }
+
+  const rows = $('resultRowsEl');
+  rows.innerHTML = '';
+  game.results.forEach(r => {
+    const row = document.createElement('div');
+    row.className = 'rt-row';
+    row.innerHTML = `
+      ${game.mode === 'versus' ? `<span class="rt-who ${r.player.toLowerCase()}">${r.player}</span>` : ''}
+      <span class="rt-text">${r.text}</span>
+      <span class="rt-wpm">${r.wpm} wpm</span>
+      <span class="rt-acc">${r.acc}%</span>`;
+    rows.appendChild(row);
+  });
+}
+
+// ── Nav ─────────────────────────────────────────────────────────────
+$('playAgainBtn').addEventListener('click', () => show('setup-screen'));
+$('homeBtn').addEventListener('click', () => { window.location.href = 'index.html'; });
+
+function show(id) {
+  ['setup-screen', 'game-screen', 'result-screen'].forEach(s => {
+    $(s).style.display = s === id ? 'flex' : 'none';
+  });
+}
+</script>
+</body>
+</html>
