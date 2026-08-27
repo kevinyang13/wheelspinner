@@ -139,6 +139,7 @@
       background: rgba(46,204,113,0.12);
     }
 
+
     .times-table td.dimmed, .table-card li.dimmed .eq-b {
       color: #39394f !important; font-weight: 600; background: none;
     }
@@ -243,6 +244,9 @@
       letter-spacing: 2px; line-height: 1.1;
       text-shadow: 0 0 30px rgba(61,158,255,0.25);
     }
+    .factor-question { font-size: clamp(1.15rem, 3.5vw, 1.9rem); font-weight: 800; line-height: 1.4; }
+    .factor-question b { color: #7ec8ff; }
+
     .op-tag {
       display: inline-block; font-size: 0.7rem; font-weight: 700;
       letter-spacing: 1px; text-transform: uppercase;
@@ -357,7 +361,7 @@
     <div class="setup-title">
       <span class="big-icon">🔢</span>
       <h1>Math Challenge</h1>
-      <p>Addition · Subtraction · Multiplication</p>
+      <p>Addition · Subtraction · Multiplication · Factors</p>
     </div>
 
     <div class="option-group" style="width:100%">
@@ -377,6 +381,7 @@
         <button class="opt-btn" data-group="op" data-val="+">➕ Add</button>
         <button class="opt-btn" data-group="op" data-val="−">➖ Sub</button>
         <button class="opt-btn" data-group="op" data-val="×">✖️ Mult</button>
+        <button class="opt-btn" data-group="op" data-val="factor">🧩 Factors</button>
         <button class="opt-btn selected" data-group="op" data-val="all">🔀 All</button>
       </div>
     </div>
@@ -648,6 +653,10 @@ function applyMasks() {
     li.classList.toggle('revealed', cls === 'revealed');
   });
 
+  updateHint();
+}
+
+function updateHint() {
   const hint = $('tableHint');
   if ($('maskToggle').checked || $('dimToggle').checked) {
     hint.textContent = 'Practice mode — tap a ? to check that one, or flip the switches off to reveal everything.';
@@ -697,6 +706,7 @@ function setView(view) {
 $('gridViewBtn').addEventListener('click', () => setView('grid'));
 $('listViewBtn').addEventListener('click', () => setView('list'));
 
+
 function openTable() {
   buildTimesTable();
   applyMasks();
@@ -722,14 +732,43 @@ function pickGrade() {
 }
 
 function pickOp() {
-  if (cfg.op === 'all') return ['+', '−', '×'][rand(0, 2)];
+  if (cfg.op === 'all') return ['+', '−', '×', 'factor'][rand(0, 3)];
   return cfg.op;
+}
+
+// "Which number is a factor of N?" — N is built from the answer so it
+// always divides, and the distractors are drawn from numbers that don't.
+function generateFactorProblem(grade) {
+  const [fMin, fMax, mMin, mMax] =
+    grade === 2 ? [2,  5, 2,  6] :
+    grade === 3 ? [2,  9, 3, 11] :
+    grade === 4 ? [2, 12, 3, 13] :
+                  [3, 15, 4, 17];
+
+  const answer = rand(fMin, fMax);
+  const n      = answer * rand(mMin, mMax);
+
+  // Distractors must not divide n. Widen the pool if a very divisible n
+  // (24, 36, ...) leaves too few non-divisors close by.
+  let pool = [];
+  for (let cap = fMax + 3; pool.length < 3; cap += 4) {
+    pool = range(2, cap).filter(c => n % c !== 0);
+  }
+  const wrongs = shuffle(pool).slice(0, 3);
+
+  return { a: n, b: null, op: 'factor', answer, grade, choices: shuffle([answer, ...wrongs]) };
+}
+
+function range(min, max) {
+  return Array.from({ length: max - min + 1 }, (_, i) => min + i);
 }
 
 function generateProblem() {
   const grade = pickGrade();
   const op    = pickOp();
   let a, b;
+
+  if (op === 'factor') return generateFactorProblem(grade);
 
   if (op === '+') {
     if (grade === 2)      { a = rand(1, 50);   b = rand(1, 50); }
@@ -821,16 +860,20 @@ function renderQuestion() {
   if (cfg.mode === 'versus') updateTurnUI();
 
   // Question label with op tag
-  const opLabel = { '+': 'Addition ➕', '−': 'Subtraction ➖', '×': 'Multiplication ✖️' }[p.op];
+  const opLabel = {
+    '+': 'Addition ➕', '−': 'Subtraction ➖', '×': 'Multiplication ✖️', 'factor': 'Factors 🧩'
+  }[p.op];
   $('questionLabel').innerHTML = `<span class="op-tag">${opLabel}</span>`;
-  $('questionContent').innerHTML = `<div class="math-equation">${p.a} ${p.op} ${p.b} = ?</div>`;
+  $('questionContent').innerHTML = p.op === 'factor'
+    ? `<div class="factor-question">Which of these is a factor of <b>${p.a}</b>?</div>`
+    : `<div class="math-equation">${p.a} ${p.op} ${p.b} = ?</div>`;
 
   buildChoices(p);
   startTimer(p);
 }
 
 function buildChoices(p) {
-  const options = generateChoices(p.answer, p.op, p.grade);
+  const options = p.choices || generateChoices(p.answer, p.op, p.grade);
   const grid = $('choicesGrid');
   grid.innerHTML = '';
   options.forEach(val => {
@@ -1069,7 +1112,9 @@ function showResults() {
     row.className = `result-row ${ok ? 'correct-row' : 'wrong-row'}`;
     row.innerHTML = `
       <span class="rr-icon">${ok ? '✅' : '❌'}</span>
-      <span class="rr-eq">${p.a} ${p.op} ${p.b} = <strong>${p.answer.toLocaleString()}</strong></span>
+      <span class="rr-eq">${p.op === 'factor'
+        ? `factor of ${p.a.toLocaleString()} → <strong>${p.answer}</strong>`
+        : `${p.a} ${p.op} ${p.b} = <strong>${p.answer.toLocaleString()}</strong>`}</span>
       ${cfg.mode === 'versus' ? `<span class="rr-who">${player === 'kyle' ? '🟡 Kyle' : '🩵 Lindsey'}</span>` : ''}
     `;
     rows.appendChild(row);
