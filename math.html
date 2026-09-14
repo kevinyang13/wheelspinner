@@ -54,6 +54,9 @@
       color: #aab; font-size: 0.9rem; font-weight: 600;
       cursor: pointer; transition: all 0.15s; text-align: center;
     }
+    .opt-btn small { display: block; font-size: 0.68rem; color: #556; margin-top: 2px; font-weight: 500; }
+    .opt-btn.selected small { color: #5aa9e6; }
+    .sub-group { border-left: 3px solid rgba(61,158,255,0.35); padding-left: 14px; margin-top: -6px; }
     .opt-btn:hover { border-color: #3d9eff; color: #eee; }
     .opt-btn.selected { border-color: #3d9eff; background: rgba(61,158,255,0.15); color: #7ec8ff; }
 
@@ -247,6 +250,25 @@
     .factor-question { font-size: clamp(1.15rem, 3.5vw, 1.9rem); font-weight: 800; line-height: 1.4; }
     .factor-question b { color: #7ec8ff; }
 
+    /* Stacked fractions, used in the question and the choice buttons */
+    .fr {
+      display: inline-flex; flex-direction: column; align-items: center;
+      vertical-align: middle; line-height: 1; margin: 0 3px; font-size: 0.72em;
+    }
+    .fr .n { border-bottom: 2px solid currentColor; padding: 0 5px 3px; }
+    .fr .d { padding: 3px 5px 0; }
+    .mixed { display: inline-flex; align-items: center; }
+    .mixed .fr { font-size: 0.6em; margin-left: 2px; }
+    .frac-question {
+      font-size: clamp(1.6rem, 5vw, 2.6rem); font-weight: 900; color: #fff;
+      display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px;
+      text-shadow: 0 0 30px rgba(61,158,255,0.25);
+    }
+    .frac-question .dot { color: #7ec8ff; margin: 0 4px; }
+    .frac-question .of-text { font-size: 0.55em; font-weight: 800; color: #ccd; }
+    .frac-question .of-text b { color: #7ec8ff; }
+    .choice-btn .fr { font-size: 0.8em; }
+
     .op-tag {
       display: inline-block; font-size: 0.7rem; font-weight: 700;
       letter-spacing: 1px; text-transform: uppercase;
@@ -361,7 +383,7 @@
     <div class="setup-title">
       <span class="big-icon">🔢</span>
       <h1>Math Challenge</h1>
-      <p>Addition · Subtraction · Multiplication · Factors</p>
+      <p>Addition · Subtraction · Multiplication · Factors · Fractions</p>
     </div>
 
     <div class="option-group" style="width:100%">
@@ -382,7 +404,19 @@
         <button class="opt-btn" data-group="op" data-val="−">➖ Sub</button>
         <button class="opt-btn" data-group="op" data-val="×">✖️ Mult</button>
         <button class="opt-btn" data-group="op" data-val="factor">🧩 Factors</button>
+        <button class="opt-btn" data-group="op" data-val="fraction">🍕 Fractions</button>
         <button class="opt-btn selected" data-group="op" data-val="all">🔀 All</button>
+      </div>
+    </div>
+
+    <div class="option-group sub-group" id="fractionKindGroup" style="width:100%; display:none">
+      <div class="option-label">Fraction Type</div>
+      <div class="option-row">
+        <button class="opt-btn" data-group="fkind" data-val="ff">½ × ⅓<small>Fraction × fraction</small></button>
+        <button class="opt-btn" data-group="fkind" data-val="wf">6 × ½<small>Whole × fraction</small></button>
+        <button class="opt-btn" data-group="fkind" data-val="mixed">2½ × ⅓<small>Mixed numbers</small></button>
+        <button class="opt-btn" data-group="fkind" data-val="of">½ of 24<small>Fraction of a number</small></button>
+        <button class="opt-btn selected" data-group="fkind" data-val="all">🔀 All</button>
       </div>
     </div>
 
@@ -534,7 +568,7 @@
 // ═══════════════════════════════════════════════════
 //  CONFIG & STATE
 // ═══════════════════════════════════════════════════
-let cfg = { grade: '3', op: 'all', mode: 'solo', count: 20, timer: 15 };
+let cfg = { grade: '3', op: 'all', mode: 'solo', count: 20, timer: 15, fkind: 'all' };
 
 let queue = [], qIdx = 0;
 let scores = { kyle: 0, lindsey: 0 }, streak = 0;
@@ -553,6 +587,7 @@ document.querySelectorAll('.opt-btn').forEach(btn => {
     document.querySelectorAll(`.opt-btn[data-group="${g}"]`).forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
     cfg[g] = btn.dataset.val;
+    if (g === 'op') $('fractionKindGroup').style.display = cfg.op === 'fraction' ? '' : 'none';
   });
 });
 
@@ -732,7 +767,7 @@ function pickGrade() {
 }
 
 function pickOp() {
-  if (cfg.op === 'all') return ['+', '−', '×', 'factor'][rand(0, 3)];
+  if (cfg.op === 'all') return ['+', '−', '×', 'factor', 'fraction'][rand(0, 4)];
   return cfg.op;
 }
 
@@ -763,12 +798,152 @@ function range(min, max) {
   return Array.from({ length: max - min + 1 }, (_, i) => min + i);
 }
 
+// ── Fractions: multiply and simplify (fraction, whole, mixed, "of") ──
+function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
+function reduce(n, d) { const g = gcd(n, d) || 1; return { n: n / g, d: d / g }; }
+function sameFrac(x, y) { const a = reduce(x.n, x.d), b = reduce(y.n, y.d); return a.n === b.n && a.d === b.d; }
+
+function fracHTML(n, d) {
+  return `<span class="fr"><span class="n">${n}</span><span class="d">${d}</span></span>`;
+}
+// Reduced value shown the way the book writes answers: whole, proper, or mixed.
+function valueHTML(f) {
+  const { n, d } = reduce(f.n, f.d);
+  if (d === 1) return `${n}`;
+  const w = Math.floor(n / d), r = n % d;
+  return w === 0 ? fracHTML(n, d) : `<span class="mixed">${w}${fracHTML(r, d)}</span>`;
+}
+function valueText(f) {
+  const { n, d } = reduce(f.n, f.d);
+  if (d === 1) return `${n}`;
+  const w = Math.floor(n / d), r = n % d;
+  return w === 0 ? `${n}/${d}` : `${w} ${r}/${d}`;
+}
+function mixedHTML(w, n, d) { return `<span class="mixed">${w}${fracHTML(n, d)}</span>`; }
+
+// A proper fraction in lowest terms with a denominator in [2, maxD].
+function properFrac(maxD) {
+  let n, d;
+  do { d = rand(2, maxD); n = rand(1, d - 1); } while (gcd(n, d) !== 1);
+  return { n, d };
+}
+
+function generateFractionProblem(grade) {
+  // Which kind of problem, weighted by grade. ff = fraction x fraction,
+  // wf = whole x fraction, mf = mixed x fraction, mm = mixed x mixed,
+  // of = "find a/b of N".
+  const kinds =
+    grade === 2 ? ['ff', 'ff', 'ff', 'of'] :
+    grade === 3 ? ['ff', 'ff', 'wf', 'of'] :
+    grade === 4 ? ['ff', 'wf', 'mf', 'of'] :
+                  ['ff', 'mf', 'mm', 'of'];
+  let kind = kinds[rand(0, kinds.length - 1)];
+  if (cfg.op === 'fraction' && cfg.fkind !== 'all') {
+    // "mixed" covers both mixed x fraction and mixed x mixed; younger grades
+    // stay on the simpler one.
+    kind = cfg.fkind === 'mixed' ? (grade >= 5 && Math.random() < 0.5 ? 'mm' : 'mf') : cfg.fkind;
+  }
+  const maxD = grade === 2 ? 4 : grade === 3 ? 8 : grade === 4 ? 10 : 12;
+
+  let html, text, answer, wrongs = [];
+  const push = f => { if (f.n > 0 && f.d > 0) wrongs.push(f); };
+
+  if (kind === 'ff') {
+    let a = properFrac(maxD), b = properFrac(maxD);
+    // From 4th grade on, bias toward products that cross-simplify, like the
+    // book's 6/7 x 14/27: plant a shared factor k across a's top and b's
+    // bottom while keeping each fraction in lowest terms on its own.
+    if (grade >= 4 && Math.random() < 0.6) {
+      for (let tries = 0; tries < 20; tries++) {
+        const k = rand(2, 4);
+        const x = properFrac(6), y = properFrac(6);
+        const ca = { n: x.n * k, d: x.d }, cb = { n: y.n, d: y.d * k };
+        if (ca.n < ca.d && gcd(ca.n, ca.d) === 1 && gcd(cb.n, cb.d) === 1) { a = ca; b = cb; break; }
+      }
+    }
+    html   = `${fracHTML(a.n, a.d)}<span class="dot">×</span>${fracHTML(b.n, b.d)}`;
+    text   = `${a.n}/${a.d} × ${b.n}/${b.d}`;
+    answer = { n: a.n * b.n, d: a.d * b.d };
+    push({ n: a.n + b.n, d: a.d + b.d });         // added straight across
+    push({ n: a.n * b.n, d: a.d + b.d });         // multiplied tops, added bottoms
+    push({ n: a.n * b.d, d: a.d * b.n });         // flipped one fraction (divided)
+    push({ n: a.n + b.n, d: a.d * b.d });         // added tops, multiplied bottoms
+  }
+
+  else if (kind === 'wf') {
+    const w = rand(2, grade >= 4 ? 12 : 8), f = properFrac(maxD);
+    html   = `${w}<span class="dot">×</span>${fracHTML(f.n, f.d)}`;
+    text   = `${w} × ${f.n}/${f.d}`;
+    answer = { n: w * f.n, d: f.d };
+    push({ n: w * f.n, d: w * f.d });             // multiplied the denominator too
+    push({ n: w + f.n, d: f.d });                 // added instead
+    push({ n: w * f.d, d: f.n });                 // flipped
+    push({ n: w * f.n + f.d, d: f.d });           // off by one whole
+  }
+
+  else if (kind === 'mf' || kind === 'mm') {
+    const w1 = rand(1, 4), f1 = properFrac(grade >= 5 ? 8 : 6);
+    const w2 = kind === 'mm' ? rand(1, 3) : 0;
+    const f2 = properFrac(grade >= 5 ? 8 : 6);
+    const A = { n: w1 * f1.d + f1.n, d: f1.d };   // improper forms
+    const B = { n: w2 * f2.d + f2.n, d: f2.d };
+    const left  = mixedHTML(w1, f1.n, f1.d);
+    const right = w2 ? mixedHTML(w2, f2.n, f2.d) : fracHTML(f2.n, f2.d);
+    html   = `${left}<span class="dot">×</span>${right}`;
+    text   = `${w1} ${f1.n}/${f1.d} × ${w2 ? `${w2} ${f2.n}/${f2.d}` : `${f2.n}/${f2.d}`}`;
+    answer = { n: A.n * B.n, d: A.d * B.d };
+    // The classic mistake from the book's Concept Check: multiply wholes and
+    // fractions separately instead of converting to improper fractions.
+    const sepW = w1 * (w2 || 1), sep = { n: f1.n * f2.n, d: f1.d * f2.d };
+    push({ n: sepW * sep.d + sep.n, d: sep.d });
+    push({ n: A.n * B.n, d: A.d + B.d });         // added denominators
+    push({ n: A.n * B.d, d: A.d * B.n });         // flipped
+    push({ n: A.n * B.n + B.d, d: A.d * B.d });   // a bit too big
+  }
+
+  else { // 'of'
+    const f = properFrac(grade === 2 ? 4 : grade === 3 ? 6 : 10);
+    const N = f.d * rand(2, grade >= 4 ? 15 : 8);       // multiple of d → whole answer
+    html   = `<span class="of-text">Find ${fracHTML(f.n, f.d)} of <b>${N}</b></span>`;
+    text   = `${f.n}/${f.d} of ${N}`;
+    answer = { n: f.n * N, d: f.d };
+    const ans = (f.n * N) / f.d;
+    push({ n: N / f.d, d: 1 });                    // forgot the numerator
+    push({ n: N - ans, d: 1 });                    // the other part
+    push({ n: ans + f.n, d: 1 });                  // off by the numerator
+    push({ n: N * f.n, d: 1 });                    // forgot to divide
+    push({ n: ans + rand(1, 3), d: 1 });
+    push({ n: ans - rand(1, 3), d: 1 });
+  }
+
+  // Dedupe against the answer and each other by reduced value, keep three.
+  const picked = [];
+  for (const w of shuffle(wrongs)) {
+    if (picked.length === 3) break;
+    if (sameFrac(w, answer) || picked.some(pk => sameFrac(pk, w))) continue;
+    picked.push(w);
+  }
+  // Fallback fill: nudge the numerator until distinct.
+  for (let k = 1; picked.length < 3; k++) {
+    const cand = { n: answer.n + k * answer.d, d: answer.d };   // answer + k
+    if (!picked.some(pk => sameFrac(pk, cand))) picked.push(cand);
+  }
+
+  const choices = shuffle([
+    { html: valueHTML(answer), correct: true },
+    ...picked.map(w => ({ html: valueHTML(w), correct: false })),
+  ]);
+
+  return { op: 'fraction', kind, html, text, answerText: valueText(answer), answer, grade, choices };
+}
+
 function generateProblem() {
   const grade = pickGrade();
   const op    = pickOp();
   let a, b;
 
-  if (op === 'factor') return generateFactorProblem(grade);
+  if (op === 'factor')   return generateFactorProblem(grade);
+  if (op === 'fraction') return generateFractionProblem(grade);
 
   if (op === '+') {
     if (grade === 2)      { a = rand(1, 50);   b = rand(1, 50); }
@@ -861,12 +1036,14 @@ function renderQuestion() {
 
   // Question label with op tag
   const opLabel = {
-    '+': 'Addition ➕', '−': 'Subtraction ➖', '×': 'Multiplication ✖️', 'factor': 'Factors 🧩'
+    '+': 'Addition ➕', '−': 'Subtraction ➖', '×': 'Multiplication ✖️',
+    'factor': 'Factors 🧩', 'fraction': 'Fractions 🍕'
   }[p.op];
   $('questionLabel').innerHTML = `<span class="op-tag">${opLabel}</span>`;
-  $('questionContent').innerHTML = p.op === 'factor'
-    ? `<div class="factor-question">Which of these is a factor of <b>${p.a}</b>?</div>`
-    : `<div class="math-equation">${p.a} ${p.op} ${p.b} = ?</div>`;
+  $('questionContent').innerHTML =
+    p.op === 'factor'   ? `<div class="factor-question">Which of these is a factor of <b>${p.a}</b>?</div>` :
+    p.op === 'fraction' ? `<div class="frac-question">${p.html}${p.kind === 'of' ? '' : '<span class="dot">=</span>?'}</div>` :
+                          `<div class="math-equation">${p.a} ${p.op} ${p.b} = ?</div>`;
 
   buildChoices(p);
   startTimer(p);
@@ -879,8 +1056,13 @@ function buildChoices(p) {
   options.forEach(val => {
     const btn = document.createElement('button');
     btn.className = 'choice-btn';
-    btn.textContent = val.toLocaleString();
-    btn.dataset.correct = (val === p.answer) ? '1' : '0';
+    if (typeof val === 'object') {                 // fraction choices bring markup
+      btn.innerHTML = val.html;
+      btn.dataset.correct = val.correct ? '1' : '0';
+    } else {
+      btn.textContent = val.toLocaleString();
+      btn.dataset.correct = (val === p.answer) ? '1' : '0';
+    }
     btn.addEventListener('click', () => handleChoice(btn, p));
     grid.appendChild(btn);
   });
@@ -1112,9 +1294,10 @@ function showResults() {
     row.className = `result-row ${ok ? 'correct-row' : 'wrong-row'}`;
     row.innerHTML = `
       <span class="rr-icon">${ok ? '✅' : '❌'}</span>
-      <span class="rr-eq">${p.op === 'factor'
-        ? `factor of ${p.a.toLocaleString()} → <strong>${p.answer}</strong>`
-        : `${p.a} ${p.op} ${p.b} = <strong>${p.answer.toLocaleString()}</strong>`}</span>
+      <span class="rr-eq">${
+        p.op === 'factor'   ? `factor of ${p.a.toLocaleString()} → <strong>${p.answer}</strong>` :
+        p.op === 'fraction' ? `${p.text} = <strong>${p.answerText}</strong>` :
+                              `${p.a} ${p.op} ${p.b} = <strong>${p.answer.toLocaleString()}</strong>`}</span>
       ${cfg.mode === 'versus' ? `<span class="rr-who">${player === 'kyle' ? '🟡 Kyle' : '🩵 Lindsey'}</span>` : ''}
     `;
     rows.appendChild(row);
