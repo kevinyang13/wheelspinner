@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <title>Kyle & Lindsey Games</title>
@@ -11,8 +13,8 @@
 
     body {
       font-family: 'Nunito', system-ui, sans-serif;
-      background: #faf8f5;
-      color: #3b3866;
+      background: var(--bg);
+      color: var(--ink);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -35,15 +37,15 @@
       font-size: 2.8rem;
       font-weight: 900;
       letter-spacing: -0.5px;
-      color: #3b3866;
+      color: var(--ink);
       margin-bottom: 14px;
     }
-    .hero h1 .spark { color: #c7bff0; font-size: 1.4rem; vertical-align: super; margin: 0 6px; }
+    .hero h1 .spark { color: var(--lavender); font-size: 1.4rem; vertical-align: super; margin: 0 6px; }
 
     .hero p {
       display: inline-block;
-      background: #e6e0f7;
-      color: #4a4680;
+      background: var(--card-alt);
+      color: var(--ink);
       font-size: 1rem;
       font-weight: 700;
       letter-spacing: 0.5px;
@@ -61,14 +63,14 @@
     }
 
     .game-card {
-      --tint: color-mix(in srgb, var(--card-accent) 9%, #ffffff);
-      --tint-strong: color-mix(in srgb, var(--card-accent) 22%, #ffffff);
+      --tint: color-mix(in srgb, var(--card-accent) 9%, var(--card));
+      --tint-strong: color-mix(in srgb, var(--card-accent) 22%, var(--card));
       background: var(--tint);
       border-radius: 20px;
       padding: 22px 24px 22px 22px;
       text-decoration: none;
       color: inherit;
-      border: 1.5px solid color-mix(in srgb, var(--card-accent) 28%, #ffffff);
+      border: 1.5px solid color-mix(in srgb, var(--card-accent) 28%, var(--card));
       transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
       display: grid;
       grid-template-columns: 64px 1fr;
@@ -77,7 +79,7 @@
       row-gap: 8px;
       position: relative;
       overflow: hidden;
-      box-shadow: 0 2px 10px rgba(59,56,102,0.05);
+      box-shadow: 0 2px 10px rgba(var(--ink-rgb),0.05);
     }
 
     .game-card:hover {
@@ -89,23 +91,23 @@
     .game-card:active { transform: translateY(-1px); }
 
     /* Per-card accent colors */
-    .card-wheel    { --card-accent: #dfa72e; --card-shadow: rgba(240,192,64,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(240,192,64,0.07), transparent 70%); }
-    .card-memory   { --card-accent: #3aa9a3; --card-shadow: rgba(34,166,179,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(34,166,179,0.07), transparent 70%); }
-    .card-pinball  { --card-accent: #b56fd0; --card-shadow: rgba(190,46,221,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(190,46,221,0.07), transparent 70%); }
-    .card-pingpong { --card-accent: #f28c5a; --card-shadow: rgba(255,107,53,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(255,107,53,0.07), transparent 70%); }
-    .card-spelling { --card-accent: #e8b83c; --card-shadow: rgba(249,194,46,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(249,194,46,0.07), transparent 70%); }
-    .card-chinese  { --card-accent: #e0706f; --card-shadow: rgba(229,57,53,0.2);   --card-glow: radial-gradient(ellipse at top left, rgba(229,57,53,0.07), transparent 70%); }
-    .card-math     { --card-accent: #5a9fe0; --card-shadow: rgba(61,158,255,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(61,158,255,0.07), transparent 70%); }
-    .card-hotpotato { --card-accent: #f28c5a; --card-shadow: rgba(255,107,53,0.2); --card-glow: radial-gradient(ellipse at top left, rgba(255,107,53,0.07), transparent 70%); }
-    .card-balloon   { --card-accent: #8e82d6; --card-shadow: rgba(167,139,250,0.2); --card-glow: radial-gradient(ellipse at top left, rgba(167,139,250,0.07), transparent 70%); }
-    .card-simon     { --card-accent: #5ab9dc; --card-shadow: rgba(34,211,238,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(34,211,238,0.07), transparent 70%); }
-    .card-whack     { --card-accent: #5fb87c; --card-shadow: rgba(74,222,128,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(74,222,128,0.07), transparent 70%); }
-    .card-snake     { --card-accent: #dfa72e; --card-shadow: rgba(240,192,64,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(240,192,64,0.07), transparent 70%); }
-    .card-gomoku    { --card-accent: #5fb87c; --card-shadow: rgba(16,185,129,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(16,185,129,0.07), transparent 70%); }
-    .card-wordchain { --card-accent: #e786a7; --card-shadow: rgba(244,114,182,0.2); --card-glow: radial-gradient(ellipse at top left, rgba(244,114,182,0.07), transparent 70%); }
-    .card-sudoku    { --card-accent: #7b7fe0; --card-shadow: rgba(99,102,241,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(99,102,241,0.07), transparent 70%); }
-    .card-typing    { --card-accent: #5cbfae; --card-shadow: rgba(45,212,191,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(45,212,191,0.07), transparent 70%); }
-    .card-wisdom    { --card-accent: #dfa72e; --card-shadow: rgba(240,192,64,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(240,192,64,0.07), transparent 70%); }
+    .card-wheel    { --card-accent: var(--gold); --card-shadow: rgba(240,192,64,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(240,192,64,0.07), transparent 70%); }
+    .card-memory   { --card-accent: var(--teal); --card-shadow: rgba(34,166,179,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(34,166,179,0.07), transparent 70%); }
+    .card-pinball  { --card-accent: var(--purple); --card-shadow: rgba(190,46,221,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(190,46,221,0.07), transparent 70%); }
+    .card-pingpong { --card-accent: var(--orange); --card-shadow: rgba(255,107,53,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(255,107,53,0.07), transparent 70%); }
+    .card-spelling { --card-accent: var(--yellow); --card-shadow: rgba(249,194,46,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(249,194,46,0.07), transparent 70%); }
+    .card-chinese  { --card-accent: var(--red); --card-shadow: rgba(229,57,53,0.2);   --card-glow: radial-gradient(ellipse at top left, rgba(229,57,53,0.07), transparent 70%); }
+    .card-math     { --card-accent: var(--sky); --card-shadow: rgba(61,158,255,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(61,158,255,0.07), transparent 70%); }
+    .card-hotpotato { --card-accent: var(--orange); --card-shadow: rgba(255,107,53,0.2); --card-glow: radial-gradient(ellipse at top left, rgba(255,107,53,0.07), transparent 70%); }
+    .card-balloon   { --card-accent: var(--lavender); --card-shadow: rgba(167,139,250,0.2); --card-glow: radial-gradient(ellipse at top left, rgba(167,139,250,0.07), transparent 70%); }
+    .card-simon     { --card-accent: var(--cyan); --card-shadow: rgba(34,211,238,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(34,211,238,0.07), transparent 70%); }
+    .card-whack     { --card-accent: var(--green); --card-shadow: rgba(74,222,128,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(74,222,128,0.07), transparent 70%); }
+    .card-snake     { --card-accent: var(--gold); --card-shadow: rgba(240,192,64,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(240,192,64,0.07), transparent 70%); }
+    .card-gomoku    { --card-accent: var(--green); --card-shadow: rgba(16,185,129,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(16,185,129,0.07), transparent 70%); }
+    .card-wordchain { --card-accent: var(--rose); --card-shadow: rgba(244,114,182,0.2); --card-glow: radial-gradient(ellipse at top left, rgba(244,114,182,0.07), transparent 70%); }
+    .card-sudoku    { --card-accent: var(--indigo); --card-shadow: rgba(99,102,241,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(99,102,241,0.07), transparent 70%); }
+    .card-typing    { --card-accent: var(--mint); --card-shadow: rgba(45,212,191,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(45,212,191,0.07), transparent 70%); }
+    .card-wisdom    { --card-accent: var(--gold); --card-shadow: rgba(240,192,64,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(240,192,64,0.07), transparent 70%); }
 
     .card-icon {
       grid-row: 1 / span 3;
@@ -127,7 +129,7 @@
 
     .card-desc {
       font-size: 0.88rem;
-      color: #6b6890;
+      color: var(--ink2);
       line-height: 1.5;
     }
 
@@ -143,9 +145,9 @@
       font-weight: 700;
       padding: 3px 10px;
       border-radius: 20px;
-      background: #ffffff;
+      background: var(--card);
       color: var(--card-accent);
-      border: 1px solid color-mix(in srgb, var(--card-accent) 35%, #ffffff);
+      border: 1px solid color-mix(in srgb, var(--card-accent) 35%, var(--card));
       letter-spacing: 0.3px;
     }
 
@@ -173,13 +175,13 @@
       font-weight: 800;
       letter-spacing: 1.5px;
       text-transform: uppercase;
-      color: #4a4680;
+      color: var(--ink);
       margin-bottom: 14px;
       padding-left: 4px;
     }
     .section-label::after {
       content: ''; display: block; height: 3px; width: 56px; margin-top: 6px;
-      border-radius: 3px; background: linear-gradient(90deg, #b3a9ea, #8fd4c1, #f5c56b);
+      border-radius: 3px; background: linear-gradient(90deg, var(--lav-3), #8fd4c1, #f5c56b);
     }
     .section-label + .section-label { margin-top: 32px; }
 
@@ -194,19 +196,19 @@
       text-align: center;
       background: rgba(46,204,113,0.1);
       border: 1px solid rgba(46,204,113,0.25);
-      color: #3f9a5e;
+      color: var(--green-deep);
     }
     .unlock-banner.banner-admin {
       background: rgba(240,192,64,0.08);
       border-color: rgba(240,192,64,0.2);
-      color: #dfa72e;
+      color: var(--gold);
       font-size: 0.75rem;
     }
 
     /* ── Lock teaser card ── */
     .card-lock-teaser {
-      --card-accent: #a3a0bf;
-      --card-shadow: rgba(59,56,102,0);
+      --card-accent: var(--muted2);
+      --card-shadow: rgba(var(--ink-rgb),0);
       --card-glow: none;
       cursor: default;
       opacity: 0.65;
@@ -221,7 +223,7 @@
     /* Footer */
     footer {
       margin-top: 56px;
-      color: #d3d0e3;
+      color: var(--faint);
       font-size: 0.8rem;
       text-align: center;
     }
@@ -523,8 +525,8 @@
     teaser.style.marginTop = '36px';
     teaser.innerHTML = `
       <div class="card-icon">🔒</div>
-      <div class="card-title" style="color:#8d8aab">10 Playing Games Locked</div>
-      <div class="card-desc">Score 80%+ on <strong style="color:#e0706f">Chinese Reading</strong> and <strong style="color:#e8b83c">Spelling Bee</strong> to unlock all playing games!</div>
+      <div class="card-title" style="color:var(--muted)">10 Playing Games Locked</div>
+      <div class="card-desc">Score 80%+ on <strong style="color:var(--red)">Chinese Reading</strong> and <strong style="color:var(--yellow)">Spelling Bee</strong> to unlock all playing games!</div>
       <div class="card-tags">
         <span class="tag">${cOk ? '✅' : '❌'} Chinese: ${chinesePct}%</span>
         <span class="tag">${sOk ? '✅' : '❌'} Spelling: ${spellingPct}%</span>

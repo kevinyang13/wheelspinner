@@ -3,16 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <title>Snake — Kyle vs Lindsey</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background: #faf8f5;
+      background: var(--bg);
       display: flex; flex-direction: column; align-items: center;
       min-height: 100vh; padding: 12px 16px 24px;
-      font-family: 'Nunito', system-ui, sans-serif; color: #3b3866;
+      font-family: 'Nunito', system-ui, sans-serif; color: var(--ink);
       user-select: none; -webkit-user-select: none;
     }
     nav {
@@ -20,7 +22,7 @@
       display: flex; justify-content: space-between; align-items: center;
       margin-bottom: 10px;
     }
-    nav a { color: #dfa72e; text-decoration: none; font-size: 0.9rem; opacity: 0.8; }
+    nav a { color: var(--gold); text-decoration: none; font-size: 0.9rem; opacity: 0.8; }
     nav a:hover { opacity: 1; }
     nav span { font-size: 1rem; font-weight: bold; }
 
@@ -28,8 +30,8 @@
       display: flex; gap: 40px; margin-bottom: 12px;
       font-size: 1rem; font-weight: 700;
     }
-    .score-kyle    { color: #dfa72e; }
-    .score-lindsey { color: #3aa9a3; }
+    .score-kyle    { color: var(--gold); }
+    .score-lindsey { color: var(--teal); }
     .score-val { font-size: 1.6rem; display: block; text-align: center; }
 
     /* ── Game area: canvas + D-pads ── */
@@ -49,14 +51,14 @@
     canvas {
       display: block; width: 100%; height: auto;
       border-radius: 8px;
-      box-shadow: 0 0 60px rgba(80,200,255,0.12), 0 0 20px rgba(59,56,102,0.27);
+      box-shadow: 0 0 60px rgba(80,200,255,0.12), 0 0 20px rgba(var(--ink-rgb),0.27);
       touch-action: none;
     }
 
     #controls-hint {
       margin-top: 8px;
       display: flex; gap: 40px;
-      font-size: 0.75rem; color: #a3a0bf; text-align: center;
+      font-size: 0.75rem; color: var(--muted2); text-align: center;
     }
     .hint-kyle    { color: #7a6020; }
     .hint-lindsey { color: #1a5a62; }
@@ -70,28 +72,28 @@
       font-size: 0.7rem; font-weight: 700; letter-spacing: 1px;
       margin-bottom: 4px;
     }
-    .dpad-label.kyle    { color: #dfa72e; }
-    .dpad-label.lindsey { color: #3aa9a3; }
+    .dpad-label.kyle    { color: var(--gold); }
+    .dpad-label.lindsey { color: var(--teal); }
     .dpad-row { display: flex; gap: 2px; }
     .dpad-btn {
       width: 52px; height: 52px;
       border-radius: 10px;
-      border: 2px solid #e8e4f2;
-      background: #ffffff;
-      color: #8d8aab;
+      border: 2px solid var(--border);
+      background: var(--card);
+      color: var(--muted);
       font-size: 1.3rem;
       display: flex; align-items: center; justify-content: center;
       cursor: pointer; touch-action: manipulation;
       transition: background 0.1s, color 0.1s;
       -webkit-tap-highlight-color: transparent;
     }
-    .dpad-btn:active { background: #dcd6f3; color: #6b6890; }
+    .dpad-btn:active { background: var(--lav-1); color: var(--ink2); }
     .dpad-center { width: 52px; height: 52px; }
 
     /* ── Overlay ── */
     #overlay {
       position: fixed; inset: 0;
-      background: rgba(250,248,245,0.96);
+      background: rgba(var(--bg-rgb),0.96);
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       gap: 20px; z-index: 10;
@@ -99,42 +101,42 @@
     }
     #overlay h1 {
       font-size: 2.2rem; font-weight: 900;
-      background: linear-gradient(135deg, #dfa72e, #3aa9a3);
+      background: linear-gradient(135deg, var(--gold), var(--teal));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text;
     }
     #overlay-sub {
-      font-size: 0.95rem; color: #6b6890; text-align: center; line-height: 1.6;
+      font-size: 0.95rem; color: var(--ink2); text-align: center; line-height: 1.6;
     }
     #result-banner {
       font-size: 1.4rem; font-weight: 800; text-align: center;
     }
-    .result-kyle    { color: #dfa72e; }
-    .result-lindsey { color: #3aa9a3; }
-    .result-tie     { color: #6b6890; }
+    .result-kyle    { color: var(--gold); }
+    .result-lindsey { color: var(--teal); }
+    .result-tie     { color: var(--ink2); }
 
     .overlay-scores { display: flex; gap: 32px; font-size: 0.95rem; }
-    .os-kyle    { color: #dfa72e; font-weight: 700; }
-    .os-lindsey { color: #3aa9a3; font-weight: 700; }
+    .os-kyle    { color: var(--gold); font-weight: 700; }
+    .os-lindsey { color: var(--teal); font-weight: 700; }
 
     .btn {
       padding: 13px 40px; border-radius: 12px;
-      border: 2px solid #3aa9a3; background: rgba(34,166,179,0.12);
-      color: #3aa9a3; font-size: 1rem; font-weight: 700; cursor: pointer;
+      border: 2px solid var(--teal); background: rgba(34,166,179,0.12);
+      color: var(--teal); font-size: 1rem; font-weight: 700; cursor: pointer;
       transition: background 0.2s, color 0.2s;
     }
-    .btn:hover { background: rgba(34,166,179,0.25); color: #3b3866; }
+    .btn:hover { background: rgba(34,166,179,0.25); color: var(--ink); }
     .btn-row { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
 
     .opt-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
     .opt-btn {
       padding: 8px 20px; border-radius: 10px;
-      border: 2px solid #d3d0e3; background: #ffffff;
-      color: #6b6890; font-size: 0.88rem; cursor: pointer;
+      border: 2px solid var(--faint); background: var(--card);
+      color: var(--ink2); font-size: 0.88rem; cursor: pointer;
       transition: border-color 0.2s, color 0.2s;
     }
-    .opt-btn.sel { border-color: #3aa9a3; color: #3aa9a3; }
-    .overlay-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #a3a0bf; }
+    .opt-btn.sel { border-color: var(--teal); color: var(--teal); }
+    .overlay-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted2); }
 
     /* ── Touch: portrait — D-pads side-by-side below canvas ── */
     @media (hover: none) and (pointer: coarse) and (orientation: portrait) {

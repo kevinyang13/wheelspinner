@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <title>Dino Whack – Kyle & Lindsey</title>
@@ -11,8 +13,8 @@
 
     body {
       font-family: 'Nunito', system-ui, sans-serif;
-      background: #faf8f5;
-      color: #3b3866;
+      background: var(--bg);
+      color: var(--ink);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -28,13 +30,13 @@
       align-items: center;
       justify-content: space-between;
       padding: 14px 24px;
-      background: rgba(59,56,102,0.03);
-      border-bottom: 1px solid rgba(59,56,102,0.06);
+      background: rgba(var(--ink-rgb),0.03);
+      border-bottom: 1px solid rgba(var(--ink-rgb),0.06);
       flex-shrink: 0;
     }
-    .header a { color: #8d8aab; text-decoration: none; font-size: 0.85rem; }
-    .header a:hover { color: #5fb87c; }
-    .header-title { font-size: 1.1rem; font-weight: 800; color: #5fb87c; }
+    .header a { color: var(--muted); text-decoration: none; font-size: 0.85rem; }
+    .header a:hover { color: var(--green); }
+    .header-title { font-size: 1.1rem; font-weight: 800; color: var(--green); }
 
     /* ── Screens ── */
     .screen { display: none; flex-direction: column; align-items: center; justify-content: center; flex: 1; width: 100%; padding: 24px; }
@@ -43,29 +45,29 @@
     /* ── Start ── */
     #startScreen h1 {
       font-size: 3rem; font-weight: 900; margin-bottom: 8px;
-      background: linear-gradient(135deg, #5fb87c, #f0a65c);
+      background: linear-gradient(135deg, var(--green), var(--peach));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
-    #startScreen .subtitle { color: #8d8aab; margin-bottom: 40px; font-size: 1rem; text-align: center; line-height: 1.7; }
+    #startScreen .subtitle { color: var(--muted); margin-bottom: 40px; font-size: 1rem; text-align: center; line-height: 1.7; }
 
     .dino-legend {
       display: flex; gap: 20px; margin-bottom: 36px; flex-wrap: wrap; justify-content: center;
     }
     .legend-item {
-      background: #faf8f5; border: 1px solid #ffffff; border-radius: 12px;
+      background: var(--bg); border: 1px solid #ffffff; border-radius: 12px;
       padding: 12px 20px; display: flex; flex-direction: column; align-items: center; gap: 4px;
     }
     .legend-emoji { font-size: 2rem; line-height: 1; }
     .legend-pts { font-size: 0.75rem; font-weight: 700; }
-    .legend-lbl { font-size: 0.65rem; color: #a3a0bf; }
-    .pts-pos { color: #5fb87c; }
-    .pts-bonus { color: #f0a65c; }
-    .pts-neg  { color: #e0706f; }
+    .legend-lbl { font-size: 0.65rem; color: var(--muted2); }
+    .pts-pos { color: var(--green); }
+    .pts-bonus { color: var(--peach); }
+    .pts-neg  { color: var(--red); }
 
     .start-btn {
       padding: 18px 52px; border-radius: 16px;
-      background: linear-gradient(135deg, #5fb87c, #5ab9dc);
-      border: none; color: #faf8f5; font-size: 1.2rem; font-weight: 800; cursor: pointer;
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+      border: none; color: var(--bg); font-size: 1.2rem; font-weight: 800; cursor: pointer;
       box-shadow: 0 8px 32px rgba(74,222,128,0.35); transition: transform 0.15s;
     }
     .start-btn:hover { transform: translateY(-3px); }
@@ -79,31 +81,31 @@
       display: flex; align-items: stretch; gap: 12px;
     }
     .player-hud {
-      flex: 1; background: #faf8f5; border-radius: 14px;
+      flex: 1; background: var(--bg); border-radius: 14px;
       padding: 12px 16px; display: flex; flex-direction: column; gap: 4px;
       border: 2px solid transparent; transition: border-color 0.3s;
     }
     .player-hud.kyle-hud    { border-color: rgba(74,222,128,0.2); }
     .player-hud.lindsey-hud { border-color: rgba(167,139,250,0.2); text-align: right; }
-    .hud-name  { font-size: 0.75rem; font-weight: 700; color: #a3a0bf; letter-spacing: 0.5px; }
+    .hud-name  { font-size: 0.75rem; font-weight: 700; color: var(--muted2); letter-spacing: 0.5px; }
     .hud-score { font-size: 2.2rem; font-weight: 900; line-height: 1; }
-    .kyle-hud    .hud-score { color: #5fb87c; }
-    .lindsey-hud .hud-score { color: #8e82d6; }
-    .hud-whacks { font-size: 0.7rem; color: #d3d0e3; }
+    .kyle-hud    .hud-score { color: var(--green); }
+    .lindsey-hud .hud-score { color: var(--lavender); }
+    .hud-whacks { font-size: 0.7rem; color: var(--faint); }
 
     .timer-hud {
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: #faf8f5; border-radius: 14px; padding: 10px 18px; gap: 4px;
-      border: 2px solid rgba(59,56,102,0.05); min-width: 80px;
+      background: var(--bg); border-radius: 14px; padding: 10px 18px; gap: 4px;
+      border: 2px solid rgba(var(--ink-rgb),0.05); min-width: 80px;
     }
-    .timer-num  { font-size: 2rem; font-weight: 900; color: #3b3866; line-height: 1; font-variant-numeric: tabular-nums; }
-    .timer-lbl  { font-size: 0.6rem; color: #d3d0e3; letter-spacing: 1px; }
-    .timer-hud.urgent .timer-num { color: #e0706f; animation: timerPulse 0.5s ease-in-out infinite alternate; }
+    .timer-num  { font-size: 2rem; font-weight: 900; color: var(--ink); line-height: 1; font-variant-numeric: tabular-nums; }
+    .timer-lbl  { font-size: 0.6rem; color: var(--faint); letter-spacing: 1px; }
+    .timer-hud.urgent .timer-num { color: var(--red); animation: timerPulse 0.5s ease-in-out infinite alternate; }
     @keyframes timerPulse { from { opacity: 1; } to { opacity: 0.5; } }
 
     /* Timer bar */
     .timer-bar-wrap { width: 100%; max-width: 680px; height: 5px; background: #111; border-radius: 3px; overflow: hidden; }
-    .timer-bar { height: 100%; width: 100%; background: linear-gradient(90deg, #5fb87c, #5ab9dc); border-radius: 3px; transition: width 0.25s linear, background 1s; }
+    .timer-bar { height: 100%; width: 100%; background: linear-gradient(90deg, var(--green), var(--cyan)); border-radius: 3px; transition: width 0.25s linear, background 1s; }
 
     /* ── Grid ── */
     .grid-wrap {
@@ -115,7 +117,7 @@
       position: absolute;
       left: 50%; top: -4px; bottom: -4px;
       width: 3px;
-      background: rgba(59,56,102,0.06);
+      background: rgba(var(--ink-rgb),0.06);
       border-radius: 2px;
       transform: translateX(-50%);
       z-index: 10;
@@ -132,8 +134,8 @@
     .hole {
       aspect-ratio: 1;
       border-radius: 14px;
-      background: #eef7ee;
-      border: 2px solid #c8e6c8;
+      background: var(--sage-1);
+      border: 2px solid var(--sage-3);
       position: relative;
       cursor: pointer;
       display: flex;
@@ -146,9 +148,9 @@
     .hole[data-owner="kyle"]:hover    { border-color: rgba(74,222,128,0.3); }
     .hole[data-owner="lindsey"]:hover { border-color: rgba(167,139,250,0.3); }
 
-    .hole.active[data-owner="kyle"]    { border-color: #5fb87c; background: rgba(74,222,128,0.07); }
-    .hole.active[data-owner="lindsey"] { border-color: #8e82d6; background: rgba(167,139,250,0.07); }
-    .hole.active.penalty               { border-color: #e0706f !important; background: rgba(248,113,113,0.07) !important; }
+    .hole.active[data-owner="kyle"]    { border-color: var(--green); background: rgba(74,222,128,0.07); }
+    .hole.active[data-owner="lindsey"] { border-color: var(--lavender); background: rgba(167,139,250,0.07); }
+    .hole.active.penalty               { border-color: var(--red) !important; background: rgba(248,113,113,0.07) !important; }
 
     .dino-display {
       font-size: clamp(1.6rem, 4.5vw, 2.6rem);
@@ -176,8 +178,8 @@
       bottom: 4px; left: 50%; transform: translateX(-50%);
       width: 70%; height: 28%;
       border-radius: 50%;
-      background: #e4f2e4;
-      border: 2px solid #b9dcb9;
+      background: var(--sage-2);
+      border: 2px solid var(--sage-4);
       z-index: 1;
       pointer-events: none;
     }
@@ -185,11 +187,11 @@
     /* Key hint */
     .key-hint {
       position: absolute; top: 4px; left: 5px;
-      font-size: 0.55rem; font-weight: 700; color: #ffffff;
+      font-size: 0.55rem; font-weight: 700; color: var(--card);
       pointer-events: none; z-index: 3; letter-spacing: 0.3px;
     }
     .hole[data-owner="lindsey"] .key-hint { left: auto; right: 5px; }
-    .hole.active .key-hint { color: rgba(59,56,102,0.2); }
+    .hole.active .key-hint { color: rgba(var(--ink-rgb),0.2); }
 
     /* Floating point popup */
     .pt-popup {
@@ -227,41 +229,41 @@
       font-size: 0.7rem; font-weight: 700; letter-spacing: 1px;
       padding: 3px 12px; border-radius: 20px;
     }
-    .grid-label.kyle-label    { color: #5fb87c; background: rgba(74,222,128,0.08); border: 1px solid rgba(74,222,128,0.15); }
-    .grid-label.lindsey-label { color: #8e82d6; background: rgba(167,139,250,0.08); border: 1px solid rgba(167,139,250,0.15); }
+    .grid-label.kyle-label    { color: var(--green); background: rgba(74,222,128,0.08); border: 1px solid rgba(74,222,128,0.15); }
+    .grid-label.lindsey-label { color: var(--lavender); background: rgba(167,139,250,0.08); border: 1px solid rgba(167,139,250,0.15); }
 
     /* Key legend at bottom */
     .key-row {
-      font-size: 0.65rem; color: #8fae8f; letter-spacing: 0.3px; text-align: center;
+      font-size: 0.65rem; color: var(--sage-5); letter-spacing: 0.3px; text-align: center;
     }
 
     /* ── Win Screen ── */
     #winScreen { gap: 20px; }
     .win-emoji { font-size: 5rem; }
-    .win-title { font-size: 2.5rem; font-weight: 900; color: #5fb87c; }
-    .win-sub   { color: #6b6890; font-size: 1rem; }
+    .win-title { font-size: 2.5rem; font-weight: 900; color: var(--green); }
+    .win-sub   { color: var(--ink2); font-size: 1rem; }
     .win-stats { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
     .win-box {
-      background: #faf8f5; border-radius: 14px; padding: 16px 22px; text-align: center;
-      border: 2px solid rgba(59,56,102,0.05); min-width: 110px;
+      background: var(--bg); border-radius: 14px; padding: 16px 22px; text-align: center;
+      border: 2px solid rgba(var(--ink-rgb),0.05); min-width: 110px;
     }
-    .win-box.winner-kyle    { border-color: #5fb87c; background: rgba(74,222,128,0.07); }
-    .win-box.winner-lindsey { border-color: #8e82d6; background: rgba(167,139,250,0.07); }
-    .wb-name  { font-size: 0.7rem; color: #a3a0bf; margin-bottom: 6px; letter-spacing: 0.5px; }
+    .win-box.winner-kyle    { border-color: var(--green); background: rgba(74,222,128,0.07); }
+    .win-box.winner-lindsey { border-color: var(--lavender); background: rgba(167,139,250,0.07); }
+    .wb-name  { font-size: 0.7rem; color: var(--muted2); margin-bottom: 6px; letter-spacing: 0.5px; }
     .wb-score { font-size: 2.2rem; font-weight: 900; line-height: 1; }
-    .winner-kyle    .wb-score { color: #5fb87c; }
-    .winner-lindsey .wb-score { color: #8e82d6; }
-    .wb-detail { font-size: 0.65rem; color: #d3d0e3; margin-top: 4px; }
+    .winner-kyle    .wb-score { color: var(--green); }
+    .winner-lindsey .wb-score { color: var(--lavender); }
+    .wb-detail { font-size: 0.65rem; color: var(--faint); margin-top: 4px; }
     .play-again-btn {
       margin-top: 6px;
       padding: 16px 48px; border-radius: 16px;
-      background: linear-gradient(135deg, #5fb87c, #5ab9dc);
-      border: none; color: #faf8f5; font-size: 1.1rem; font-weight: 800; cursor: pointer;
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+      border: none; color: var(--bg); font-size: 1.1rem; font-weight: 800; cursor: pointer;
       box-shadow: 0 8px 32px rgba(74,222,128,0.3); transition: transform 0.15s;
     }
     .play-again-btn:hover { transform: translateY(-3px); }
-    .home-link { color: #d3d0e3; text-decoration: none; font-size: 0.85rem; }
-    .home-link:hover { color: #5fb87c; }
+    .home-link { color: var(--faint); text-decoration: none; font-size: 0.85rem; }
+    .home-link:hover { color: var(--green); }
   </style>
 </head>
 <body>
@@ -296,7 +298,7 @@
   </div>
 
   <button class="start-btn" id="startBtn">🦴 Start Game!</button>
-  <p style="margin-top:28px;color:#8fae8f;font-size:0.75rem;">
+  <p style="margin-top:28px;color:var(--sage-5);font-size:0.75rem;">
     Kyle (left): Q W E · A S D · Z X C &nbsp;|&nbsp; Lindsey (right): U I O · J K L · M , .
   </p>
   <p style="margin-top:6px;color:#ffffff;font-size:0.7rem;">Or just tap / click your side!</p>
@@ -455,7 +457,7 @@
     updateHUD();
     showScreen(gameScreen);
     timerBar.style.width = '100%';
-    timerBar.style.background = 'linear-gradient(90deg, #5fb87c, #5ab9dc)';
+    timerBar.style.background = 'linear-gradient(90deg, var(--green), var(--cyan))';
     timerHud.classList.remove('urgent');
     timerNum.textContent = '60';
 
@@ -469,7 +471,7 @@
       timerBar.style.width = (timeLeft / 60 * 100) + '%';
       if (timeLeft <= 10) {
         timerHud.classList.add('urgent');
-        timerBar.style.background = 'linear-gradient(90deg, #e0706f, #f0a65c)';
+        timerBar.style.background = 'linear-gradient(90deg, var(--red), var(--peach))';
       }
       // Speed up spawning over time
       if (timeLeft === 40) restartSpawning(750);
@@ -562,8 +564,8 @@
     const pop = document.createElement('div');
     pop.className = 'pt-popup';
     pop.textContent = pts > 0 ? `+${pts}` : pts;
-    pop.style.color = pts > 0 ? '#5fb87c' : '#e0706f';
-    if (pts === 2) { pop.style.color = '#f0a65c'; pop.style.fontSize = '1.3rem'; }
+    pop.style.color = pts > 0 ? 'var(--green)' : 'var(--red)';
+    if (pts === 2) { pop.style.color = 'var(--peach)'; pop.style.fontSize = '1.3rem'; }
     pop.style.left = '50%';
     pop.style.top  = '10%';
     pop.style.transform = 'translateX(-50%)';

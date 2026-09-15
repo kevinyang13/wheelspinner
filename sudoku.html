@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <title>Sudoku – Kyle &amp; Lindsey</title>
@@ -11,8 +13,8 @@
 
     body {
       font-family: 'Nunito', system-ui, sans-serif;
-      background: #faf8f5;
-      color: #3b3866;
+      background: var(--bg);
+      color: var(--ink);
       min-height: 100vh;
       display: flex; flex-direction: column; align-items: center;
       padding: 0 16px 60px;
@@ -24,10 +26,10 @@
       display: flex; align-items: center; gap: 12px;
       padding: 16px 0 0; margin-bottom: 10px;
     }
-    .topnav a { color: #dfa72e; text-decoration: none; font-size: 0.85rem; opacity: 0.7; transition: opacity 0.2s; }
+    .topnav a { color: var(--gold); text-decoration: none; font-size: 0.85rem; opacity: 0.7; transition: opacity 0.2s; }
     .topnav a:hover { opacity: 1; }
     .topnav h2 {
-      font-size: 1.1rem; font-weight: 800; color: #3b3866;
+      font-size: 1.1rem; font-weight: 800; color: var(--ink);
     }
 
     /* ── Screens ── */
@@ -39,42 +41,42 @@
     .setup-title .big-icon { font-size: 3.2rem; display: block; margin-bottom: 8px; }
     .setup-title h1 {
       font-size: 2.2rem; font-weight: 900;
-      color: #dfa72e;
+      color: var(--gold);
       letter-spacing: 1px;
     }
-    .setup-title p { color: #8d8aab; font-size: 0.9rem; margin-top: 6px; }
+    .setup-title p { color: var(--muted); font-size: 0.9rem; margin-top: 6px; }
 
     .option-group { width: 100%; }
-    .option-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 1px; color: #6b6890; text-transform: uppercase; margin-bottom: 8px; }
+    .option-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 1px; color: var(--ink2); text-transform: uppercase; margin-bottom: 8px; }
     .option-row { display: flex; gap: 10px; flex-wrap: wrap; }
     .opt-btn {
       flex: 1; min-width: 70px;
       padding: 11px 14px; border-radius: 12px;
-      border: 2px solid #f4f1fa; background: #ffffff;
-      color: #6b6890; font-size: 0.9rem; font-weight: 600;
+      border: 2px solid var(--card-alt); background: var(--card);
+      color: var(--ink2); font-size: 0.9rem; font-weight: 600;
       cursor: pointer; transition: all 0.15s; text-align: center;
     }
-    .opt-btn:hover { border-color: #dfa72e; color: #3b3866; }
-    .opt-btn.selected { border-color: #dfa72e; background: rgba(240,192,64,0.12); color: #dfa72e; }
+    .opt-btn:hover { border-color: var(--gold); color: var(--ink); }
+    .opt-btn.selected { border-color: var(--gold); background: rgba(240,192,64,0.12); color: var(--gold); }
 
     .player-select-row { display: flex; gap: 12px; width: 100%; }
     .player-opt {
       flex: 1; padding: 14px; border-radius: 14px;
-      border: 2px solid #f4f1fa; background: #ffffff;
+      border: 2px solid var(--card-alt); background: var(--card);
       cursor: pointer; transition: all 0.2s; text-align: center;
     }
     .player-opt .p-name { font-size: 1rem; font-weight: 700; margin-bottom: 2px; }
-    .player-opt .p-sub { font-size: 0.75rem; color: #8d8aab; }
-    .player-opt.kyle   { --pc: #dfa72e; }
-    .player-opt.lindsey { --pc: #3aa9a3; }
-    .player-opt.selected { border-color: var(--pc); background: rgba(59,56,102,0.09); box-shadow: 0 0 14px rgba(59,56,102,0.135); }
+    .player-opt .p-sub { font-size: 0.75rem; color: var(--muted); }
+    .player-opt.kyle   { --pc: var(--gold); }
+    .player-opt.lindsey { --pc: var(--teal); }
+    .player-opt.selected { border-color: var(--pc); background: rgba(var(--ink-rgb),0.09); box-shadow: 0 0 14px rgba(var(--ink-rgb),0.135); }
     .player-opt.selected .p-name { color: var(--pc); }
     .player-opt.kyle.selected   { box-shadow: 0 0 14px rgba(240,192,64,0.2); }
     .player-opt.lindsey.selected { box-shadow: 0 0 14px rgba(34,166,179,0.2); }
 
     .start-btn {
       width: 100%; padding: 16px; border-radius: 14px; border: none;
-      background: linear-gradient(135deg, #dfa72e, #e8a020);
+      background: linear-gradient(135deg, var(--gold), #e8a020);
       color: #111; font-size: 1.1rem; font-weight: 800;
       cursor: pointer; transition: transform 0.15s, opacity 0.15s;
     }
@@ -93,7 +95,7 @@
       font-size: clamp(1.1rem, 3vw, 1.4rem);
       font-weight: 800;
       font-variant-numeric: tabular-nums;
-      color: #3b3866;
+      color: var(--ink);
       letter-spacing: 1px;
     }
 
@@ -102,20 +104,20 @@
     }
     .pip {
       width: 10px; height: 10px; border-radius: 50%;
-      background: #f4f1fa;
-      border: 1.5px solid #a3a0bf;
+      background: var(--card-alt);
+      border: 1.5px solid var(--muted2);
       transition: background 0.3s, border-color 0.3s;
     }
-    .pip.used { background: #e0706f; border-color: #e0706f; }
+    .pip.used { background: var(--red); border-color: var(--red); }
 
     .pause-btn {
-      background: rgba(59,56,102,0.06); border: 2px solid #f4f1fa; color: #6b6890;
+      background: rgba(var(--ink-rgb),0.06); border: 2px solid var(--card-alt); color: var(--ink2);
       border-radius: 10px; width: 38px; height: 38px; font-size: 1rem;
       cursor: pointer; flex-shrink: 0; transition: all 0.15s;
       display: flex; align-items: center; justify-content: center;
     }
-    .pause-btn:hover { border-color: #dfa72e; color: #dfa72e; }
-    .pause-btn.paused { border-color: #5fb87c; color: #5fb87c; background: rgba(46,204,113,0.1); }
+    .pause-btn:hover { border-color: var(--gold); color: var(--gold); }
+    .pause-btn.paused { border-color: var(--green); color: var(--green); background: rgba(46,204,113,0.1); }
 
     /* ── Sudoku Grid ── */
     .sudoku-wrap {
@@ -128,7 +130,7 @@
       display: grid;
       grid-template-columns: repeat(9, 1fr);
       grid-template-rows: repeat(9, 1fr);
-      border: 3px solid #8d8aab;
+      border: 3px solid var(--muted);
       border-radius: 6px;
       overflow: hidden;
     }
@@ -136,23 +138,23 @@
     .cell {
       position: relative;
       display: flex; align-items: center; justify-content: center;
-      border: 1px solid #f4f1fa;
+      border: 1px solid var(--card-alt);
       cursor: pointer;
       user-select: none;
       transition: background 0.1s;
       font-size: clamp(0.9rem, 3vw, 1.25rem);
       font-weight: 700;
       color: #7a8090;
-      background: #ffffff;
+      background: var(--card);
       -webkit-tap-highlight-color: transparent;
     }
 
     /* thick box borders */
-    .cell.col-end-box { border-right: 3px solid #a3a0bf; }
-    .cell.row-end-box { border-bottom: 3px solid #a3a0bf; }
+    .cell.col-end-box { border-right: 3px solid var(--muted2); }
+    .cell.row-end-box { border-bottom: 3px solid var(--muted2); }
 
     /* cell states */
-    .cell.given { color: #3b3866; font-weight: 800; }
+    .cell.given { color: var(--ink); font-weight: 800; }
     .cell.selected { background: rgba(61,130,255,0.25) !important; }
     .cell.highlight { background: rgba(61,130,255,0.08); }
     .cell.same-num { background: rgba(61,130,255,0.16); }
@@ -192,16 +194,16 @@
       aspect-ratio: 1;
       display: flex; align-items: center; justify-content: center;
       border-radius: 8px;
-      border: 2px solid #f4f1fa;
-      background: #ffffff;
-      color: #3b3866;
+      border: 2px solid var(--card-alt);
+      background: var(--card);
+      color: var(--ink);
       font-size: clamp(0.9rem, 2.5vw, 1.2rem);
       font-weight: 700;
       cursor: pointer;
       transition: all 0.15s;
       -webkit-tap-highlight-color: transparent;
     }
-    .num-btn:hover { border-color: #dfa72e; color: #dfa72e; }
+    .num-btn:hover { border-color: var(--gold); color: var(--gold); }
     .num-btn:active { transform: scale(0.93); }
 
     /* ── Action bar ── */
@@ -215,9 +217,9 @@
       display: flex; flex-direction: column; align-items: center; gap: 3px;
       padding: 10px 4px;
       border-radius: 12px;
-      border: 2px solid #f4f1fa;
-      background: #ffffff;
-      color: #6b6890;
+      border: 2px solid var(--card-alt);
+      background: var(--card);
+      color: var(--ink2);
       font-size: clamp(0.85rem, 2.5vw, 1.05rem);
       cursor: pointer;
       transition: all 0.15s;
@@ -228,42 +230,42 @@
       font-weight: 600;
       letter-spacing: 0.3px;
       text-transform: uppercase;
-      color: #8d8aab;
+      color: var(--muted);
     }
-    .action-btn:hover { border-color: #b3a9ea; color: #3b3866; }
+    .action-btn:hover { border-color: var(--lav-3); color: var(--ink); }
     .action-btn:hover .ab-label { color: #99a; }
     .action-btn.active { border-color: #a855f7; background: rgba(168,85,247,0.12); color: #c084fc; }
     .action-btn.active .ab-label { color: #a855f7; }
 
     /* ── Result Screen ── */
     .result-card {
-      width: 100%; background: #ffffff; border-radius: 20px;
-      padding: 32px 24px; text-align: center; border: 2px solid #f4f1fa;
+      width: 100%; background: var(--card); border-radius: 20px;
+      padding: 32px 24px; text-align: center; border: 2px solid var(--card-alt);
       margin-top: 16px;
     }
     .result-icon { font-size: 3.5rem; margin-bottom: 12px; display: block; }
     .result-title { font-size: 2rem; font-weight: 900; margin-bottom: 6px; }
-    .result-subtitle { font-size: 0.9rem; color: #8d8aab; margin-bottom: 28px; }
+    .result-subtitle { font-size: 0.9rem; color: var(--muted); margin-bottom: 28px; }
 
     .result-stats {
       display: flex; gap: 12px; justify-content: center; margin-bottom: 28px;
     }
     .stat-box {
-      flex: 1; max-width: 120px; background: #faf8f5; border-radius: 14px;
-      padding: 14px 10px; border: 2px solid #f4f1fa;
+      flex: 1; max-width: 120px; background: var(--bg); border-radius: 14px;
+      padding: 14px 10px; border: 2px solid var(--card-alt);
     }
-    .stat-val { font-size: 1.6rem; font-weight: 900; color: #3b3866; }
-    .stat-lbl { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #8d8aab; margin-top: 3px; }
+    .stat-val { font-size: 1.6rem; font-weight: 900; color: var(--ink); }
+    .stat-lbl { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-top: 3px; }
 
     .result-btns { display: flex; gap: 10px; }
     .res-btn {
-      flex: 1; padding: 14px; border-radius: 12px; border: 2px solid #f4f1fa;
-      background: #faf8f5; color: #3b3866; font-size: 0.95rem; font-weight: 700;
+      flex: 1; padding: 14px; border-radius: 12px; border: 2px solid var(--card-alt);
+      background: var(--bg); color: var(--ink); font-size: 0.95rem; font-weight: 700;
       cursor: pointer; transition: all 0.15s;
     }
-    .res-btn:hover { border-color: #dfa72e; color: #dfa72e; }
+    .res-btn:hover { border-color: var(--gold); color: var(--gold); }
     .res-btn.primary {
-      background: linear-gradient(135deg, #dfa72e, #e8a020);
+      background: linear-gradient(135deg, var(--gold), #e8a020);
       border-color: transparent; color: #111;
     }
     .res-btn.primary:hover { opacity: 0.9; color: #111; border-color: transparent; }
@@ -288,9 +290,9 @@
   <div class="option-group">
     <div class="option-label">Difficulty</div>
     <div class="option-row">
-      <button class="opt-btn selected" data-diff="easy">Easy<br><small style="font-weight:400;color:#8d8aab">45 clues</small></button>
-      <button class="opt-btn" data-diff="medium">Medium<br><small style="font-weight:400;color:#8d8aab">35 clues</small></button>
-      <button class="opt-btn" data-diff="hard">Hard<br><small style="font-weight:400;color:#8d8aab">27 clues</small></button>
+      <button class="opt-btn selected" data-diff="easy">Easy<br><small style="font-weight:400;color:var(--muted)">45 clues</small></button>
+      <button class="opt-btn" data-diff="medium">Medium<br><small style="font-weight:400;color:var(--muted)">35 clues</small></button>
+      <button class="opt-btn" data-diff="hard">Hard<br><small style="font-weight:400;color:var(--muted)">27 clues</small></button>
     </div>
   </div>
 
@@ -298,11 +300,11 @@
     <div class="option-label">Player</div>
     <div class="player-select-row">
       <div class="player-opt kyle selected" data-player="kyle">
-        <div class="p-name" style="color:#dfa72e">Kyle</div>
+        <div class="p-name" style="color:var(--gold)">Kyle</div>
         <div class="p-sub">Gold</div>
       </div>
       <div class="player-opt lindsey" data-player="lindsey">
-        <div class="p-name" style="color:#3aa9a3">Lindsey</div>
+        <div class="p-name" style="color:var(--teal)">Lindsey</div>
         <div class="p-sub">Teal</div>
       </div>
     </div>
@@ -503,7 +505,7 @@ let timerInterval = null;
 let gamePaused = false;
 let difficulty = 'easy';
 let player = 'kyle';
-let playerColor = '#dfa72e';
+let playerColor = 'var(--gold)';
 let gameActive = false;
 
 // ─────────────────────────────────────────────
@@ -523,7 +525,7 @@ document.querySelectorAll('[data-player]').forEach(opt => {
     document.querySelectorAll('[data-player]').forEach(o => o.classList.remove('selected'));
     opt.classList.add('selected');
     player = opt.dataset.player;
-    playerColor = player === 'kyle' ? '#dfa72e' : '#3aa9a3';
+    playerColor = player === 'kyle' ? 'var(--gold)' : 'var(--teal)';
   });
 });
 

@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <title>Balloon Pop – Kyle & Lindsey</title>
@@ -11,8 +13,8 @@
 
     body {
       font-family: 'Nunito', system-ui, sans-serif;
-      background: #faf8f5;
-      color: #3b3866;
+      background: var(--bg);
+      color: var(--ink);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -28,13 +30,13 @@
       align-items: center;
       justify-content: space-between;
       padding: 14px 24px;
-      background: rgba(59,56,102,0.03);
-      border-bottom: 1px solid rgba(59,56,102,0.06);
+      background: rgba(var(--ink-rgb),0.03);
+      border-bottom: 1px solid rgba(var(--ink-rgb),0.06);
       flex-shrink: 0;
     }
-    .header a { color: #8d8aab; text-decoration: none; font-size: 0.85rem; }
-    .header a:hover { color: #8e82d6; }
-    .header-title { font-size: 1.1rem; font-weight: 800; color: #8e82d6; }
+    .header a { color: var(--muted); text-decoration: none; font-size: 0.85rem; }
+    .header a:hover { color: var(--lavender); }
+    .header-title { font-size: 1.1rem; font-weight: 800; color: var(--lavender); }
 
     /* ── Screens ── */
     .screen { display: none; flex-direction: column; align-items: center; justify-content: center; flex: 1; width: 100%; padding: 24px; }
@@ -43,23 +45,23 @@
     /* ── Start ── */
     #startScreen h1 {
       font-size: 3rem; font-weight: 900; margin-bottom: 8px;
-      background: linear-gradient(135deg, #8e82d6, #e786a7);
+      background: linear-gradient(135deg, var(--lavender), var(--rose));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
-    #startScreen .subtitle { color: #8d8aab; margin-bottom: 40px; font-size: 1rem; }
+    #startScreen .subtitle { color: var(--muted); margin-bottom: 40px; font-size: 1rem; }
 
     .lives-select { margin-bottom: 36px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
-    .lives-select label { color: #6b6890; font-size: 0.9rem; }
+    .lives-select label { color: var(--ink2); font-size: 0.9rem; }
     .lives-btns { display: flex; gap: 12px; }
     .lives-btn {
-      width: 56px; height: 56px; border-radius: 14px; border: 2px solid #d3d0e3;
-      background: #ffffff; color: #3b3866; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: all 0.15s;
+      width: 56px; height: 56px; border-radius: 14px; border: 2px solid var(--faint);
+      background: var(--card); color: var(--ink); font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: all 0.15s;
     }
-    .lives-btn.selected { border-color: #8e82d6; background: rgba(167,139,250,0.15); color: #8e82d6; }
+    .lives-btn.selected { border-color: var(--lavender); background: rgba(167,139,250,0.15); color: var(--lavender); }
 
     .start-btn {
       padding: 18px 52px; border-radius: 16px;
-      background: linear-gradient(135deg, #8e82d6, #e786a7);
+      background: linear-gradient(135deg, var(--lavender), var(--rose));
       border: none; color: #fff; font-size: 1.2rem; font-weight: 800; cursor: pointer;
       box-shadow: 0 8px 32px rgba(167,139,250,0.35); transition: transform 0.15s, box-shadow 0.15s;
     }
@@ -86,33 +88,33 @@
       position: relative;
       z-index: 2;
     }
-    .panel-kyle { border-right: 1px solid rgba(59,56,102,0.05); }
-    .panel-lindsey { border-left: 1px solid rgba(59,56,102,0.05); }
+    .panel-kyle { border-right: 1px solid rgba(var(--ink-rgb),0.05); }
+    .panel-lindsey { border-left: 1px solid rgba(var(--ink-rgb),0.05); }
 
     .player-label {
-      font-size: 1.4rem; font-weight: 900; color: #8d8aab;
+      font-size: 1.4rem; font-weight: 900; color: var(--muted);
       transition: color 0.2s;
     }
-    .player-panel.active-turn .player-label { color: #8e82d6; }
+    .player-panel.active-turn .player-label { color: var(--lavender); }
 
     .lives-row { display: flex; gap: 5px; font-size: 1.3rem; flex-wrap: wrap; justify-content: center; }
 
     .score-box {
-      background: #ffffff; border-radius: 12px; padding: 10px 18px; text-align: center;
-      border: 1px solid rgba(59,56,102,0.05);
+      background: var(--card); border-radius: 12px; padding: 10px 18px; text-align: center;
+      border: 1px solid rgba(var(--ink-rgb),0.05);
     }
-    .score-num { font-size: 1.6rem; font-weight: 900; color: #8e82d6; line-height: 1; }
-    .score-lbl { font-size: 0.65rem; color: #a3a0bf; letter-spacing: 0.5px; margin-top: 2px; }
+    .score-num { font-size: 1.6rem; font-weight: 900; color: var(--lavender); line-height: 1; }
+    .score-lbl { font-size: 0.65rem; color: var(--muted2); letter-spacing: 0.5px; margin-top: 2px; }
 
     /* Pump button */
     .pump-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; }
     .pump-btn {
-      width: 100%; padding: 14px 10px; border-radius: 14px; border: 2px solid #d3d0e3;
-      background: #ffffff; color: #8d8aab; font-size: 0.85rem; font-weight: 700; cursor: pointer;
+      width: 100%; padding: 14px 10px; border-radius: 14px; border: 2px solid var(--faint);
+      background: var(--card); color: var(--muted); font-size: 0.85rem; font-weight: 700; cursor: pointer;
       letter-spacing: 0.5px; transition: all 0.15s; position: relative; overflow: hidden;
     }
     .player-panel.active-turn .pump-btn {
-      border-color: #8e82d6; color: #8e82d6;
+      border-color: var(--lavender); color: var(--lavender);
       background: rgba(167,139,250,0.1);
       animation: readyGlow 1.2s ease-in-out infinite alternate;
     }
@@ -121,7 +123,7 @@
       to   { box-shadow: 0 0 20px rgba(167,139,250,0.5); }
     }
     .player-panel.charging .pump-btn {
-      border-color: #e786a7; color: #e786a7;
+      border-color: var(--rose); color: var(--rose);
       background: rgba(236,72,153,0.15);
       box-shadow: 0 0 24px rgba(236,72,153,0.4);
       animation: none;
@@ -129,16 +131,16 @@
 
     /* Charge meter */
     .charge-bar-wrap {
-      width: 100%; height: 8px; background: #faf8f5; border-radius: 4px; overflow: hidden;
+      width: 100%; height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden;
     }
     .charge-bar {
       height: 100%; width: 0; border-radius: 4px;
-      background: linear-gradient(90deg, #8e82d6, #e786a7);
+      background: linear-gradient(90deg, var(--lavender), var(--rose));
       transition: background 0.3s;
     }
 
-    .key-hint { font-size: 0.7rem; color: #d3d0e3; letter-spacing: 0.3px; }
-    .player-panel.active-turn .key-hint { color: #8d8aab; }
+    .key-hint { font-size: 0.7rem; color: var(--faint); letter-spacing: 0.3px; }
+    .player-panel.active-turn .key-hint { color: var(--muted); }
 
     /* Turn arrow */
     .turn-arrow {
@@ -146,7 +148,7 @@
       top: 50%;
       transform: translateY(-50%);
       font-size: 1.4rem;
-      color: #8e82d6;
+      color: var(--lavender);
       opacity: 0;
       transition: opacity 0.3s, transform 0.3s;
     }
@@ -180,9 +182,9 @@
       width: 100px;
       height: 120px;
       border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
-      background: radial-gradient(circle at 35% 30%, rgba(59,56,102,0.55) 0%, transparent 55%),
-                  radial-gradient(circle at 65% 70%, rgba(59,56,102,0.09) 0%, transparent 50%),
-                  var(--balloon-color, #8e82d6);
+      background: radial-gradient(circle at 35% 30%, rgba(var(--ink-rgb),0.55) 0%, transparent 55%),
+                  radial-gradient(circle at 65% 70%, rgba(var(--ink-rgb),0.09) 0%, transparent 50%),
+                  var(--balloon-color, var(--lavender));
       transform-origin: center bottom;
       transition: width 0.15s, height 0.15s, background 0.3s, filter 0.3s;
       position: relative;
@@ -192,7 +194,7 @@
     /* Knot */
     .balloon-knot {
       width: 14px; height: 14px;
-      background: var(--balloon-color, #8e82d6);
+      background: var(--balloon-color, var(--lavender));
       clip-path: polygon(0% 0%, 100% 0%, 65% 55%, 100% 100%, 50% 75%, 0% 100%, 35% 55%);
       transition: background 0.3s;
       margin-top: -2px;
@@ -201,7 +203,7 @@
     /* String */
     .balloon-string {
       width: 2px; height: 80px;
-      background: linear-gradient(to bottom, #8d8aab, transparent);
+      background: linear-gradient(to bottom, var(--muted), transparent);
       border-radius: 1px;
     }
 
@@ -222,14 +224,14 @@
       position: absolute;
       bottom: 24px;
       font-size: 0.8rem;
-      color: #a3a0bf;
+      color: var(--muted2);
       text-align: center;
       pointer-events: none;
     }
     .pump-size-indicator {
       font-size: 1.1rem;
       font-weight: 700;
-      color: #8e82d6;
+      color: var(--lavender);
       min-height: 1.4rem;
       text-align: center;
       margin-bottom: 4px;
@@ -238,7 +240,7 @@
     /* ── Explode overlay ── */
     .explode-overlay {
       position: fixed; inset: 0; z-index: 200;
-      background: rgba(250,248,245,0.89);
+      background: rgba(var(--bg-rgb),0.89);
       display: none; align-items: center; justify-content: center; flex-direction: column; gap: 12px;
     }
     .explode-overlay.show { display: flex; }
@@ -248,35 +250,35 @@
       60%  { transform: scale(1.2); }
       100% { transform: scale(1); opacity: 1; }
     }
-    .pop-title { font-size: 2rem; font-weight: 900; color: #3b3866; }
-    .pop-sub   { font-size: 1rem; color: #6b6890; }
-    .pop-pts   { font-size: 0.9rem; color: #8e82d6; margin-top: 4px; }
+    .pop-title { font-size: 2rem; font-weight: 900; color: var(--ink); }
+    .pop-sub   { font-size: 1rem; color: var(--ink2); }
+    .pop-pts   { font-size: 0.9rem; color: var(--lavender); margin-top: 4px; }
 
     /* ── Win screen ── */
     #winScreen { gap: 20px; }
     .win-emoji { font-size: 5rem; }
-    .win-title { font-size: 2.5rem; font-weight: 900; color: #8e82d6; }
-    .win-sub   { color: #6b6890; font-size: 1rem; }
+    .win-title { font-size: 2.5rem; font-weight: 900; color: var(--lavender); }
+    .win-sub   { color: var(--ink2); font-size: 1rem; }
     .win-scores {
       display: flex; gap: 24px; margin: 8px 0;
     }
     .win-score-box {
-      background: #ffffff; border-radius: 14px; padding: 16px 24px; text-align: center;
-      border: 2px solid rgba(59,56,102,0.05);
+      background: var(--card); border-radius: 14px; padding: 16px 24px; text-align: center;
+      border: 2px solid rgba(var(--ink-rgb),0.05);
     }
-    .win-score-box.winner { border-color: #8e82d6; background: rgba(167,139,250,0.1); }
-    .win-score-box .ws-name { font-size: 0.8rem; color: #8d8aab; margin-bottom: 6px; }
-    .win-score-box .ws-pts  { font-size: 2rem; font-weight: 900; color: #8e82d6; }
-    .win-score-box .ws-lives { font-size: 0.75rem; color: #a3a0bf; margin-top: 4px; }
+    .win-score-box.winner { border-color: var(--lavender); background: rgba(167,139,250,0.1); }
+    .win-score-box .ws-name { font-size: 0.8rem; color: var(--muted); margin-bottom: 6px; }
+    .win-score-box .ws-pts  { font-size: 2rem; font-weight: 900; color: var(--lavender); }
+    .win-score-box .ws-lives { font-size: 0.75rem; color: var(--muted2); margin-top: 4px; }
     .play-again-btn {
       padding: 16px 48px; border-radius: 16px;
-      background: linear-gradient(135deg, #8e82d6, #e786a7);
+      background: linear-gradient(135deg, var(--lavender), var(--rose));
       border: none; color: #fff; font-size: 1.1rem; font-weight: 800; cursor: pointer;
       box-shadow: 0 8px 32px rgba(167,139,250,0.3); transition: transform 0.15s;
     }
     .play-again-btn:hover { transform: translateY(-3px); }
-    .home-link { color: #8d8aab; text-decoration: none; font-size: 0.85rem; }
-    .home-link:hover { color: #8e82d6; }
+    .home-link { color: var(--muted); text-decoration: none; font-size: 0.85rem; }
+    .home-link:hover { color: var(--lavender); }
   </style>
 </head>
 <body>
@@ -303,10 +305,10 @@
 
   <button class="start-btn" id="startBtn">Start Game</button>
 
-  <p style="margin-top:28px;color:#a3a0bf;font-size:0.8rem;">
-    Kyle: hold <strong style="color:#8d8aab">F</strong> then release &nbsp;|&nbsp; Lindsey: hold <strong style="color:#8d8aab">J</strong> then release
+  <p style="margin-top:28px;color:var(--muted2);font-size:0.8rem;">
+    Kyle: hold <strong style="color:var(--muted)">F</strong> then release &nbsp;|&nbsp; Lindsey: hold <strong style="color:var(--muted)">J</strong> then release
   </p>
-  <p style="margin-top:8px;color:#d3d0e3;font-size:0.75rem;">Bigger pumps = more points, but more risk!</p>
+  <p style="margin-top:8px;color:var(--faint);font-size:0.75rem;">Bigger pumps = more points, but more risk!</p>
 </div>
 
 <!-- Game Screen -->
@@ -601,7 +603,7 @@
     const ratio = inflation / popThreshold;
     const pct = Math.round(ratio * 100);
     roundPumpInfo.textContent = `${pct}% full`;
-    roundPumpInfo.style.color = pct > 80 ? '#e0706f' : pct > 60 ? '#f0a65c' : '#a3a0bf';
+    roundPumpInfo.style.color = pct > 80 ? 'var(--red)' : pct > 60 ? 'var(--peach)' : 'var(--muted2)';
   }
 
   function triggerPop(who, units) {

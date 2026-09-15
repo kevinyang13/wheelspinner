@@ -1,0 +1,106 @@
+/* Shared light / dark palette. Every page reads these tokens; theme.js
+   flips data-theme on <html> and remembers the choice. */
+
+:root {
+  color-scheme: light;
+
+  --bg:        #faf8f5;
+  --bg-rgb:    250,248,245;
+  --card:      #ffffff;
+  --card-alt:  #f4f1fa;
+  --border:    #e8e4f2;
+  --faint:     #d3d0e3;
+
+  --ink:       #3b3866;
+  --ink-rgb:   59,56,102;
+  --ink2:      #6b6890;
+  --muted:     #8d8aab;
+  --muted2:    #a3a0bf;
+
+  --gold:      #dfa72e;
+  --yellow:    #e8b83c;
+  --teal:      #3aa9a3;
+  --lavender:  #8e82d6;
+  --lavender-deep: #6f63c9;
+  --indigo:    #7b7fe0;
+  --sky:       #5a9fe0;
+  --sky-soft:  #7db8e8;
+  --steel:     #7b9cc8;
+  --rose:      #e786a7;
+  --mint:      #5cbfae;
+  --cyan:      #5ab9dc;
+  --green:     #5fb87c;
+  --green-deep:#3f9a5e;
+  --orange:    #f28c5a;
+  --peach:     #f0a65c;
+  --red:       #e0706f;
+  --red-deep:  #d05a5a;
+  --purple:    #b56fd0;
+
+  --lav-1:     #dcd6f3;
+  --lav-2:     #c9bff0;
+  --lav-3:     #b3a9ea;
+  --sage-1:    #eef7ee;
+  --sage-2:    #e4f2e4;
+  --sage-3:    #c8e6c8;
+  --sage-4:    #b9dcb9;
+  --sage-5:    #8fae8f;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg:        #0f0f1e;
+  --bg-rgb:    15,15,30;
+  --card:      #16213e;
+  --card-alt:  #1e2a44;
+  --border:    #2a2a3e;
+  --faint:     #334;
+
+  --ink:       #eeeeee;
+  --ink-rgb:   255,255,255;
+  --ink2:      #aaaabb;
+  --muted:     #666677;
+  --muted2:    #444455;
+
+  --gold:      #f0c040;
+  --yellow:    #f9c22e;
+  --teal:      #22a6b3;
+  --lavender:  #a78bfa;
+  --lavender-deep: #c4b0ff;
+  --indigo:    #818cf8;
+  --sky:       #3d9eff;
+  --sky-soft:  #aaddff;
+  --steel:     #6090c0;
+  --rose:      #f472b6;
+  --mint:      #2dd4bf;
+  --cyan:      #22d3ee;
+  --green:     #4ade80;
+  --green-deep:#86efac;
+  --orange:    #ff6b35;
+  --peach:     #ff9f43;
+  --red:       #f87171;
+  --red-deep:  #fca5a5;
+  --purple:    #be2edd;
+
+  --lav-1:     #1e3a5f;
+  --lav-2:     #0d1b3e;
+  --lav-3:     #2a4070;
+  --sage-1:    #0d160d;
+  --sage-2:    #07100a;
+  --sage-3:    #1a2a1a;
+  --sage-4:    #142014;
+  --sage-5:    #2a3a2a;
+}
+
+/* Floating light / dark switch, injected by theme.js */
+#themeToggle {
+  position: fixed; right: 16px; bottom: 16px; z-index: 9999;
+  width: 44px; height: 44px; border-radius: 50%;
+  border: 1.5px solid var(--border); background: var(--card); color: var(--ink);
+  font-size: 1.25rem; line-height: 1; cursor: pointer;
+  box-shadow: 0 4px 16px rgba(var(--ink-rgb), 0.15);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+#themeToggle:hover { transform: scale(1.08); box-shadow: 0 6px 20px rgba(var(--ink-rgb), 0.22); }

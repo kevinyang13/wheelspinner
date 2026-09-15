@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <title>Wheel Spinner</title>
@@ -11,8 +13,8 @@
 
     body {
       font-family: 'Nunito', system-ui, sans-serif;
-      background: #faf8f5;
-      color: #3b3866;
+      background: var(--bg);
+      color: var(--ink);
       min-height: 100vh;
       padding: 24px 20px;
       display: flex;
@@ -24,7 +26,7 @@
       font-size: 2rem;
       margin-bottom: 20px;
       letter-spacing: 1px;
-      color: #dfa72e;
+      color: var(--gold);
     }
 
     .tabs {
@@ -35,15 +37,15 @@
 
     .tab-btn {
       padding: 9px 28px;
-      border: 2px solid #dfa72e;
+      border: 2px solid var(--gold);
       background: transparent;
-      color: #dfa72e;
+      color: var(--gold);
       border-radius: 24px;
       font-size: 1rem;
       cursor: pointer;
       transition: background 0.2s, color 0.2s;
     }
-    .tab-btn.active { background: #dfa72e; color: #faf8f5; font-weight: bold; }
+    .tab-btn.active { background: var(--gold); color: var(--bg); font-weight: bold; }
 
     /* ── Two-column layout ── */
     .app-layout {
@@ -76,7 +78,7 @@
       height: 44px;
       margin-bottom: -6px;
       z-index: 10;
-      filter: drop-shadow(0 4px 6px rgba(59,56,102,0.27));
+      filter: drop-shadow(0 4px 6px rgba(var(--ink-rgb),0.27));
     }
 
     canvas { display: block; }
@@ -89,8 +91,8 @@
       font-weight: bold;
       border: none;
       border-radius: 32px;
-      background: linear-gradient(135deg, #dfa72e, #f28c5a);
-      color: #faf8f5;
+      background: linear-gradient(135deg, var(--gold), var(--orange));
+      color: var(--bg);
       cursor: pointer;
       box-shadow: 0 4px 18px rgba(240,192,64,0.45);
       transition: transform 0.1s, box-shadow 0.1s;
@@ -102,9 +104,9 @@
     .reload-btn {
       width: 50px; height: 50px;
       border-radius: 50%;
-      border: 2px solid #dfa72e;
+      border: 2px solid var(--gold);
       background: transparent;
-      color: #dfa72e;
+      color: var(--gold);
       font-size: 1.5rem;
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
@@ -119,7 +121,7 @@
       font-size: 1.6rem;
       font-weight: bold;
       min-height: 2.2rem;
-      color: #dfa72e;
+      color: var(--gold);
       text-align: center;
       text-shadow: 0 2px 8px rgba(240,192,64,0.5);
     }
@@ -131,15 +133,15 @@
       gap: 12px;
       margin-top: 20px;
       font-size: 0.9rem;
-      color: #3b3866;
+      color: var(--ink);
     }
-    .count-control input[type=range] { width: 160px; accent-color: #dfa72e; }
-    #count-label { font-weight: bold; color: #dfa72e; min-width: 24px; text-align: center; }
+    .count-control input[type=range] { width: 160px; accent-color: var(--gold); }
+    #count-label { font-weight: bold; color: var(--gold); min-width: 24px; text-align: center; }
 
     /* ── Entry editor ── */
     .entries-panel { margin-top: 20px; width: 100%; max-width: 440px; }
     .entries-panel h2 {
-      font-size: 0.85rem; color: #6b6890; margin-bottom: 8px;
+      font-size: 0.85rem; color: var(--ink2); margin-bottom: 8px;
       text-transform: uppercase; letter-spacing: 1px;
     }
     .entry-list {
@@ -149,16 +151,16 @@
     .entry-row { display: flex; align-items: center; gap: 8px; }
     .entry-row input {
       flex: 1; padding: 6px 10px; border-radius: 8px;
-      border: 1px solid #a3a0bf; background: #ffffff; color: #3b3866; font-size: 0.9rem;
+      border: 1px solid var(--muted2); background: var(--card); color: var(--ink); font-size: 0.9rem;
     }
     .entry-row button {
-      background: transparent; border: none; color: #e0706f;
+      background: transparent; border: none; color: var(--red);
       font-size: 1.1rem; cursor: pointer; padding: 3px 6px; line-height: 1;
     }
     .add-btn {
       margin-top: 8px; padding: 7px 16px; border-radius: 8px;
-      border: 1px dashed #dfa72e; background: transparent;
-      color: #dfa72e; cursor: pointer; font-size: 0.85rem;
+      border: 1px dashed var(--gold); background: transparent;
+      color: var(--gold); cursor: pointer; font-size: 0.85rem;
     }
     .add-btn:hover { background: rgba(240,192,64,0.1); }
 
@@ -172,7 +174,7 @@
       max-height: calc(100vh - 48px);
       display: flex;
       flex-direction: column;
-      background: #ffffff;
+      background: var(--card);
       border-radius: 16px;
       padding: 16px;
     }
@@ -185,15 +187,15 @@
       flex-shrink: 0;
     }
     .history-header h2 {
-      font-size: 0.85rem; color: #6b6890;
+      font-size: 0.85rem; color: var(--ink2);
       text-transform: uppercase; letter-spacing: 1px;
     }
     .clear-btn {
-      background: transparent; border: 1px solid #a3a0bf; color: #6b6890;
+      background: transparent; border: 1px solid var(--muted2); color: var(--ink2);
       font-size: 0.75rem; padding: 3px 9px; border-radius: 6px; cursor: pointer;
       transition: border-color 0.2s, color 0.2s;
     }
-    .clear-btn:hover { border-color: #e0706f; color: #e0706f; }
+    .clear-btn:hover { border-color: var(--red); color: var(--red); }
 
     .history-list {
       display: flex; flex-direction: column; gap: 6px;
@@ -202,7 +204,7 @@
 
     .history-item {
       display: flex; align-items: center; gap: 8px;
-      background: #f4f1fa; border-radius: 10px; padding: 9px 12px;
+      background: var(--card-alt); border-radius: 10px; padding: 9px 12px;
       animation: fadeIn 0.3s ease;
     }
     @keyframes fadeIn {
@@ -210,20 +212,20 @@
       to   { opacity: 1; transform: translateX(0); }
     }
 
-    .history-num { font-size: 0.7rem; color: #a3a0bf; min-width: 18px; text-align: right; }
+    .history-num { font-size: 0.7rem; color: var(--muted2); min-width: 18px; text-align: right; }
     .history-person {
       font-size: 0.7rem; font-weight: bold; padding: 2px 7px;
-      border-radius: 10px; background: #dfa72e; color: #faf8f5; white-space: nowrap;
+      border-radius: 10px; background: var(--gold); color: var(--bg); white-space: nowrap;
     }
-    .history-person.lindsey { background: #3aa9a3; color: #fff; }
-    .history-value { flex: 1; font-size: 0.9rem; font-weight: bold; color: #3b3866; }
-    .history-time { font-size: 0.7rem; color: #8d8aab; white-space: nowrap; }
-    .history-empty { color: #a3a0bf; font-size: 0.85rem; text-align: center; padding: 24px 0; }
+    .history-person.lindsey { background: var(--teal); color: #fff; }
+    .history-value { flex: 1; font-size: 0.9rem; font-weight: bold; color: var(--ink); }
+    .history-time { font-size: 0.7rem; color: var(--muted); white-space: nowrap; }
+    .history-empty { color: var(--muted2); font-size: 0.85rem; text-align: center; padding: 24px 0; }
   </style>
 </head>
 <body>
   <nav style="width:100%;max-width:960px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-    <a href="index.html" style="color:#dfa72e;text-decoration:none;font-size:0.9rem;opacity:0.8;">← Home</a>
+    <a href="index.html" style="color:var(--gold);text-decoration:none;font-size:0.9rem;opacity:0.8;">← Home</a>
   </nav>
   <h1>🎡 Wheel Spinner</h1>
 
@@ -240,13 +242,13 @@
         <svg class="pointer" viewBox="0 0 28 44" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="pinGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%"   stop-color="#e0706f"/>
-              <stop offset="40%"  stop-color="#e0706f"/>
-              <stop offset="100%" stop-color="#d05a5a"/>
+              <stop offset="0%"   stop-color="var(--red)"/>
+              <stop offset="40%"  stop-color="var(--red)"/>
+              <stop offset="100%" stop-color="var(--red-deep)"/>
             </linearGradient>
             <linearGradient id="pinShine" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%"  stop-color="rgba(59,56,102,0.4)"/>
-              <stop offset="50%" stop-color="rgba(59,56,102,0)"/>
+              <stop offset="0%"  stop-color="rgba(var(--ink-rgb),0.4)"/>
+              <stop offset="50%" stop-color="rgba(var(--ink-rgb),0)"/>
             </linearGradient>
           </defs>
           <!-- Main body -->
@@ -254,7 +256,7 @@
           <!-- Shine -->
           <path d="M14 44 L2 10 Q8 4 14 4 Z" fill="url(#pinShine)"/>
           <!-- Tip highlight -->
-          <ellipse cx="14" cy="10" rx="6" ry="4" fill="rgba(59,56,102,0.2)"/>
+          <ellipse cx="14" cy="10" rx="6" ry="4" fill="rgba(var(--ink-rgb),0.2)"/>
         </svg>
         <canvas id="wheel" width="420" height="420"></canvas>
       </div>

@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <title>Hot Potato – Kyle & Lindsey</title>
@@ -11,8 +13,8 @@
 
     body {
       font-family: 'Nunito', system-ui, sans-serif;
-      background: #faf8f5;
-      color: #3b3866;
+      background: var(--bg);
+      color: var(--ink);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -28,19 +30,19 @@
       align-items: center;
       justify-content: space-between;
       padding: 14px 24px;
-      background: rgba(59,56,102,0.03);
-      border-bottom: 1px solid rgba(59,56,102,0.06);
+      background: rgba(var(--ink-rgb),0.03);
+      border-bottom: 1px solid rgba(var(--ink-rgb),0.06);
     }
     .header a {
-      color: #8d8aab;
+      color: var(--muted);
       text-decoration: none;
       font-size: 0.85rem;
     }
-    .header a:hover { color: #f28c5a; }
+    .header a:hover { color: var(--orange); }
     .header-title {
       font-size: 1.1rem;
       font-weight: 800;
-      color: #f28c5a;
+      color: var(--orange);
     }
 
     /* ── Screens ── */
@@ -52,13 +54,13 @@
       font-size: 3rem;
       font-weight: 900;
       margin-bottom: 8px;
-      background: linear-gradient(135deg, #f28c5a, #f0a65c);
+      background: linear-gradient(135deg, var(--orange), var(--peach));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
     #startScreen .subtitle {
-      color: #8d8aab;
+      color: var(--muted);
       margin-bottom: 40px;
       font-size: 1rem;
     }
@@ -69,28 +71,28 @@
       align-items: center;
       gap: 12px;
     }
-    .lives-select label { color: #6b6890; font-size: 0.9rem; }
+    .lives-select label { color: var(--ink2); font-size: 0.9rem; }
     .lives-btns { display: flex; gap: 12px; }
     .lives-btn {
       width: 56px; height: 56px;
       border-radius: 14px;
-      border: 2px solid #d3d0e3;
-      background: #ffffff;
-      color: #3b3866;
+      border: 2px solid var(--faint);
+      background: var(--card);
+      color: var(--ink);
       font-size: 1.1rem;
       font-weight: 700;
       cursor: pointer;
       transition: all 0.15s;
     }
     .lives-btn.selected {
-      border-color: #f28c5a;
+      border-color: var(--orange);
       background: rgba(255,107,53,0.15);
-      color: #f28c5a;
+      color: var(--orange);
     }
     .start-btn {
       padding: 18px 52px;
       border-radius: 16px;
-      background: linear-gradient(135deg, #f28c5a, #f0a65c);
+      background: linear-gradient(135deg, var(--orange), var(--peach));
       border: none;
       color: #fff;
       font-size: 1.2rem;
@@ -130,7 +132,7 @@
       position: relative;
       padding: 30px 20px;
     }
-    .player-zone.kyle { border-right: 1px solid rgba(59,56,102,0.06); }
+    .player-zone.kyle { border-right: 1px solid rgba(var(--ink-rgb),0.06); }
 
     .player-zone.holding {
       background: rgba(255, 107, 53, 0.05);
@@ -146,10 +148,10 @@
     .player-name {
       font-size: 2rem;
       font-weight: 900;
-      color: #6b6890;
+      color: var(--ink2);
       transition: color 0.2s;
     }
-    .player-zone.holding .player-name { color: #f28c5a; }
+    .player-zone.holding .player-name { color: var(--orange); }
 
     .lives-display {
       display: flex;
@@ -159,17 +161,17 @@
 
     .key-hint {
       font-size: 0.9rem;
-      color: #a3a0bf;
+      color: var(--muted2);
       margin-top: 8px;
     }
-    .player-zone.holding .key-hint { color: #f28c5a; }
+    .player-zone.holding .key-hint { color: var(--orange); }
 
     .pass-btn {
       padding: 16px 40px;
       border-radius: 16px;
-      background: #ffffff;
-      border: 2px solid #d3d0e3;
-      color: #8d8aab;
+      background: var(--card);
+      border: 2px solid var(--faint);
+      color: var(--muted);
       font-size: 1rem;
       font-weight: 700;
       cursor: pointer;
@@ -177,9 +179,9 @@
       letter-spacing: 0.5px;
     }
     .player-zone.holding .pass-btn {
-      border-color: #f28c5a;
+      border-color: var(--orange);
       background: rgba(255,107,53,0.15);
-      color: #f28c5a;
+      color: var(--orange);
       animation: btnPulse 0.8s ease-in-out infinite alternate;
     }
     @keyframes btnPulse {
@@ -261,19 +263,19 @@
       25%     { transform: translate(-8px,4px) rotate(-5deg); }
       75%     { transform: translate(8px,-4px) rotate(5deg); }
     }
-    .explode-text { font-size: 1.8rem; font-weight: 900; color: #3b3866; }
-    .explode-sub  { font-size: 1rem; color: rgba(59,56,102,0.7); }
+    .explode-text { font-size: 1.8rem; font-weight: 900; color: var(--ink); }
+    .explode-sub  { font-size: 1rem; color: rgba(var(--ink-rgb),0.7); }
 
     /* Win Screen */
     #winScreen { gap: 20px; }
     .win-emoji { font-size: 5rem; }
-    .win-title { font-size: 2.5rem; font-weight: 900; color: #f28c5a; }
-    .win-sub   { color: #6b6890; font-size: 1rem; }
+    .win-title { font-size: 2.5rem; font-weight: 900; color: var(--orange); }
+    .win-sub   { color: var(--ink2); font-size: 1rem; }
     .play-again-btn {
       margin-top: 20px;
       padding: 16px 48px;
       border-radius: 16px;
-      background: linear-gradient(135deg, #f28c5a, #f0a65c);
+      background: linear-gradient(135deg, var(--orange), var(--peach));
       border: none;
       color: #fff;
       font-size: 1.1rem;
@@ -283,8 +285,8 @@
       transition: transform 0.15s;
     }
     .play-again-btn:hover { transform: translateY(-3px); }
-    .home-link { color: #8d8aab; text-decoration: none; font-size: 0.85rem; }
-    .home-link:hover { color: #f28c5a; }
+    .home-link { color: var(--muted); text-decoration: none; font-size: 0.85rem; }
+    .home-link:hover { color: var(--orange); }
 
     /* Countdown bar */
     .countdown-bar-wrap {
@@ -295,7 +297,7 @@
     .countdown-bar {
       height: 100%;
       width: 100%;
-      background: linear-gradient(90deg, #ff3300, #f0a65c, #ffcc00);
+      background: linear-gradient(90deg, #ff3300, var(--peach), #ffcc00);
       transition: width 0.1s linear, background 0.5s;
       transform-origin: left;
     }
@@ -325,8 +327,8 @@
 
   <button class="start-btn" id="startBtn">Start Game</button>
 
-  <p style="margin-top:28px;color:#a3a0bf;font-size:0.8rem;">
-    Kyle: press <strong style="color:#8d8aab">F</strong> or tap left &nbsp;|&nbsp; Lindsey: press <strong style="color:#8d8aab">J</strong> or tap right
+  <p style="margin-top:28px;color:var(--muted2);font-size:0.8rem;">
+    Kyle: press <strong style="color:var(--muted)">F</strong> or tap left &nbsp;|&nbsp; Lindsey: press <strong style="color:var(--muted)">J</strong> or tap right
   </p>
 </div>
 
