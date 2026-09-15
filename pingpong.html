@@ -3,14 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <title>Ping Pong</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background: #05080f;
+      background: #faf8f5;
       display: flex; flex-direction: column; align-items: center;
       min-height: 100vh; padding: 12px 16px 24px;
-      font-family: system-ui, sans-serif; color: #eee;
+      font-family: 'Nunito', system-ui, sans-serif; color: #3b3866;
       user-select: none; -webkit-user-select: none;
     }
     nav {
@@ -18,13 +20,13 @@
       display: flex; justify-content: space-between; align-items: center;
       margin-bottom: 10px;
     }
-    nav a { color: #f0c040; text-decoration: none; font-size: 0.9rem; opacity: 0.8; }
+    nav a { color: #dfa72e; text-decoration: none; font-size: 0.9rem; opacity: 0.8; }
     nav a:hover { opacity: 1; }
     nav span { font-size: 1rem; font-weight: bold; }
 
     canvas {
       display: block;
-      box-shadow: 0 0 60px rgba(80,200,255,0.15), 0 0 20px rgba(0,0,0,0.6);
+      box-shadow: 0 0 60px rgba(80,200,255,0.15), 0 0 20px rgba(59,56,102,0.27);
       border-radius: 8px;
       touch-action: none;
     }
@@ -32,34 +34,34 @@
     /* Mode selection overlay */
     #mode-screen {
       position: fixed; inset: 0;
-      background: rgba(5,8,15,0.94);
+      background: rgba(250,248,245,0.96);
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       gap: 28px; z-index: 10;
     }
     #mode-screen h1 {
       font-size: 2.4rem; font-weight: 900;
-      background: linear-gradient(135deg, #22A6B3, #4834D4);
+      background: linear-gradient(135deg, #3aa9a3, #7b7fe0);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text;
     }
     .mode-group { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-    .mode-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #556; }
+    .mode-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #8d8aab; }
     .mode-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
     .mode-btn {
       padding: 13px 28px; border-radius: 12px;
-      border: 2px solid #334; background: #111828;
-      color: #aaa; font-size: 0.95rem; cursor: pointer;
+      border: 2px solid #d3d0e3; background: #ffffff;
+      color: #6b6890; font-size: 0.95rem; cursor: pointer;
       transition: border-color 0.2s, color 0.2s, background 0.2s;
     }
     .mode-btn:hover, .mode-btn.sel {
-      border-color: #22A6B3; color: #22A6B3; background: rgba(34,166,179,0.1);
+      border-color: #3aa9a3; color: #3aa9a3; background: rgba(34,166,179,0.1);
     }
-    .mode-btn.kyle-sel { border-color: #f0c040; color: #f0c040; background: rgba(240,192,64,0.1); }
+    .mode-btn.kyle-sel { border-color: #dfa72e; color: #dfa72e; background: rgba(240,192,64,0.1); }
     .start-btn {
       padding: 14px 56px; font-size: 1.15rem; font-weight: bold;
       border: none; border-radius: 32px;
-      background: linear-gradient(135deg, #22A6B3, #4834D4);
+      background: linear-gradient(135deg, #3aa9a3, #7b7fe0);
       color: #fff; cursor: pointer; margin-top: 8px;
       box-shadow: 0 4px 20px rgba(34,166,179,0.35);
       transition: transform 0.1s;
@@ -67,7 +69,7 @@
     .start-btn:hover { transform: scale(1.04); }
 
     #hint {
-      margin-top: 10px; font-size: 0.75rem; color: #334;
+      margin-top: 10px; font-size: 0.75rem; color: #d3d0e3;
       text-align: center; line-height: 1.7;
     }
   </style>
@@ -105,7 +107,7 @@
 
   <button class="start-btn" id="startBtn">Start Game</button>
 
-  <div style="font-size:0.78rem;color:#445;text-align:center;line-height:1.8">
+  <div style="font-size:0.78rem;color:#a3a0bf;text-align:center;line-height:1.8">
     Kyle: W / S &nbsp;|&nbsp; Lindsey: ↑ / ↓ &nbsp;|&nbsp; Mobile: drag on each side
   </div>
 </div>

@@ -3,14 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <title>Word Chain</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: system-ui, sans-serif;
-      background: #0a0c10;
-      color: #eee;
+      font-family: 'Nunito', system-ui, sans-serif;
+      background: #faf8f5;
+      color: #3b3866;
       min-height: 100vh;
       display: flex; flex-direction: column; align-items: center;
       padding: 12px 16px 40px;
@@ -21,7 +23,7 @@
       display: flex; justify-content: space-between; align-items: center;
       margin-bottom: 12px;
     }
-    nav a { color: #f472b6; text-decoration: none; font-size: 0.9rem; opacity: 0.8; }
+    nav a { color: #e786a7; text-decoration: none; font-size: 0.9rem; opacity: 0.8; }
     nav a:hover { opacity: 1; }
     nav span { font-size: 1rem; font-weight: bold; }
 
@@ -31,27 +33,27 @@
       gap: 28px; padding-top: 12px; width: 100%; max-width: 520px;
     }
     .setup-title { font-size: 2.4rem; font-weight: 900; text-align: center; line-height: 1.1; }
-    .setup-title span { display: block; font-size: 0.95rem; color: #556; font-weight: 400; margin-top: 6px; letter-spacing: 1px; }
+    .setup-title span { display: block; font-size: 0.95rem; color: #8d8aab; font-weight: 400; margin-top: 6px; letter-spacing: 1px; }
 
     .option-group { width: 100%; }
-    .option-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1px; color: #556; margin-bottom: 10px; text-align: center; }
+    .option-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1px; color: #8d8aab; margin-bottom: 10px; text-align: center; }
     .option-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
     .opt-btn {
       padding: 14px 28px; border-radius: 14px;
-      border: 2px solid #222; background: #111520;
-      color: #889; font-size: 1rem; cursor: pointer; text-align: center;
+      border: 2px solid #e8e4f2; background: #ffffff;
+      color: #6b6890; font-size: 1rem; cursor: pointer; text-align: center;
       transition: border-color 0.2s, color 0.2s, background 0.2s;
       min-width: 140px;
     }
-    .opt-btn small { display: block; font-size: 0.72rem; color: #445; margin-top: 3px; }
-    .opt-btn:hover { border-color: #f472b6; color: #f472b6; }
-    .opt-btn.sel { border-color: #f472b6; color: #f472b6; background: rgba(244,114,182,0.08); }
+    .opt-btn small { display: block; font-size: 0.72rem; color: #a3a0bf; margin-top: 3px; }
+    .opt-btn:hover { border-color: #e786a7; color: #e786a7; }
+    .opt-btn.sel { border-color: #e786a7; color: #e786a7; background: rgba(244,114,182,0.08); }
 
     .big-start {
       padding: 15px 64px; font-size: 1.2rem; font-weight: bold;
       border: none; border-radius: 32px;
-      background: linear-gradient(135deg, #f472b6, #c026d3);
+      background: linear-gradient(135deg, #e786a7, #b56fd0);
       color: #fff; cursor: pointer;
       box-shadow: 0 4px 20px rgba(244,114,182,0.35);
       transition: transform 0.1s;
@@ -63,34 +65,34 @@
 
     /* Solo score */
     .solo-score-wrap {
-      width: 100%; background: #111520; border-radius: 14px;
+      width: 100%; background: #ffffff; border-radius: 14px;
       padding: 14px 24px; text-align: center;
     }
-    .solo-score-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #445; }
-    .solo-score-num { font-size: 2.8rem; font-weight: 900; color: #f472b6; line-height: 1.1; }
-    .solo-best { font-size: 0.82rem; color: #445; margin-top: 2px; }
+    .solo-score-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #a3a0bf; }
+    .solo-score-num { font-size: 2.8rem; font-weight: 900; color: #e786a7; line-height: 1.1; }
+    .solo-best { font-size: 0.82rem; color: #a3a0bf; margin-top: 2px; }
 
     /* Scoreboard */
     .scoreboard {
       display: flex; align-items: center; justify-content: space-between;
-      width: 100%; background: #111520; border-radius: 14px; padding: 12px 20px;
+      width: 100%; background: #ffffff; border-radius: 14px; padding: 12px 20px;
     }
     .player-box { text-align: center; min-width: 80px; transition: opacity 0.25s; opacity: 0.38; }
-    .player-box .pname { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: #556; }
+    .player-box .pname { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: #8d8aab; }
     .player-box .pscore { font-size: 1.8rem; font-weight: bold; line-height: 1.1; }
-    .player-box.kyle    .pscore { color: #f0c040; }
-    .player-box.lindsey .pscore { color: #22A6B3; }
-    .player-box.active-player { background: rgba(255,255,255,0.06); border-radius: 10px; padding: 4px 12px; opacity: 1; }
+    .player-box.kyle    .pscore { color: #dfa72e; }
+    .player-box.lindsey .pscore { color: #3aa9a3; }
+    .player-box.active-player { background: rgba(59,56,102,0.06); border-radius: 10px; padding: 4px 12px; opacity: 1; }
     .player-box .lives { font-size: 0.9rem; margin-top: 2px; letter-spacing: -2px; }
     .round-center { text-align: center; flex: 1; }
-    .round-center .chain-count { font-size: 0.82rem; color: #445; }
-    .round-center .rturn { font-size: 1rem; font-weight: bold; color: #eee; margin-top: 2px; }
+    .round-center .chain-count { font-size: 0.82rem; color: #a3a0bf; }
+    .round-center .rturn { font-size: 1rem; font-weight: bold; color: #3b3866; margin-top: 2px; }
 
     /* Timer */
     .timer-wrap { display: flex; justify-content: center; }
     .timer-ring { position: relative; width: 64px; height: 64px; }
     .timer-ring svg { transform: rotate(-90deg); }
-    .timer-track { fill: none; stroke: #1e2a44; stroke-width: 5; }
+    .timer-track { fill: none; stroke: #f4f1fa; stroke-width: 5; }
     .timer-fill  { fill: none; stroke-width: 5; stroke-linecap: round; transition: stroke-dashoffset 0.9s linear, stroke 0.3s; }
     .timer-text {
       position: absolute; inset: 0;
@@ -100,39 +102,39 @@
 
     /* Chain display */
     .chain-wrap {
-      width: 100%; background: #111520; border-radius: 14px;
+      width: 100%; background: #ffffff; border-radius: 14px;
       padding: 14px 16px; min-height: 56px; max-height: 110px; overflow-y: auto;
     }
     .chain-words { display: flex; flex-wrap: wrap; gap: 3px 2px; align-items: center; }
     .chain-word { font-size: 0.88rem; }
-    .chain-word .word-body { color: #667; }
-    .chain-word .link-letter { color: #f472b6; font-weight: bold; }
-    .chain-word.last .word-body { color: #ccc; }
-    .chain-word.last .link-letter { color: #f472b6; font-size: 1rem; font-weight: 900; }
-    .chain-arrow { color: #2a3040; font-size: 0.75rem; margin: 0 1px; }
+    .chain-word .word-body { color: #8d8aab; }
+    .chain-word .link-letter { color: #e786a7; font-weight: bold; }
+    .chain-word.last .word-body { color: #3b3866; }
+    .chain-word.last .link-letter { color: #e786a7; font-size: 1rem; font-weight: 900; }
+    .chain-arrow { color: #e8e4f2; font-size: 0.75rem; margin: 0 1px; }
 
     /* Letter prompt */
     .letter-prompt {
-      width: 100%; background: #111520; border-radius: 16px;
+      width: 100%; background: #ffffff; border-radius: 16px;
       padding: 18px 24px; text-align: center;
     }
-    .lp-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #445; }
+    .lp-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #a3a0bf; }
     .lp-letter {
-      font-size: 3.5rem; font-weight: 900; color: #f472b6; line-height: 1.1; margin: 4px 0;
+      font-size: 3.5rem; font-weight: 900; color: #e786a7; line-height: 1.1; margin: 4px 0;
       text-shadow: 0 0 24px rgba(244,114,182,0.4);
     }
-    .lp-hint { font-size: 0.82rem; color: #445; }
+    .lp-hint { font-size: 0.82rem; color: #a3a0bf; }
 
     /* Input */
     .input-wrap { width: 100%; display: flex; flex-direction: column; gap: 10px; }
     .chain-input {
       width: 100%; padding: 14px 16px; font-size: 1.3rem; font-weight: bold;
-      border-radius: 12px; border: 2px solid #223; background: #0a0e18;
-      color: #fff; text-align: center; text-transform: lowercase;
+      border-radius: 12px; border: 2px solid #e8e4f2; background: #ffffff;
+      color: #3b3866; text-align: center; text-transform: lowercase;
       outline: none; transition: border-color 0.2s; letter-spacing: 2px;
     }
-    .chain-input:focus { border-color: #f472b6; }
-    .chain-input.err { border-color: #f87171; animation: shake 0.4s; }
+    .chain-input:focus { border-color: #e786a7; }
+    .chain-input.err { border-color: #e0706f; animation: shake 0.4s; }
     @keyframes shake {
       0%,100% { transform: translateX(0); }
       20%      { transform: translateX(-8px); }
@@ -142,65 +144,65 @@
     }
     .submit-btn {
       width: 100%; padding: 13px; border-radius: 12px; border: none;
-      background: linear-gradient(135deg, #f472b6, #c026d3);
+      background: linear-gradient(135deg, #e786a7, #b56fd0);
       color: #fff; font-size: 1rem; font-weight: bold; cursor: pointer;
       transition: transform 0.1s;
     }
     .submit-btn:hover { transform: scale(1.02); }
 
     .feedback-msg { min-height: 28px; text-align: center; font-size: 1rem; font-weight: bold; }
-    .fb-ok  { color: #4ade80; }
-    .fb-err { color: #f87171; }
+    .fb-ok  { color: #5fb87c; }
+    .fb-err { color: #e0706f; }
 
     /* ── Results ── */
     #result-screen {
       display: none; flex-direction: column; align-items: center;
       gap: 20px; padding-top: 10px; width: 100%; max-width: 520px;
     }
-    .result-title { font-size: 2rem; font-weight: 900; color: #f472b6; text-align: center; }
+    .result-title { font-size: 2rem; font-weight: 900; color: #e786a7; text-align: center; }
 
     .winner-banner {
-      width: 100%; background: rgba(244,114,182,0.1); border: 2px solid #f472b6;
+      width: 100%; background: rgba(244,114,182,0.1); border: 2px solid #e786a7;
       border-radius: 16px; padding: 16px 24px; text-align: center;
-      font-size: 1.2rem; font-weight: bold; color: #f472b6; line-height: 1.5;
+      font-size: 1.2rem; font-weight: bold; color: #e786a7; line-height: 1.5;
     }
 
     .result-stats { display: flex; gap: 16px; width: 100%; flex-wrap: wrap; }
     .stat-card {
-      flex: 1; min-width: 130px; background: #111520; border-radius: 14px;
+      flex: 1; min-width: 130px; background: #ffffff; border-radius: 14px;
       padding: 16px; text-align: center; border: 2px solid transparent;
     }
-    .stat-card.kyle    { border-color: #f0c040; }
-    .stat-card.lindsey { border-color: #22A6B3; }
+    .stat-card.kyle    { border-color: #dfa72e; }
+    .stat-card.lindsey { border-color: #3aa9a3; }
     .stat-card.winner  { box-shadow: 0 0 24px rgba(244,114,182,0.25); }
-    .stat-name  { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #556; }
+    .stat-name  { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #8d8aab; }
     .stat-score { font-size: 2.8rem; font-weight: 900; line-height: 1; }
-    .stat-card.kyle    .stat-score { color: #f0c040; }
-    .stat-card.lindsey .stat-score { color: #22A6B3; }
-    .stat-sub   { font-size: 0.75rem; color: #445; margin-top: 4px; }
+    .stat-card.kyle    .stat-score { color: #dfa72e; }
+    .stat-card.lindsey .stat-score { color: #3aa9a3; }
+    .stat-sub   { font-size: 0.75rem; color: #a3a0bf; margin-top: 4px; }
 
     .result-chain-box {
-      width: 100%; background: #111520; border-radius: 14px; padding: 18px;
+      width: 100%; background: #ffffff; border-radius: 14px; padding: 18px;
     }
-    .result-chain-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: #445; margin-bottom: 10px; }
+    .result-chain-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: #a3a0bf; margin-bottom: 10px; }
     .result-chain-words { display: flex; flex-wrap: wrap; gap: 3px 2px; align-items: center; }
-    .rcw { font-size: 0.85rem; color: #778; }
-    .rcw-arrow { color: #2a3040; margin: 0 1px; font-size: 0.75rem; }
+    .rcw { font-size: 0.85rem; color: #6b6890; }
+    .rcw-arrow { color: #e8e4f2; margin: 0 1px; font-size: 0.75rem; }
 
     .result-btns { display: flex; gap: 12px; }
     .result-btn-primary {
       padding: 12px 36px; border-radius: 24px; border: none;
-      background: linear-gradient(135deg, #f472b6, #c026d3);
+      background: linear-gradient(135deg, #e786a7, #b56fd0);
       color: #fff; font-size: 1rem; font-weight: bold; cursor: pointer;
       transition: transform 0.1s;
     }
     .result-btn-primary:hover { transform: scale(1.04); }
     .result-btn-secondary {
       padding: 12px 28px; border-radius: 24px; font-size: 1rem;
-      border: 2px solid #334; background: transparent; color: #aaa;
+      border: 2px solid #d3d0e3; background: transparent; color: #6b6890;
       cursor: pointer; transition: border-color 0.2s, color 0.2s;
     }
-    .result-btn-secondary:hover { border-color: #f472b6; color: #f472b6; }
+    .result-btn-secondary:hover { border-color: #e786a7; color: #e786a7; }
 
     @media (max-width: 480px) {
       .setup-title { font-size: 1.9rem; }
@@ -277,7 +279,7 @@
       <svg width="64" height="64" viewBox="0 0 64 64">
         <circle class="timer-track" cx="32" cy="32" r="27"/>
         <circle class="timer-fill" id="timerArc" cx="32" cy="32" r="27"
-          stroke="#f472b6" stroke-dasharray="169.6" stroke-dashoffset="0"/>
+          stroke="#e786a7" stroke-dasharray="169.6" stroke-dashoffset="0"/>
       </svg>
       <div class="timer-text" id="timerText">12</div>
     </div>
@@ -285,7 +287,7 @@
 
   <div class="chain-wrap">
     <div class="chain-words" id="chainWords">
-      <span style="color:#334;font-size:0.85rem">Chain starts here…</span>
+      <span style="color:#d3d0e3;font-size:0.85rem">Chain starts here…</span>
     </div>
   </div>
 
@@ -494,10 +496,10 @@ function renderTimer() {
   const offset = CIRC * (1 - pct);
   const arc    = document.getElementById('timerArc');
   arc.style.strokeDashoffset = offset;
-  arc.style.stroke = pct > 0.5 ? '#f472b6' : pct > 0.25 ? '#fb923c' : '#f87171';
+  arc.style.stroke = pct > 0.5 ? '#e786a7' : pct > 0.25 ? '#f0a65c' : '#e0706f';
   const txt = document.getElementById('timerText');
   txt.textContent  = game.timeLeft;
-  txt.style.color  = pct > 0.25 ? '#eee' : '#f87171';
+  txt.style.color  = pct > 0.25 ? '#3b3866' : '#e0706f';
 }
 
 // ── Submit ───────────────────────────────────────────────────────────

@@ -3,14 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <title>Sudoku – Kyle &amp; Lindsey</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: system-ui, sans-serif;
-      background: #0a0c10;
-      color: #eee;
+      font-family: 'Nunito', system-ui, sans-serif;
+      background: #faf8f5;
+      color: #3b3866;
       min-height: 100vh;
       display: flex; flex-direction: column; align-items: center;
       padding: 0 16px 60px;
@@ -22,10 +24,10 @@
       display: flex; align-items: center; gap: 12px;
       padding: 16px 0 0; margin-bottom: 10px;
     }
-    .topnav a { color: #f0c040; text-decoration: none; font-size: 0.85rem; opacity: 0.7; transition: opacity 0.2s; }
+    .topnav a { color: #dfa72e; text-decoration: none; font-size: 0.85rem; opacity: 0.7; transition: opacity 0.2s; }
     .topnav a:hover { opacity: 1; }
     .topnav h2 {
-      font-size: 1.1rem; font-weight: 800; color: #eee;
+      font-size: 1.1rem; font-weight: 800; color: #3b3866;
     }
 
     /* ── Screens ── */
@@ -37,42 +39,42 @@
     .setup-title .big-icon { font-size: 3.2rem; display: block; margin-bottom: 8px; }
     .setup-title h1 {
       font-size: 2.2rem; font-weight: 900;
-      color: #f0c040;
+      color: #dfa72e;
       letter-spacing: 1px;
     }
-    .setup-title p { color: #556; font-size: 0.9rem; margin-top: 6px; }
+    .setup-title p { color: #8d8aab; font-size: 0.9rem; margin-top: 6px; }
 
     .option-group { width: 100%; }
-    .option-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 1px; color: #778; text-transform: uppercase; margin-bottom: 8px; }
+    .option-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 1px; color: #6b6890; text-transform: uppercase; margin-bottom: 8px; }
     .option-row { display: flex; gap: 10px; flex-wrap: wrap; }
     .opt-btn {
       flex: 1; min-width: 70px;
       padding: 11px 14px; border-radius: 12px;
-      border: 2px solid #1e2030; background: #111520;
-      color: #aab; font-size: 0.9rem; font-weight: 600;
+      border: 2px solid #f4f1fa; background: #ffffff;
+      color: #6b6890; font-size: 0.9rem; font-weight: 600;
       cursor: pointer; transition: all 0.15s; text-align: center;
     }
-    .opt-btn:hover { border-color: #f0c040; color: #eee; }
-    .opt-btn.selected { border-color: #f0c040; background: rgba(240,192,64,0.12); color: #f0c040; }
+    .opt-btn:hover { border-color: #dfa72e; color: #3b3866; }
+    .opt-btn.selected { border-color: #dfa72e; background: rgba(240,192,64,0.12); color: #dfa72e; }
 
     .player-select-row { display: flex; gap: 12px; width: 100%; }
     .player-opt {
       flex: 1; padding: 14px; border-radius: 14px;
-      border: 2px solid #1e2030; background: #111520;
+      border: 2px solid #f4f1fa; background: #ffffff;
       cursor: pointer; transition: all 0.2s; text-align: center;
     }
     .player-opt .p-name { font-size: 1rem; font-weight: 700; margin-bottom: 2px; }
-    .player-opt .p-sub { font-size: 0.75rem; color: #556; }
-    .player-opt.kyle   { --pc: #f0c040; }
-    .player-opt.lindsey { --pc: #22A6B3; }
-    .player-opt.selected { border-color: var(--pc); background: rgba(0,0,0,0.2); box-shadow: 0 0 14px rgba(0,0,0,0.3); }
+    .player-opt .p-sub { font-size: 0.75rem; color: #8d8aab; }
+    .player-opt.kyle   { --pc: #dfa72e; }
+    .player-opt.lindsey { --pc: #3aa9a3; }
+    .player-opt.selected { border-color: var(--pc); background: rgba(59,56,102,0.09); box-shadow: 0 0 14px rgba(59,56,102,0.135); }
     .player-opt.selected .p-name { color: var(--pc); }
     .player-opt.kyle.selected   { box-shadow: 0 0 14px rgba(240,192,64,0.2); }
     .player-opt.lindsey.selected { box-shadow: 0 0 14px rgba(34,166,179,0.2); }
 
     .start-btn {
       width: 100%; padding: 16px; border-radius: 14px; border: none;
-      background: linear-gradient(135deg, #f0c040, #e8a020);
+      background: linear-gradient(135deg, #dfa72e, #e8a020);
       color: #111; font-size: 1.1rem; font-weight: 800;
       cursor: pointer; transition: transform 0.15s, opacity 0.15s;
     }
@@ -91,7 +93,7 @@
       font-size: clamp(1.1rem, 3vw, 1.4rem);
       font-weight: 800;
       font-variant-numeric: tabular-nums;
-      color: #eee;
+      color: #3b3866;
       letter-spacing: 1px;
     }
 
@@ -100,20 +102,20 @@
     }
     .pip {
       width: 10px; height: 10px; border-radius: 50%;
-      background: #2a2d3a;
-      border: 1.5px solid #445;
+      background: #f4f1fa;
+      border: 1.5px solid #a3a0bf;
       transition: background 0.3s, border-color 0.3s;
     }
-    .pip.used { background: #ff6b6b; border-color: #ff6b6b; }
+    .pip.used { background: #e0706f; border-color: #e0706f; }
 
     .pause-btn {
-      background: rgba(255,255,255,0.06); border: 2px solid #2a2d3a; color: #aab;
+      background: rgba(59,56,102,0.06); border: 2px solid #f4f1fa; color: #6b6890;
       border-radius: 10px; width: 38px; height: 38px; font-size: 1rem;
       cursor: pointer; flex-shrink: 0; transition: all 0.15s;
       display: flex; align-items: center; justify-content: center;
     }
-    .pause-btn:hover { border-color: #f0c040; color: #f0c040; }
-    .pause-btn.paused { border-color: #2ecc71; color: #2ecc71; background: rgba(46,204,113,0.1); }
+    .pause-btn:hover { border-color: #dfa72e; color: #dfa72e; }
+    .pause-btn.paused { border-color: #5fb87c; color: #5fb87c; background: rgba(46,204,113,0.1); }
 
     /* ── Sudoku Grid ── */
     .sudoku-wrap {
@@ -126,7 +128,7 @@
       display: grid;
       grid-template-columns: repeat(9, 1fr);
       grid-template-rows: repeat(9, 1fr);
-      border: 3px solid #667;
+      border: 3px solid #8d8aab;
       border-radius: 6px;
       overflow: hidden;
     }
@@ -134,23 +136,23 @@
     .cell {
       position: relative;
       display: flex; align-items: center; justify-content: center;
-      border: 1px solid #2a2d3a;
+      border: 1px solid #f4f1fa;
       cursor: pointer;
       user-select: none;
       transition: background 0.1s;
       font-size: clamp(0.9rem, 3vw, 1.25rem);
       font-weight: 700;
       color: #7a8090;
-      background: #111520;
+      background: #ffffff;
       -webkit-tap-highlight-color: transparent;
     }
 
     /* thick box borders */
-    .cell.col-end-box { border-right: 3px solid #445; }
-    .cell.row-end-box { border-bottom: 3px solid #445; }
+    .cell.col-end-box { border-right: 3px solid #a3a0bf; }
+    .cell.row-end-box { border-bottom: 3px solid #a3a0bf; }
 
     /* cell states */
-    .cell.given { color: #bbccdd; font-weight: 800; }
+    .cell.given { color: #3b3866; font-weight: 800; }
     .cell.selected { background: rgba(61,130,255,0.25) !important; }
     .cell.highlight { background: rgba(61,130,255,0.08); }
     .cell.same-num { background: rgba(61,130,255,0.16); }
@@ -190,16 +192,16 @@
       aspect-ratio: 1;
       display: flex; align-items: center; justify-content: center;
       border-radius: 8px;
-      border: 2px solid #1e2030;
-      background: #111520;
-      color: #ccd;
+      border: 2px solid #f4f1fa;
+      background: #ffffff;
+      color: #3b3866;
       font-size: clamp(0.9rem, 2.5vw, 1.2rem);
       font-weight: 700;
       cursor: pointer;
       transition: all 0.15s;
       -webkit-tap-highlight-color: transparent;
     }
-    .num-btn:hover { border-color: #f0c040; color: #f0c040; }
+    .num-btn:hover { border-color: #dfa72e; color: #dfa72e; }
     .num-btn:active { transform: scale(0.93); }
 
     /* ── Action bar ── */
@@ -213,9 +215,9 @@
       display: flex; flex-direction: column; align-items: center; gap: 3px;
       padding: 10px 4px;
       border-radius: 12px;
-      border: 2px solid #1e2030;
-      background: #111520;
-      color: #aab;
+      border: 2px solid #f4f1fa;
+      background: #ffffff;
+      color: #6b6890;
       font-size: clamp(0.85rem, 2.5vw, 1.05rem);
       cursor: pointer;
       transition: all 0.15s;
@@ -226,42 +228,42 @@
       font-weight: 600;
       letter-spacing: 0.3px;
       text-transform: uppercase;
-      color: #667;
+      color: #8d8aab;
     }
-    .action-btn:hover { border-color: #3a3d50; color: #eee; }
+    .action-btn:hover { border-color: #b3a9ea; color: #3b3866; }
     .action-btn:hover .ab-label { color: #99a; }
     .action-btn.active { border-color: #a855f7; background: rgba(168,85,247,0.12); color: #c084fc; }
     .action-btn.active .ab-label { color: #a855f7; }
 
     /* ── Result Screen ── */
     .result-card {
-      width: 100%; background: #111520; border-radius: 20px;
-      padding: 32px 24px; text-align: center; border: 2px solid #1e2030;
+      width: 100%; background: #ffffff; border-radius: 20px;
+      padding: 32px 24px; text-align: center; border: 2px solid #f4f1fa;
       margin-top: 16px;
     }
     .result-icon { font-size: 3.5rem; margin-bottom: 12px; display: block; }
     .result-title { font-size: 2rem; font-weight: 900; margin-bottom: 6px; }
-    .result-subtitle { font-size: 0.9rem; color: #667; margin-bottom: 28px; }
+    .result-subtitle { font-size: 0.9rem; color: #8d8aab; margin-bottom: 28px; }
 
     .result-stats {
       display: flex; gap: 12px; justify-content: center; margin-bottom: 28px;
     }
     .stat-box {
-      flex: 1; max-width: 120px; background: #0a0c10; border-radius: 14px;
-      padding: 14px 10px; border: 2px solid #1e2030;
+      flex: 1; max-width: 120px; background: #faf8f5; border-radius: 14px;
+      padding: 14px 10px; border: 2px solid #f4f1fa;
     }
-    .stat-val { font-size: 1.6rem; font-weight: 900; color: #eee; }
-    .stat-lbl { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #556; margin-top: 3px; }
+    .stat-val { font-size: 1.6rem; font-weight: 900; color: #3b3866; }
+    .stat-lbl { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #8d8aab; margin-top: 3px; }
 
     .result-btns { display: flex; gap: 10px; }
     .res-btn {
-      flex: 1; padding: 14px; border-radius: 12px; border: 2px solid #2a2d3a;
-      background: #0a0c10; color: #ccd; font-size: 0.95rem; font-weight: 700;
+      flex: 1; padding: 14px; border-radius: 12px; border: 2px solid #f4f1fa;
+      background: #faf8f5; color: #3b3866; font-size: 0.95rem; font-weight: 700;
       cursor: pointer; transition: all 0.15s;
     }
-    .res-btn:hover { border-color: #f0c040; color: #f0c040; }
+    .res-btn:hover { border-color: #dfa72e; color: #dfa72e; }
     .res-btn.primary {
-      background: linear-gradient(135deg, #f0c040, #e8a020);
+      background: linear-gradient(135deg, #dfa72e, #e8a020);
       border-color: transparent; color: #111;
     }
     .res-btn.primary:hover { opacity: 0.9; color: #111; border-color: transparent; }
@@ -286,9 +288,9 @@
   <div class="option-group">
     <div class="option-label">Difficulty</div>
     <div class="option-row">
-      <button class="opt-btn selected" data-diff="easy">Easy<br><small style="font-weight:400;color:#667">45 clues</small></button>
-      <button class="opt-btn" data-diff="medium">Medium<br><small style="font-weight:400;color:#667">35 clues</small></button>
-      <button class="opt-btn" data-diff="hard">Hard<br><small style="font-weight:400;color:#667">27 clues</small></button>
+      <button class="opt-btn selected" data-diff="easy">Easy<br><small style="font-weight:400;color:#8d8aab">45 clues</small></button>
+      <button class="opt-btn" data-diff="medium">Medium<br><small style="font-weight:400;color:#8d8aab">35 clues</small></button>
+      <button class="opt-btn" data-diff="hard">Hard<br><small style="font-weight:400;color:#8d8aab">27 clues</small></button>
     </div>
   </div>
 
@@ -296,11 +298,11 @@
     <div class="option-label">Player</div>
     <div class="player-select-row">
       <div class="player-opt kyle selected" data-player="kyle">
-        <div class="p-name" style="color:#f0c040">Kyle</div>
+        <div class="p-name" style="color:#dfa72e">Kyle</div>
         <div class="p-sub">Gold</div>
       </div>
       <div class="player-opt lindsey" data-player="lindsey">
-        <div class="p-name" style="color:#22A6B3">Lindsey</div>
+        <div class="p-name" style="color:#3aa9a3">Lindsey</div>
         <div class="p-sub">Teal</div>
       </div>
     </div>
@@ -501,7 +503,7 @@ let timerInterval = null;
 let gamePaused = false;
 let difficulty = 'easy';
 let player = 'kyle';
-let playerColor = '#f0c040';
+let playerColor = '#dfa72e';
 let gameActive = false;
 
 // ─────────────────────────────────────────────
@@ -521,7 +523,7 @@ document.querySelectorAll('[data-player]').forEach(opt => {
     document.querySelectorAll('[data-player]').forEach(o => o.classList.remove('selected'));
     opt.classList.add('selected');
     player = opt.dataset.player;
-    playerColor = player === 'kyle' ? '#f0c040' : '#22A6B3';
+    playerColor = player === 'kyle' ? '#dfa72e' : '#3aa9a3';
   });
 });
 

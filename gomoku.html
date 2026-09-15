@@ -3,13 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <title>五子棋 Gomoku – Kyle & Lindsey</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: system-ui, sans-serif;
-      background: #0f0f1e;
-      color: #eee;
+      font-family: 'Nunito', system-ui, sans-serif;
+      background: #faf8f5;
+      color: #3b3866;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -24,13 +26,13 @@
       align-items: center;
       justify-content: space-between;
       padding: 14px 24px;
-      background: rgba(255,255,255,0.03);
-      border-bottom: 1px solid rgba(255,255,255,0.06);
+      background: rgba(59,56,102,0.03);
+      border-bottom: 1px solid rgba(59,56,102,0.06);
       flex-shrink: 0;
     }
-    .header a { color: #667; text-decoration: none; font-size: 0.85rem; }
-    .header a:hover { color: #10b981; }
-    .header-title { font-size: 1.1rem; font-weight: 800; color: #10b981; }
+    .header a { color: #8d8aab; text-decoration: none; font-size: 0.85rem; }
+    .header a:hover { color: #5fb87c; }
+    .header-title { font-size: 1.1rem; font-weight: 800; color: #5fb87c; }
 
     .screen {
       display: none;
@@ -47,7 +49,7 @@
     h1 {
       font-size: 3rem;
       font-weight: 900;
-      background: linear-gradient(135deg, #10b981, #34d399);
+      background: linear-gradient(135deg, #5fb87c, #5fb87c);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -55,7 +57,7 @@
       margin-bottom: 4px;
       line-height: 1.1;
     }
-    .subtitle { color: #667; font-size: 0.95rem; margin-bottom: 28px; }
+    .subtitle { color: #8d8aab; font-size: 0.95rem; margin-bottom: 28px; }
 
     .player-legend {
       display: flex;
@@ -68,10 +70,10 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      background: #16213e;
+      background: #ffffff;
       padding: 12px 20px;
       border-radius: 14px;
-      border: 2px solid #2a2a3e;
+      border: 2px solid #e8e4f2;
     }
     .legend-stone {
       width: 30px;
@@ -80,23 +82,23 @@
       flex-shrink: 0;
     }
     .legend-stone.black {
-      background: radial-gradient(circle at 35% 30%, #666, #111);
-      box-shadow: 0 3px 8px rgba(0,0,0,0.6), inset 0 1px 2px rgba(255,255,255,0.15);
+      background: radial-gradient(circle at 35% 30%, #8d8aab, #111);
+      box-shadow: 0 3px 8px rgba(59,56,102,0.27), inset 0 1px 2px rgba(59,56,102,0.15);
     }
     .legend-stone.white {
-      background: radial-gradient(circle at 35% 30%, #fff, #ccc);
-      box-shadow: 0 3px 8px rgba(0,0,0,0.35), inset 0 1px 2px rgba(0,0,0,0.08);
+      background: radial-gradient(circle at 35% 30%, #3b3866, #3b3866);
+      box-shadow: 0 3px 8px rgba(59,56,102,0.158), inset 0 1px 2px rgba(59,56,102,0.036);
     }
     .legend-info { display: flex; flex-direction: column; gap: 2px; }
     .legend-name { font-weight: 800; font-size: 1rem; }
-    .legend-name.kyle { color: #f0c040; }
-    .legend-name.lindsey { color: #22A6B3; }
-    .legend-role { font-size: 0.72rem; color: #778; }
+    .legend-name.kyle { color: #dfa72e; }
+    .legend-name.lindsey { color: #3aa9a3; }
+    .legend-role { font-size: 0.72rem; color: #6b6890; }
 
     .setup-section { margin-bottom: 24px; text-align: center; }
     .setup-label {
       font-size: 0.75rem;
-      color: #889;
+      color: #6b6890;
       text-transform: uppercase;
       letter-spacing: 0.1em;
       margin-bottom: 10px;
@@ -105,25 +107,25 @@
     .opt-btn {
       padding: 10px 20px;
       border-radius: 12px;
-      border: 2px solid #2a2a3e;
-      background: #16213e;
-      color: #aab;
+      border: 2px solid #e8e4f2;
+      background: #ffffff;
+      color: #6b6890;
       cursor: pointer;
       transition: all 0.15s;
       font-size: 0.9rem;
       font-weight: 600;
     }
     .opt-btn.selected {
-      border-color: #10b981;
+      border-color: #5fb87c;
       background: rgba(16,185,129,0.15);
-      color: #10b981;
+      color: #5fb87c;
     }
-    .opt-btn:hover { border-color: #10b981; }
+    .opt-btn:hover { border-color: #5fb87c; }
 
     .start-btn {
       padding: 18px 52px;
       border-radius: 16px;
-      background: linear-gradient(135deg, #10b981, #34d399);
+      background: linear-gradient(135deg, #5fb87c, #5fb87c);
       border: none;
       color: #fff;
       font-size: 1.2rem;
@@ -148,35 +150,35 @@
       flex: 1;
       padding: 10px 14px;
       border-radius: 14px;
-      background: #16213e;
-      border: 2px solid #2a2a3e;
+      background: #ffffff;
+      border: 2px solid #e8e4f2;
       position: relative;
       transition: all 0.25s;
       text-align: center;
     }
-    .player-card.active.kyle   { border-color: #f0c040; box-shadow: 0 0 18px rgba(240,192,64,0.25); }
-    .player-card.active.lindsey { border-color: #22A6B3; box-shadow: 0 0 18px rgba(34,166,179,0.25); }
+    .player-card.active.kyle   { border-color: #dfa72e; box-shadow: 0 0 18px rgba(240,192,64,0.25); }
+    .player-card.active.lindsey { border-color: #3aa9a3; box-shadow: 0 0 18px rgba(34,166,179,0.25); }
     .player-name { font-weight: 800; font-size: 0.95rem; }
-    .player-name.kyle { color: #f0c040; }
-    .player-name.lindsey { color: #22A6B3; }
+    .player-name.kyle { color: #dfa72e; }
+    .player-name.lindsey { color: #3aa9a3; }
     .stone-row { display: flex; align-items: center; gap: 6px; justify-content: center; margin-top: 4px; }
     .stone-pip { width: 14px; height: 14px; border-radius: 50%; }
     .stone-pip.black {
-      background: radial-gradient(circle at 35% 30%, #555, #000);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+      background: radial-gradient(circle at 35% 30%, #8d8aab, #000);
+      box-shadow: 0 1px 3px rgba(59,56,102,0.225);
     }
     .stone-pip.white {
-      background: radial-gradient(circle at 35% 30%, #fff, #ccc);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+      background: radial-gradient(circle at 35% 30%, #3b3866, #3b3866);
+      box-shadow: 0 1px 3px rgba(59,56,102,0.135);
       border: 1px solid #bbb;
     }
-    .stone-label { font-size: 0.72rem; color: #889; }
+    .stone-label { font-size: 0.72rem; color: #6b6890; }
     .turn-badge {
       position: absolute;
       top: -10px;
       left: 50%;
       transform: translateX(-50%);
-      background: #10b981;
+      background: #5fb87c;
       color: #fff;
       font-size: 0.6rem;
       font-weight: 800;
@@ -186,9 +188,9 @@
       display: none;
     }
     .player-card.active .turn-badge { display: block; }
-    .turn-badge.thinking { background: #6366f1; animation: pulse 0.8s ease-in-out infinite; }
+    .turn-badge.thinking { background: #7b7fe0; animation: pulse 0.8s ease-in-out infinite; }
     @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.55; } }
-    .vs-sep { color: #445; font-weight: 800; font-size: 0.9rem; flex-shrink: 0; }
+    .vs-sep { color: #a3a0bf; font-weight: 800; font-size: 0.9rem; flex-shrink: 0; }
 
     #boardCanvas {
       border-radius: 10px;
@@ -203,17 +205,17 @@
     .win-title {
       font-size: 2.5rem;
       font-weight: 900;
-      background: linear-gradient(135deg, #10b981, #34d399);
+      background: linear-gradient(135deg, #5fb87c, #5fb87c);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
       margin-bottom: 8px;
     }
-    .win-sub { color: #889; font-size: 1rem; margin-bottom: 32px; text-align: center; }
+    .win-sub { color: #6b6890; font-size: 1rem; margin-bottom: 32px; text-align: center; }
     .play-again-btn {
       padding: 16px 48px;
       border-radius: 16px;
-      background: linear-gradient(135deg, #10b981, #34d399);
+      background: linear-gradient(135deg, #5fb87c, #5fb87c);
       border: none;
       color: #fff;
       font-size: 1.1rem;
@@ -224,8 +226,8 @@
       margin-bottom: 16px;
     }
     .play-again-btn:hover { transform: translateY(-3px); }
-    .home-link { color: #667; text-decoration: none; font-size: 0.9rem; }
-    .home-link:hover { color: #10b981; }
+    .home-link { color: #8d8aab; text-decoration: none; font-size: 0.9rem; }
+    .home-link:hover { color: #5fb87c; }
 
     /* ── Confetti ── */
     .confetti-piece {

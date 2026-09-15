@@ -3,14 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <title>Speed Typing</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: system-ui, sans-serif;
-      background: #0a0c10;
-      color: #eee;
+      font-family: 'Nunito', system-ui, sans-serif;
+      background: #faf8f5;
+      color: #3b3866;
       min-height: 100vh;
       display: flex; flex-direction: column; align-items: center;
       padding: 12px 16px 40px;
@@ -21,7 +23,7 @@
       display: flex; justify-content: space-between; align-items: center;
       margin-bottom: 12px;
     }
-    nav a { color: #2dd4bf; text-decoration: none; font-size: 0.9rem; opacity: 0.8; }
+    nav a { color: #5cbfae; text-decoration: none; font-size: 0.9rem; opacity: 0.8; }
     nav a:hover { opacity: 1; }
     nav span { font-size: 1rem; font-weight: bold; }
 
@@ -31,27 +33,27 @@
       gap: 28px; padding-top: 12px; width: 100%; max-width: 520px;
     }
     .setup-title { font-size: 2.4rem; font-weight: 900; text-align: center; line-height: 1.1; }
-    .setup-title span { display: block; font-size: 0.95rem; color: #556; font-weight: 400; margin-top: 6px; letter-spacing: 1px; }
+    .setup-title span { display: block; font-size: 0.95rem; color: #8d8aab; font-weight: 400; margin-top: 6px; letter-spacing: 1px; }
 
     .option-group { width: 100%; }
-    .option-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1px; color: #556; margin-bottom: 10px; text-align: center; }
+    .option-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1px; color: #8d8aab; margin-bottom: 10px; text-align: center; }
     .option-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
     .opt-btn {
       padding: 14px 28px; border-radius: 14px;
-      border: 2px solid #222; background: #111520;
-      color: #889; font-size: 1rem; cursor: pointer; text-align: center;
+      border: 2px solid #e8e4f2; background: #ffffff;
+      color: #6b6890; font-size: 1rem; cursor: pointer; text-align: center;
       transition: border-color 0.2s, color 0.2s, background 0.2s;
       min-width: 140px;
     }
-    .opt-btn small { display: block; font-size: 0.72rem; color: #445; margin-top: 3px; }
-    .opt-btn:hover { border-color: #2dd4bf; color: #2dd4bf; }
-    .opt-btn.sel { border-color: #2dd4bf; color: #2dd4bf; background: rgba(45,212,191,0.08); }
+    .opt-btn small { display: block; font-size: 0.72rem; color: #a3a0bf; margin-top: 3px; }
+    .opt-btn:hover { border-color: #5cbfae; color: #5cbfae; }
+    .opt-btn.sel { border-color: #5cbfae; color: #5cbfae; background: rgba(45,212,191,0.08); }
 
     .big-start {
       padding: 15px 64px; font-size: 1.2rem; font-weight: bold;
       border: none; border-radius: 32px;
-      background: linear-gradient(135deg, #2dd4bf, #0ea5e9);
+      background: linear-gradient(135deg, #5cbfae, #5a9fe0);
       color: #04222a; cursor: pointer;
       box-shadow: 0 4px 20px rgba(45,212,191,0.35);
       transition: transform 0.1s;
@@ -64,134 +66,134 @@
     /* Scoreboard */
     .scoreboard {
       display: flex; align-items: center; justify-content: space-between;
-      width: 100%; background: #111520; border-radius: 14px; padding: 12px 20px;
+      width: 100%; background: #ffffff; border-radius: 14px; padding: 12px 20px;
     }
     .player-box { text-align: center; min-width: 88px; transition: opacity 0.25s; opacity: 0.38; }
-    .player-box .pname { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: #556; }
+    .player-box .pname { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: #8d8aab; }
     .player-box .pscore { font-size: 1.8rem; font-weight: bold; line-height: 1.1; }
-    .player-box.kyle    .pscore { color: #f0c040; }
-    .player-box.lindsey .pscore { color: #22A6B3; }
-    .player-box.active-player { background: rgba(255,255,255,0.06); border-radius: 10px; padding: 4px 12px; opacity: 1; }
-    .player-box .psub { font-size: 0.72rem; color: #445; margin-top: 2px; }
+    .player-box.kyle    .pscore { color: #dfa72e; }
+    .player-box.lindsey .pscore { color: #3aa9a3; }
+    .player-box.active-player { background: rgba(59,56,102,0.06); border-radius: 10px; padding: 4px 12px; opacity: 1; }
+    .player-box .psub { font-size: 0.72rem; color: #a3a0bf; margin-top: 2px; }
     .round-center { text-align: center; flex: 1; }
-    .round-center .round-count { font-size: 0.82rem; color: #445; }
-    .round-center .rturn { font-size: 1rem; font-weight: bold; color: #eee; margin-top: 2px; }
+    .round-center .round-count { font-size: 0.82rem; color: #a3a0bf; }
+    .round-center .rturn { font-size: 1rem; font-weight: bold; color: #3b3866; margin-top: 2px; }
 
     /* Solo stat strip */
     .solo-score-wrap {
-      width: 100%; background: #111520; border-radius: 14px;
+      width: 100%; background: #ffffff; border-radius: 14px;
       padding: 14px 24px; text-align: center;
     }
-    .solo-score-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #445; }
-    .solo-score-num { font-size: 2.8rem; font-weight: 900; color: #2dd4bf; line-height: 1.1; }
-    .solo-best { font-size: 0.82rem; color: #445; margin-top: 2px; }
+    .solo-score-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #a3a0bf; }
+    .solo-score-num { font-size: 2.8rem; font-weight: 900; color: #5cbfae; line-height: 1.1; }
+    .solo-best { font-size: 0.82rem; color: #a3a0bf; margin-top: 2px; }
 
     /* Live stats */
     .live-stats { display: flex; gap: 10px; width: 100%; }
     .live-stat {
-      flex: 1; background: #111520; border-radius: 12px; padding: 10px 8px; text-align: center;
+      flex: 1; background: #ffffff; border-radius: 12px; padding: 10px 8px; text-align: center;
     }
-    .ls-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1px; color: #445; }
-    .ls-value { font-size: 1.5rem; font-weight: 900; color: #eee; line-height: 1.2; }
-    .ls-value.good { color: #4ade80; }
-    .ls-value.warn { color: #f87171; }
+    .ls-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1px; color: #a3a0bf; }
+    .ls-value { font-size: 1.5rem; font-weight: 900; color: #3b3866; line-height: 1.2; }
+    .ls-value.good { color: #5fb87c; }
+    .ls-value.warn { color: #e0706f; }
 
     /* Sentence */
     .sentence-box {
-      width: 100%; background: #111520; border-radius: 16px;
+      width: 100%; background: #ffffff; border-radius: 16px;
       padding: 20px 22px; font-size: 1.35rem; line-height: 1.7;
       font-family: ui-monospace, "SF Mono", Menlo, monospace;
       letter-spacing: 0.5px; word-break: break-word;
     }
-    .ch { color: #556; transition: color 0.05s; }
-    .ch.done  { color: #2dd4bf; }
-    .ch.wrong { color: #fff; background: rgba(248,113,113,0.55); border-radius: 3px; }
+    .ch { color: #8d8aab; transition: color 0.05s; }
+    .ch.done  { color: #5cbfae; }
+    .ch.wrong { color: #3b3866; background: rgba(248,113,113,0.55); border-radius: 3px; }
     .ch.wrong.space { background: rgba(248,113,113,0.75); }
-    .ch.cursor { border-bottom: 3px solid #2dd4bf; }
+    .ch.cursor { border-bottom: 3px solid #5cbfae; }
 
     /* Input */
     .type-input {
       width: 100%; padding: 14px 16px; font-size: 1.15rem;
       font-family: ui-monospace, "SF Mono", Menlo, monospace;
-      border-radius: 12px; border: 2px solid #223; background: #0a0e18;
-      color: #fff; outline: none; transition: border-color 0.2s;
+      border-radius: 12px; border: 2px solid #e8e4f2; background: #ffffff;
+      color: #3b3866; outline: none; transition: border-color 0.2s;
       resize: none; line-height: 1.5;
     }
-    .type-input:focus { border-color: #2dd4bf; }
+    .type-input:focus { border-color: #5cbfae; }
     .type-input:disabled { opacity: 0.5; }
 
     .hint-row {
       width: 100%; display: flex; justify-content: space-between; align-items: center;
-      font-size: 0.8rem; color: #445; gap: 12px;
+      font-size: 0.8rem; color: #a3a0bf; gap: 12px;
     }
     .skip-btn {
-      border: 2px solid #223; background: transparent; color: #667;
+      border: 2px solid #e8e4f2; background: transparent; color: #8d8aab;
       border-radius: 10px; padding: 7px 16px; font-size: 0.8rem; cursor: pointer;
       transition: border-color 0.2s, color 0.2s;
     }
-    .skip-btn:hover { border-color: #2dd4bf; color: #2dd4bf; }
+    .skip-btn:hover { border-color: #5cbfae; color: #5cbfae; }
 
     .feedback-msg { min-height: 28px; text-align: center; font-size: 1rem; font-weight: bold; }
-    .fb-ok  { color: #4ade80; }
-    .fb-err { color: #f87171; }
+    .fb-ok  { color: #5fb87c; }
+    .fb-err { color: #e0706f; }
 
     /* ── Results ── */
     #result-screen {
       display: none; flex-direction: column; align-items: center;
       gap: 20px; padding-top: 10px; width: 100%; max-width: 560px;
     }
-    .result-title { font-size: 2rem; font-weight: 900; color: #2dd4bf; text-align: center; }
+    .result-title { font-size: 2rem; font-weight: 900; color: #5cbfae; text-align: center; }
 
     .winner-banner {
-      width: 100%; background: rgba(45,212,191,0.1); border: 2px solid #2dd4bf;
+      width: 100%; background: rgba(45,212,191,0.1); border: 2px solid #5cbfae;
       border-radius: 16px; padding: 16px 24px; text-align: center;
-      font-size: 1.2rem; font-weight: bold; color: #2dd4bf; line-height: 1.5;
+      font-size: 1.2rem; font-weight: bold; color: #5cbfae; line-height: 1.5;
     }
 
     .result-stats { display: flex; gap: 16px; width: 100%; flex-wrap: wrap; }
     .stat-card {
-      flex: 1; min-width: 130px; background: #111520; border-radius: 14px;
+      flex: 1; min-width: 130px; background: #ffffff; border-radius: 14px;
       padding: 16px; text-align: center; border: 2px solid transparent;
     }
-    .stat-card.kyle    { border-color: #f0c040; }
-    .stat-card.lindsey { border-color: #22A6B3; }
+    .stat-card.kyle    { border-color: #dfa72e; }
+    .stat-card.lindsey { border-color: #3aa9a3; }
     .stat-card.winner  { box-shadow: 0 0 24px rgba(45,212,191,0.25); }
-    .stat-name  { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #556; }
+    .stat-name  { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #8d8aab; }
     .stat-score { font-size: 2.8rem; font-weight: 900; line-height: 1; }
-    .stat-card.kyle    .stat-score { color: #f0c040; }
-    .stat-card.lindsey .stat-score { color: #22A6B3; }
-    .stat-sub   { font-size: 0.75rem; color: #445; margin-top: 4px; }
+    .stat-card.kyle    .stat-score { color: #dfa72e; }
+    .stat-card.lindsey .stat-score { color: #3aa9a3; }
+    .stat-sub   { font-size: 0.75rem; color: #a3a0bf; margin-top: 4px; }
 
     .round-table {
-      width: 100%; background: #111520; border-radius: 14px; padding: 16px 18px;
+      width: 100%; background: #ffffff; border-radius: 14px; padding: 16px 18px;
     }
-    .rt-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: #445; margin-bottom: 10px; }
+    .rt-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: #a3a0bf; margin-bottom: 10px; }
     .rt-row {
       display: flex; align-items: center; gap: 10px;
-      padding: 7px 0; border-top: 1px solid #1a2030; font-size: 0.85rem;
+      padding: 7px 0; border-top: 1px solid #e8e4f2; font-size: 0.85rem;
     }
     .rt-row:first-of-type { border-top: none; }
     .rt-who { min-width: 62px; font-weight: bold; }
-    .rt-who.kyle { color: #f0c040; }
-    .rt-who.lindsey { color: #22A6B3; }
-    .rt-text { flex: 1; color: #667; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .rt-wpm { color: #2dd4bf; font-weight: bold; min-width: 62px; text-align: right; }
-    .rt-acc { color: #556; min-width: 48px; text-align: right; }
+    .rt-who.kyle { color: #dfa72e; }
+    .rt-who.lindsey { color: #3aa9a3; }
+    .rt-text { flex: 1; color: #8d8aab; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .rt-wpm { color: #5cbfae; font-weight: bold; min-width: 62px; text-align: right; }
+    .rt-acc { color: #8d8aab; min-width: 48px; text-align: right; }
 
     .result-btns { display: flex; gap: 12px; }
     .result-btn-primary {
       padding: 12px 36px; border-radius: 24px; border: none;
-      background: linear-gradient(135deg, #2dd4bf, #0ea5e9);
+      background: linear-gradient(135deg, #5cbfae, #5a9fe0);
       color: #04222a; font-size: 1rem; font-weight: bold; cursor: pointer;
       transition: transform 0.1s;
     }
     .result-btn-primary:hover { transform: scale(1.04); }
     .result-btn-secondary {
       padding: 12px 28px; border-radius: 24px; font-size: 1rem;
-      border: 2px solid #334; background: transparent; color: #aaa;
+      border: 2px solid #d3d0e3; background: transparent; color: #6b6890;
       cursor: pointer; transition: border-color 0.2s, color 0.2s;
     }
-    .result-btn-secondary:hover { border-color: #2dd4bf; color: #2dd4bf; }
+    .result-btn-secondary:hover { border-color: #5cbfae; color: #5cbfae; }
 
     @media (max-width: 480px) {
       .setup-title { font-size: 1.9rem; }
@@ -252,7 +254,7 @@
 
   <div class="solo-score-wrap" id="soloWrap">
     <div class="solo-score-label">Best Sentence So Far</div>
-    <div class="solo-score-num" id="soloScoreEl">0 <span style="font-size:1.1rem;color:#445">wpm</span></div>
+    <div class="solo-score-num" id="soloScoreEl">0 <span style="font-size:1.1rem;color:#a3a0bf">wpm</span></div>
     <div class="solo-best" id="soloBestEl">All-time best: 0 wpm</div>
   </div>
 
@@ -429,7 +431,7 @@ function startGame() {
   const isSolo = cfg.mode === 'solo';
   $('soloWrap').style.display   = isSolo ? ''     : 'none';
   $('scoreboard').style.display = isSolo ? 'none' : '';
-  $('soloScoreEl').innerHTML    = '0 <span style="font-size:1.1rem;color:#445">wpm</span>';
+  $('soloScoreEl').innerHTML    = '0 <span style="font-size:1.1rem;color:#a3a0bf">wpm</span>';
   $('soloBestEl').textContent   = `All-time best: ${bestWpm} wpm`;
 
   show('game-screen');
@@ -578,7 +580,7 @@ function finishSentence(skipped) {
 
   if (game.mode === 'solo') {
     const best = Math.max(...game.results.map(r => r.wpm), 0);
-    $('soloScoreEl').innerHTML = `${best} <span style="font-size:1.1rem;color:#445">wpm</span>`;
+    $('soloScoreEl').innerHTML = `${best} <span style="font-size:1.1rem;color:#a3a0bf">wpm</span>`;
   } else {
     game.currentPlayer = game.currentPlayer === 'Kyle' ? 'Lindsey' : 'Kyle';
   }

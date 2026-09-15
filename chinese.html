@@ -3,14 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <title>Chinese Reading – Kyle &amp; Lindsey</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: system-ui, sans-serif;
-      background: #0f0f1e;
-      color: #eee;
+      font-family: 'Nunito', system-ui, sans-serif;
+      background: #faf8f5;
+      color: #3b3866;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -26,7 +28,7 @@
       margin-bottom: 10px;
     }
     .topnav a {
-      color: #e53;
+      color: #e0706f;
       text-decoration: none;
       font-size: 0.85rem;
       opacity: 0.7;
@@ -36,7 +38,7 @@
     .topnav h2 {
       font-size: 1.1rem;
       font-weight: 800;
-      background: linear-gradient(135deg, #e53, #ff9800);
+      background: linear-gradient(135deg, #e0706f, #f0a65c);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text;
     }
@@ -53,18 +55,18 @@
     .setup-title .big-icon { font-size: 3.2rem; display: block; margin-bottom: 8px; }
     .setup-title h1 {
       font-size: 2.1rem; font-weight: 900;
-      background: linear-gradient(135deg, #e53, #ff9800);
+      background: linear-gradient(135deg, #e0706f, #f0a65c);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text;
     }
-    .setup-title p { color: #667; font-size: 0.9rem; margin-top: 6px; }
+    .setup-title p { color: #8d8aab; font-size: 0.9rem; margin-top: 6px; }
 
     .option-group { width: 100%; }
     .voice-select-wrap {
       width: 100%;
-      background: #16213e;
+      background: #ffffff;
       border-radius: 12px;
-      border: 2px solid #2a2a3e;
+      border: 2px solid #e8e4f2;
       padding: 10px 14px;
       display: flex;
       align-items: center;
@@ -74,16 +76,16 @@
       flex: 1;
       background: transparent;
       border: none;
-      color: #ccd;
+      color: #3b3866;
       font-size: 0.88rem;
       outline: none;
       cursor: pointer;
     }
-    .voice-select-wrap select option { background: #16213e; color: #eee; }
+    .voice-select-wrap select option { background: #ffffff; color: #3b3866; }
     .voice-test-btn {
       background: rgba(255,150,50,0.12);
       border: 1px solid rgba(255,150,50,0.3);
-      color: #ff9965;
+      color: #f0a65c;
       border-radius: 8px;
       padding: 5px 12px;
       font-size: 0.8rem;
@@ -96,7 +98,7 @@
       font-size: 0.75rem;
       font-weight: 700;
       letter-spacing: 1px;
-      color: #778;
+      color: #6b6890;
       text-transform: uppercase;
       margin-bottom: 8px;
     }
@@ -105,18 +107,18 @@
       flex: 1; min-width: 100px;
       padding: 12px 16px;
       border-radius: 12px;
-      border: 2px solid #2a2a3e;
-      background: #16213e;
-      color: #aab;
+      border: 2px solid #e8e4f2;
+      background: #ffffff;
+      color: #6b6890;
       font-size: 0.9rem;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.15s;
       text-align: center;
     }
-    .opt-btn:hover { border-color: #e53; color: #eee; }
+    .opt-btn:hover { border-color: #e0706f; color: #3b3866; }
     .opt-btn.selected {
-      border-color: #e53;
+      border-color: #e0706f;
       background: rgba(238,85,51,0.15);
       color: #ff9977;
     }
@@ -126,7 +128,7 @@
       padding: 16px;
       border-radius: 14px;
       border: none;
-      background: linear-gradient(135deg, #e53, #ff9800);
+      background: linear-gradient(135deg, #e0706f, #f0a65c);
       color: #fff;
       font-size: 1.1rem;
       font-weight: 800;
@@ -148,7 +150,7 @@
     .player-cards { display: flex; gap: 10px; width: 100%; }
     .player-card {
       flex: 1;
-      background: #16213e;
+      background: #ffffff;
       border-radius: 14px;
       padding: 12px 16px;
       border: 2px solid transparent;
@@ -156,8 +158,8 @@
       text-align: center;
       position: relative;
     }
-    .player-card.kyle { --pc: #f0c040; }
-    .player-card.lindsey { --pc: #22A6B3; }
+    .player-card.kyle { --pc: #dfa72e; }
+    .player-card.lindsey { --pc: #3aa9a3; }
     .player-card.active {
       border-color: var(--pc);
       box-shadow: 0 0 20px rgba(var(--pc-rgb), 0.2);
@@ -180,25 +182,25 @@
 
     /* Progress */
     .progress-wrap { width: 100%; }
-    .progress-info { display: flex; justify-content: space-between; font-size: 0.75rem; color: #667; margin-bottom: 5px; }
-    .progress-bar { width: 100%; height: 6px; background: #1e1e30; border-radius: 3px; overflow: hidden; }
-    .progress-fill { height: 100%; background: linear-gradient(90deg, #e53, #ff9800); border-radius: 3px; transition: width 0.4s ease; }
+    .progress-info { display: flex; justify-content: space-between; font-size: 0.75rem; color: #8d8aab; margin-bottom: 5px; }
+    .progress-bar { width: 100%; height: 6px; background: #e8e4f2; border-radius: 3px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #e0706f, #f0a65c); border-radius: 3px; transition: width 0.4s ease; }
 
     /* Question card */
     .question-card {
       width: 100%;
-      background: #16213e;
+      background: #ffffff;
       border-radius: 20px;
       padding: 32px 24px 28px;
       text-align: center;
-      border: 2px solid #1e2a44;
+      border: 2px solid #f4f1fa;
       position: relative;
     }
     .question-label {
       font-size: 0.7rem;
       font-weight: 700;
       letter-spacing: 1px;
-      color: #556;
+      color: #8d8aab;
       text-transform: uppercase;
       margin-bottom: 14px;
     }
@@ -206,13 +208,13 @@
       font-size: 3.8rem;
       line-height: 1.1;
       font-weight: 900;
-      color: #fff;
+      color: #3b3866;
       text-shadow: 0 0 30px rgba(255,150,80,0.3);
       letter-spacing: 4px;
     }
     .pinyin {
       font-size: 1.1rem;
-      color: #ff9965;
+      color: #f0a65c;
       margin-top: 8px;
       font-style: italic;
       letter-spacing: 1px;
@@ -220,7 +222,7 @@
     .english-prompt {
       font-size: 1.8rem;
       font-weight: 700;
-      color: #eef;
+      color: #3b3866;
       line-height: 1.3;
     }
 
@@ -231,7 +233,7 @@
     .speak-btn {
       background: rgba(255,150,50,0.12);
       border: 1px solid rgba(255,150,50,0.25);
-      color: #ff9965;
+      color: #f0a65c;
       border-radius: 8px;
       padding: 7px 16px;
       font-size: 0.82rem;
@@ -246,9 +248,9 @@
       width: 100%; gap: 14px;
     }
     .pause-btn {
-      background: rgba(255,255,255,0.06);
-      border: 2px solid #2a2a3e;
-      color: #aab;
+      background: rgba(59,56,102,0.06);
+      border: 2px solid #e8e4f2;
+      color: #6b6890;
       border-radius: 10px;
       width: 42px; height: 42px;
       font-size: 1.1rem;
@@ -257,23 +259,23 @@
       transition: all 0.15s;
       display: flex; align-items: center; justify-content: center;
     }
-    .pause-btn:hover { border-color: #f9c22e; color: #f9c22e; }
-    .pause-btn.paused { border-color: #2ecc71; color: #2ecc71; background: rgba(46,204,113,0.1); }
+    .pause-btn:hover { border-color: #e8b83c; color: #e8b83c; }
+    .pause-btn.paused { border-color: #5fb87c; color: #5fb87c; background: rgba(46,204,113,0.1); }
 
     .skip-btn {
       display: block;
       margin: 10px auto 0;
       padding: 7px 22px;
       border-radius: 10px;
-      border: 1px solid #2a2a3e;
+      border: 1px solid #e8e4f2;
       background: transparent;
-      color: #556;
+      color: #8d8aab;
       font-size: 0.82rem;
       font-weight: 600;
       cursor: pointer;
       transition: color 0.15s, border-color 0.15s;
     }
-    .skip-btn:hover:not(:disabled) { color: #aab; border-color: #445; }
+    .skip-btn:hover:not(:disabled) { color: #6b6890; border-color: #a3a0bf; }
     .skip-btn:disabled { opacity: 0.25; cursor: default; }
 
     /* Paused overlay — covers choices only, not the question card */
@@ -281,12 +283,12 @@
     .game-paused-overlay {
       display: none;
       position: absolute; inset: 0;
-      background: rgba(10,10,20,0.88);
+      background: rgba(250,248,245,0.92);
       border-radius: 14px;
       z-index: 10;
       align-items: center; justify-content: center;
       flex-direction: column; gap: 8px;
-      font-size: 1.4rem; font-weight: 900; color: #f9c22e;
+      font-size: 1.4rem; font-weight: 900; color: #e8b83c;
       letter-spacing: 1px;
     }
     .game-paused-overlay.show { display: flex; }
@@ -295,16 +297,16 @@
       position: relative; width: 64px; height: 64px; flex-shrink: 0;
     }
     .timer-ring svg { transform: rotate(-90deg); }
-    .timer-track { fill: none; stroke: #1e2a44; stroke-width: 5; }
+    .timer-track { fill: none; stroke: #f4f1fa; stroke-width: 5; }
     .timer-fill  { fill: none; stroke-width: 5; stroke-linecap: round;
                    transition: stroke 0.4s; }
     .timer-num {
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
-      font-size: 1.15rem; font-weight: 900; color: #eee;
+      font-size: 1.15rem; font-weight: 900; color: #3b3866;
     }
     .timer-bar-wrap {
-      flex: 1; height: 8px; background: #1e2a44; border-radius: 4px; overflow: hidden;
+      flex: 1; height: 8px; background: #f4f1fa; border-radius: 4px; overflow: hidden;
     }
     .timer-bar {
       height: 100%; border-radius: 4px;
@@ -321,9 +323,9 @@
     .choice-btn {
       padding: 18px 14px;
       border-radius: 14px;
-      border: 2px solid #2a2a3e;
-      background: #16213e;
-      color: #ccd;
+      border: 2px solid #e8e4f2;
+      background: #ffffff;
+      color: #3b3866;
       font-size: 1.05rem;
       font-weight: 600;
       cursor: pointer;
@@ -331,18 +333,18 @@
       line-height: 1.3;
       text-align: center;
     }
-    .choice-btn .choice-zh { font-size: 1.5rem; display: block; margin-bottom: 4px; color: #fff; }
-    .choice-btn .choice-py { font-size: 0.72rem; color: #ff9965; font-style: italic; display: block; margin-bottom: 2px; }
-    .choice-btn:hover:not(:disabled) { border-color: #e53; color: #fff; background: rgba(238,85,51,0.1); }
+    .choice-btn .choice-zh { font-size: 1.5rem; display: block; margin-bottom: 4px; color: #3b3866; }
+    .choice-btn .choice-py { font-size: 0.72rem; color: #f0a65c; font-style: italic; display: block; margin-bottom: 2px; }
+    .choice-btn:hover:not(:disabled) { border-color: #e0706f; color: #3b3866; background: rgba(238,85,51,0.1); }
     .choice-btn:disabled { cursor: default; }
-    .choice-btn.correct { border-color: #2ecc71 !important; background: rgba(46,204,113,0.15) !important; color: #2ecc71 !important; }
-    .choice-btn.wrong   { border-color: #e74c3c !important; background: rgba(231,76,60,0.15)  !important; color: #e74c3c  !important; }
-    .choice-btn.reveal  { border-color: #2ecc71 !important; background: rgba(46,204,113,0.08) !important; }
+    .choice-btn.correct { border-color: #5fb87c !important; background: rgba(46,204,113,0.15) !important; color: #5fb87c !important; }
+    .choice-btn.wrong   { border-color: #e0706f !important; background: rgba(231,76,60,0.15)  !important; color: #e0706f  !important; }
+    .choice-btn.reveal  { border-color: #5fb87c !important; background: rgba(46,204,113,0.08) !important; }
 
     /* Streak */
     .streak-display {
       font-size: 0.9rem;
-      color: #ff9965;
+      color: #f0a65c;
       font-weight: 700;
       min-height: 24px;
       text-align: center;
@@ -354,7 +356,7 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%) scale(0.8);
-      background: #1e2a44;
+      background: #f4f1fa;
       border-radius: 16px;
       padding: 20px 40px;
       font-size: 1.5rem;
@@ -370,15 +372,15 @@
       opacity: 1;
       transform: translate(-50%, -50%) scale(1);
     }
-    .feedback-toast.correct { border-color: #2ecc71; color: #2ecc71; }
-    .feedback-toast.wrong   { border-color: #e74c3c; color: #e74c3c; }
+    .feedback-toast.correct { border-color: #5fb87c; color: #5fb87c; }
+    .feedback-toast.wrong   { border-color: #e0706f; color: #e0706f; }
 
     /* ── Results ── */
     .results-header { text-align: center; }
     .results-header .big-icon { font-size: 3rem; display: block; margin-bottom: 8px; }
     .results-header h2 {
       font-size: 1.9rem; font-weight: 900;
-      background: linear-gradient(135deg, #e53, #ff9800);
+      background: linear-gradient(135deg, #e0706f, #f0a65c);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text;
     }
@@ -388,48 +390,48 @@
     }
     .result-scorecard {
       flex: 1; max-width: 200px;
-      background: #16213e;
+      background: #ffffff;
       border-radius: 16px;
       padding: 20px 16px;
       text-align: center;
-      border: 2px solid #1e2a44;
+      border: 2px solid #f4f1fa;
       transition: transform 0.3s;
     }
     .result-scorecard.winner {
       transform: scale(1.06);
       border-color: var(--pc);
     }
-    .result-scorecard.kyle { --pc: #f0c040; }
-    .result-scorecard.lindsey { --pc: #22A6B3; }
+    .result-scorecard.kyle { --pc: #dfa72e; }
+    .result-scorecard.lindsey { --pc: #3aa9a3; }
     .result-scorecard .rs-name { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px; opacity: 0.6; text-transform: uppercase; margin-bottom: 6px; }
     .result-scorecard .rs-score { font-size: 2.4rem; font-weight: 900; color: var(--pc); }
-    .result-scorecard .rs-pct { font-size: 0.85rem; color: #667; margin-top: 2px; }
+    .result-scorecard .rs-pct { font-size: 0.85rem; color: #8d8aab; margin-top: 2px; }
     .result-scorecard .rs-crown { font-size: 1.4rem; margin-bottom: 4px; display: none; }
     .result-scorecard.winner .rs-crown { display: block; }
 
     .results-list { width: 100%; }
     .results-list-title {
       font-size: 0.75rem; font-weight: 700; letter-spacing: 1px;
-      color: #556; text-transform: uppercase; margin-bottom: 10px;
+      color: #8d8aab; text-transform: uppercase; margin-bottom: 10px;
     }
     .result-row {
       display: flex; align-items: center; gap: 12px;
       padding: 10px 14px;
-      background: #16213e;
+      background: #ffffff;
       border-radius: 10px;
       margin-bottom: 7px;
       font-size: 0.88rem;
     }
     .result-row .rr-icon { font-size: 1.1rem; flex-shrink: 0; }
-    .result-row .rr-zh { font-size: 1.2rem; font-weight: 700; color: #fff; flex-shrink: 0; min-width: 60px; }
-    .result-row .rr-py { font-size: 0.7rem; color: #ff9965; font-style: italic; }
-    .result-row .rr-en { flex: 1; color: #aab; }
-    .result-row .rr-who { font-size: 0.72rem; color: #556; flex-shrink: 0; }
-    .result-row.correct-row { border-left: 3px solid #2ecc71; }
-    .result-row.wrong-row   { border-left: 3px solid #e74c3c; }
+    .result-row .rr-zh { font-size: 1.2rem; font-weight: 700; color: #3b3866; flex-shrink: 0; min-width: 60px; }
+    .result-row .rr-py { font-size: 0.7rem; color: #f0a65c; font-style: italic; }
+    .result-row .rr-en { flex: 1; color: #6b6890; }
+    .result-row .rr-who { font-size: 0.72rem; color: #8d8aab; flex-shrink: 0; }
+    .result-row.correct-row { border-left: 3px solid #5fb87c; }
+    .result-row.wrong-row   { border-left: 3px solid #e0706f; }
     .rr-speak {
       background: none; border: 1px solid rgba(255,150,50,0.3);
-      color: #ff9965; border-radius: 6px;
+      color: #f0a65c; border-radius: 6px;
       padding: 4px 8px; font-size: 0.8rem;
       cursor: pointer; flex-shrink: 0;
       transition: background 0.15s;
@@ -441,7 +443,7 @@
       padding: 15px;
       border-radius: 14px;
       border: none;
-      background: linear-gradient(135deg, #e53, #ff9800);
+      background: linear-gradient(135deg, #e0706f, #f0a65c);
       color: #fff;
       font-size: 1.05rem;
       font-weight: 800;
@@ -469,7 +471,7 @@
 
   <div class="topnav">
     <a href="index.html">← Home</a>
-    <span style="color:#334">|</span>
+    <span style="color:#d3d0e3">|</span>
     <h2>🀄 Chinese Reading</h2>
   </div>
 
@@ -562,8 +564,8 @@
 
     <!-- Solo score -->
     <div id="soloScore" style="width:100%;display:flex;justify-content:space-between;align-items:center">
-      <span style="font-size:0.85rem;color:#667">Score</span>
-      <span style="font-size:1.3rem;font-weight:800;color:#ff9965" id="soloScoreVal">0</span>
+      <span style="font-size:0.85rem;color:#8d8aab">Score</span>
+      <span style="font-size:1.3rem;font-weight:800;color:#f0a65c" id="soloScoreVal">0</span>
     </div>
 
     <!-- Progress -->
@@ -581,12 +583,12 @@
         <svg width="64" height="64" viewBox="0 0 64 64">
           <circle class="timer-track" cx="32" cy="32" r="27"/>
           <circle class="timer-fill" id="timerCircle" cx="32" cy="32" r="27"
-            stroke-dasharray="169.6" stroke-dashoffset="0" stroke="#e53"/>
+            stroke-dasharray="169.6" stroke-dashoffset="0" stroke="#e0706f"/>
         </svg>
         <div class="timer-num" id="timerNum">60</div>
       </div>
       <div class="timer-bar-wrap">
-        <div class="timer-bar" id="timerBar" style="width:100%;background:#e53"></div>
+        <div class="timer-bar" id="timerBar" style="width:100%;background:#e0706f"></div>
       </div>
       <button class="pause-btn" id="pauseBtn" title="Pause">⏸</button>
     </div>
@@ -607,8 +609,8 @@
       <div class="choices-wrap">
         <div class="game-paused-overlay" id="pausedOverlay">
           <span>⏸</span>
-          <span style="font-size:0.95rem;color:#aab;font-weight:600">Paused — choices hidden</span>
-          <span style="font-size:0.72rem;color:#667;font-weight:400">Tap ▶ to resume</span>
+          <span style="font-size:0.95rem;color:#6b6890;font-weight:600">Paused — choices hidden</span>
+          <span style="font-size:0.72rem;color:#8d8aab;font-weight:400">Tap ▶ to resume</span>
         </div>
         <div class="choices-grid" id="choicesGrid"></div>
       </div>
@@ -624,7 +626,7 @@
     <div class="results-header">
       <span class="big-icon" id="resultIcon">🎉</span>
       <h2 id="resultTitle">Great Job!</h2>
-      <p style="color:#667;font-size:0.88rem;margin-top:6px" id="resultSubtitle"></p>
+      <p style="color:#8d8aab;font-size:0.88rem;margin-top:6px" id="resultSubtitle"></p>
     </div>
 
     <div class="result-scorecards" id="resultScorecards"></div>
@@ -635,7 +637,7 @@
     </div>
 
     <button class="play-again-btn" id="playAgainBtn">Play Again 🔄</button>
-    <button class="play-again-btn" id="replayBtn" style="background:linear-gradient(135deg,#22A6B3,#1a8a96);box-shadow:0 4px 20px rgba(34,166,179,0.35);margin-top:0">Same Words Again 🔁</button>
+    <button class="play-again-btn" id="replayBtn" style="background:linear-gradient(135deg,#3aa9a3,#1a8a96);box-shadow:0 4px 20px rgba(34,166,179,0.35);margin-top:0">Same Words Again 🔁</button>
   </div>
 
   <!-- Feedback toast -->
@@ -1584,10 +1586,10 @@ function updateTimerLabel(secs) {
   const bar    = $('timerBar');
   num.textContent = secs;
   // Color: green → yellow (≤½) → red (≤⅙)
-  const color = secs > TIMER_SECS / 2 ? '#2ecc71' : secs > TIMER_SECS / 6 ? '#f9c22e' : '#e53935';
+  const color = secs > TIMER_SECS / 2 ? '#5fb87c' : secs > TIMER_SECS / 6 ? '#e8b83c' : '#e0706f';
   circle.style.stroke  = color;
   bar.style.background = color;
-  num.style.color = secs <= Math.min(TIMER_SECS / 3, 5) ? '#e53935' : '#eee';
+  num.style.color = secs <= Math.min(TIMER_SECS / 3, 5) ? '#e0706f' : '#3b3866';
 }
 
 function timeOut(word) {
@@ -1863,7 +1865,7 @@ function showResults() {
     card.innerHTML = `
       <div class="rs-crown">⭐</div>
       <div class="rs-name">Your Score</div>
-      <div class="rs-score">${correct}<span style="font-size:1.2rem;color:#667"> / ${total}</span></div>
+      <div class="rs-score">${correct}<span style="font-size:1.2rem;color:#8d8aab"> / ${total}</span></div>
       <div class="rs-pct">${pct}%</div>
     `;
     sc.appendChild(card);
@@ -1894,7 +1896,7 @@ function showResults() {
 //  CONFETTI
 // ═══════════════════════════════════════════════════════
 function confettiBurst() {
-  const colors = ['#e53','#ff9800','#f0c040','#2ecc71','#22A6B3','#9b59b6'];
+  const colors = ['#e0706f','#f0a65c','#dfa72e','#5fb87c','#3aa9a3','#9b59b6'];
   for (let i = 0; i < 60; i++) {
     setTimeout(() => {
       const el = document.createElement('div');
