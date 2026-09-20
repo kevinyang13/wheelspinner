@@ -118,6 +118,8 @@
       transition: all 0.15s;
       text-align: center;
     }
+    .opt-btn small { display: block; font-size: 0.68rem; color: var(--muted); margin-top: 2px; font-weight: 500; }
+    .sub-group { border-left: 3px solid rgba(229,57,53,0.3); padding-left: 14px; margin-top: -6px; }
     .opt-btn:hover { border-color: var(--red); color: var(--ink); }
     .opt-btn.selected {
       border-color: var(--red);
@@ -498,6 +500,11 @@
         <button class="opt-btn" data-group="grade" data-val="split">🆚 各自</button>
         <button class="opt-btn" data-group="grade" data-val="all">All</button>
       </div>
+    </div>
+
+    <div class="option-group sub-group" id="lessonGroup" style="width:100%; display:none">
+      <div class="option-label">Lessons</div>
+      <div class="option-row" id="lessonRow"></div>
     </div>
 
     <div class="option-group" style="width:100%">
@@ -931,117 +938,117 @@ const WORDS = {
   // ── Kyle: 美洲華語 第四冊 (Book 4) — 2026-27 school year ──
   kyle: [
     // 第一課
-    { zh: '第一',     py: 'dì yī',             en: 'First' },
-    { zh: '考試',     py: 'kǎo shì',           en: 'Test / Exam' },
-    { zh: '考卷',     py: 'kǎo juàn',          en: 'Exam paper' },
-    { zh: '試試看',   py: 'shì shì kàn',       en: 'Give it a try' },
-    { zh: '張先生',   py: 'zhāng xiān shēng',  en: 'Mr. Chang' },
-    { zh: '一張紙',   py: 'yì zhāng zhǐ',      en: 'A piece of paper' },
-    { zh: '所以',     py: 'suǒ yǐ',            en: 'Therefore' },
-    { zh: '廁所',     py: 'cè suǒ',            en: 'Restroom' },
-    { zh: '因為',     py: 'yīn wèi',           en: 'Because' },
-    { zh: '原因',     py: 'yuán yīn',          en: 'Cause / Reason' },
-    { zh: '方法',     py: 'fāng fǎ',           en: 'Method / Way' },
-    { zh: '法律',     py: 'fǎ lǜ',             en: 'Law' },
-    { zh: '帽子',     py: 'mào zi',            en: 'Hat / Cap' },
-    { zh: '弓箭',     py: 'gōng jiàn',         en: 'Bow and arrow' },
-    { zh: '反對',     py: 'fǎn duì',           en: 'To oppose' },
-    { zh: '相反',     py: 'xiāng fǎn',         en: 'Opposite' },
-    { zh: '正式',     py: 'zhèng shì',         en: 'Formal' },
-    { zh: '方式',     py: 'fāng shì',          en: 'Way / Form' },
-    { zh: '感冒',     py: 'gǎn mào',           en: 'To catch a cold' },
-    { zh: '冒充',     py: 'mào chōng',         en: 'Pretend to be' },
-    { zh: '孝順',     py: 'xiào shùn',         en: 'Filial obedience' },
-    { zh: '更好',     py: 'gèng hǎo',          en: 'Better' },
-    { zh: '更衣室',   py: 'gēng yī shì',       en: 'Fitting room / Locker room' },
+    { l: 1, zh: '第一',     py: 'dì yī',             en: 'First' },
+    { l: 1, zh: '考試',     py: 'kǎo shì',           en: 'Test / Exam' },
+    { l: 1, zh: '考卷',     py: 'kǎo juàn',          en: 'Exam paper' },
+    { l: 1, zh: '試試看',   py: 'shì shì kàn',       en: 'Give it a try' },
+    { l: 1, zh: '張先生',   py: 'zhāng xiān shēng',  en: 'Mr. Chang' },
+    { l: 1, zh: '一張紙',   py: 'yì zhāng zhǐ',      en: 'A piece of paper' },
+    { l: 1, zh: '所以',     py: 'suǒ yǐ',            en: 'Therefore' },
+    { l: 1, zh: '廁所',     py: 'cè suǒ',            en: 'Restroom' },
+    { l: 1, zh: '因為',     py: 'yīn wèi',           en: 'Because' },
+    { l: 1, zh: '原因',     py: 'yuán yīn',          en: 'Cause / Reason' },
+    { l: 1, zh: '方法',     py: 'fāng fǎ',           en: 'Method / Way' },
+    { l: 1, zh: '法律',     py: 'fǎ lǜ',             en: 'Law' },
+    { l: 1, zh: '帽子',     py: 'mào zi',            en: 'Hat / Cap' },
+    { l: 1, zh: '弓箭',     py: 'gōng jiàn',         en: 'Bow and arrow' },
+    { l: 1, zh: '反對',     py: 'fǎn duì',           en: 'To oppose' },
+    { l: 1, zh: '相反',     py: 'xiāng fǎn',         en: 'Opposite' },
+    { l: 1, zh: '正式',     py: 'zhèng shì',         en: 'Formal' },
+    { l: 1, zh: '方式',     py: 'fāng shì',          en: 'Way / Form' },
+    { l: 1, zh: '感冒',     py: 'gǎn mào',           en: 'To catch a cold' },
+    { l: 1, zh: '冒充',     py: 'mào chōng',         en: 'Pretend to be' },
+    { l: 1, zh: '孝順',     py: 'xiào shùn',         en: 'Filial obedience' },
+    { l: 1, zh: '更好',     py: 'gèng hǎo',          en: 'Better' },
+    { l: 1, zh: '更衣室',   py: 'gēng yī shì',       en: 'Fitting room / Locker room' },
     // 第二課
-    { zh: '照亮',     py: 'zhào liàng',        en: 'To light up / Illuminate' },
-    { zh: '照相機',   py: 'zhào xiàng jī',     en: 'Camera' },
-    { zh: '溫暖',     py: 'wēn nuǎn',          en: 'Warm' },
-    { zh: '氣溫',     py: 'qì wēn',            en: 'Temperature' },
-    { zh: '使用',     py: 'shǐ yòng',          en: 'To use' },
-    { zh: '天使',     py: 'tiān shǐ',          en: 'Angel' },
-    { zh: '運動',     py: 'yùn dòng',          en: 'To exercise / Sport' },
-    { zh: '幸運',     py: 'xìng yùn',          en: 'Fortunate / Lucky' },
-    { zh: '運動員',   py: 'yùn dòng yuán',     en: 'Athlete' },
-    { zh: '店員',     py: 'diàn yuán',         en: 'Sales clerk' },
-    { zh: '充滿',     py: 'chōng mǎn',         en: 'To be full of / Filled with' },
-    { zh: '充電',     py: 'chōng diàn',        en: 'To charge a battery' },
-    { zh: '滿了',     py: 'mǎn le',            en: 'Full / Packed' },
-    { zh: '滿意',     py: 'mǎn yì',            en: 'To be satisfied' },
-    { zh: '記者',     py: 'jì zhě',            en: 'Journalist' },
-    { zh: '作者',     py: 'zuò zhě',           en: 'Author' },
-    { zh: '永遠',     py: 'yǒng yuǎn',         en: 'Forever' },
-    { zh: '永久',     py: 'yǒng jiǔ',          en: 'Lasting / Permanent' },
-    { zh: '很遠',     py: 'hěn yuǎn',          en: 'Very far away' },
-    { zh: '生病',     py: 'shēng bìng',        en: 'To get ill' },
-    { zh: '看病',     py: 'kàn bìng',          en: 'To see a doctor' },
-    { zh: '願意',     py: 'yuàn yì',           en: 'To be willing' },
-    { zh: '願望',     py: 'yuàn wàng',         en: 'Desire / Wish' },
-    { zh: '平安',     py: 'píng ān',           en: 'Safe and sound' },
-    { zh: '安靜',     py: 'ān jìng',           en: 'Quiet' },
-    { zh: '果樹',     py: 'guǒ shù',           en: 'Fruit tree' },
-    { zh: '樹木',     py: 'shù mù',            en: 'Tree' },
+    { l: 2, zh: '照亮',     py: 'zhào liàng',        en: 'To light up / Illuminate' },
+    { l: 2, zh: '照相機',   py: 'zhào xiàng jī',     en: 'Camera' },
+    { l: 2, zh: '溫暖',     py: 'wēn nuǎn',          en: 'Warm' },
+    { l: 2, zh: '氣溫',     py: 'qì wēn',            en: 'Temperature' },
+    { l: 2, zh: '使用',     py: 'shǐ yòng',          en: 'To use' },
+    { l: 2, zh: '天使',     py: 'tiān shǐ',          en: 'Angel' },
+    { l: 2, zh: '運動',     py: 'yùn dòng',          en: 'To exercise / Sport' },
+    { l: 2, zh: '幸運',     py: 'xìng yùn',          en: 'Fortunate / Lucky' },
+    { l: 2, zh: '運動員',   py: 'yùn dòng yuán',     en: 'Athlete' },
+    { l: 2, zh: '店員',     py: 'diàn yuán',         en: 'Sales clerk' },
+    { l: 2, zh: '充滿',     py: 'chōng mǎn',         en: 'To be full of / Filled with' },
+    { l: 2, zh: '充電',     py: 'chōng diàn',        en: 'To charge a battery' },
+    { l: 2, zh: '滿了',     py: 'mǎn le',            en: 'Full / Packed' },
+    { l: 2, zh: '滿意',     py: 'mǎn yì',            en: 'To be satisfied' },
+    { l: 2, zh: '記者',     py: 'jì zhě',            en: 'Journalist' },
+    { l: 2, zh: '作者',     py: 'zuò zhě',           en: 'Author' },
+    { l: 2, zh: '永遠',     py: 'yǒng yuǎn',         en: 'Forever' },
+    { l: 2, zh: '永久',     py: 'yǒng jiǔ',          en: 'Lasting / Permanent' },
+    { l: 2, zh: '很遠',     py: 'hěn yuǎn',          en: 'Very far away' },
+    { l: 2, zh: '生病',     py: 'shēng bìng',        en: 'To get ill' },
+    { l: 2, zh: '看病',     py: 'kàn bìng',          en: 'To see a doctor' },
+    { l: 2, zh: '願意',     py: 'yuàn yì',           en: 'To be willing' },
+    { l: 2, zh: '願望',     py: 'yuàn wàng',         en: 'Desire / Wish' },
+    { l: 2, zh: '平安',     py: 'píng ān',           en: 'Safe and sound' },
+    { l: 2, zh: '安靜',     py: 'ān jìng',           en: 'Quiet' },
+    { l: 2, zh: '果樹',     py: 'guǒ shù',           en: 'Fruit tree' },
+    { l: 2, zh: '樹木',     py: 'shù mù',            en: 'Tree' },
     // 第三課
-    { zh: '感謝',     py: 'gǎn xiè',           en: 'To thank' },
-    { zh: '感動',     py: 'gǎn dòng',          en: 'To be touched / Moved' },
-    { zh: '感恩節',   py: 'gǎn ēn jié',        en: 'Thanksgiving' },
-    { zh: '節日',     py: 'jié rì',            en: 'Holiday' },
+    { l: 3, zh: '感謝',     py: 'gǎn xiè',           en: 'To thank' },
+    { l: 3, zh: '感動',     py: 'gǎn dòng',          en: 'To be touched / Moved' },
+    { l: 3, zh: '感恩節',   py: 'gǎn ēn jié',        en: 'Thanksgiving' },
+    { l: 3, zh: '節日',     py: 'jié rì',            en: 'Holiday' },
   ],
 
   // ── Lindsey: 美洲華語 第三冊 (Book 3) — 2026-27 school year ──
   lindsey: [
     // 第一課
-    { zh: '王先生',   py: 'wáng xiān shēng',   en: 'Mr. Wang' },
-    { zh: '王冠',     py: 'wáng guān',         en: 'Crown' },
-    { zh: '中文',     py: 'zhōng wén',         en: 'The Chinese language' },
-    { zh: '文字',     py: 'wén zì',            en: 'Character / Writing' },
-    { zh: '許多',     py: 'xǔ duō',            en: 'Many' },
-    { zh: '也許',     py: 'yě xǔ',             en: 'Perhaps' },
-    { zh: '河川',     py: 'hé chuān',          en: 'River' },
-    { zh: '山川',     py: 'shān chuān',        en: 'Mountains and rivers' },
-    { zh: '半天',     py: 'bàn tiān',          en: 'Half a day / A long while' },
-    { zh: '一半',     py: 'yí bàn',            en: 'Half' },
-    { zh: '站著',     py: 'zhàn zhe',          en: 'Standing' },
-    { zh: '車站',     py: 'chē zhàn',          en: 'Station' },
-    { zh: '寫字',     py: 'xiě zì',            en: 'To write' },
-    { zh: '寫信',     py: 'xiě xìn',           en: 'To write a letter' },
-    { zh: '咬一口',   py: 'yǎo yì kǒu',        en: 'To take a bite' },
-    { zh: '表哥',     py: 'biǎo gē',           en: 'An elder male cousin' },
-    { zh: '表演',     py: 'biǎo yǎn',          en: 'To perform / A performance' },
-    { zh: '表示',     py: 'biǎo shì',          en: 'To express / Indication' },
-    { zh: '收到',     py: 'shōu dào',          en: 'To receive' },
-    { zh: '回收',     py: 'huí shōu',          en: 'To recycle' },
-    { zh: '五點半',   py: 'wǔ diǎn bàn',       en: 'Half past five' },
-    { zh: '點心',     py: 'diǎn xīn',          en: 'Snacks / Refreshments' },
-    { zh: '事情',     py: 'shì qíng',          en: 'Matter / Business' },
-    { zh: '故事',     py: 'gù shì',            en: 'Story' },
+    { l: 1, zh: '王先生',   py: 'wáng xiān shēng',   en: 'Mr. Wang' },
+    { l: 1, zh: '王冠',     py: 'wáng guān',         en: 'Crown' },
+    { l: 1, zh: '中文',     py: 'zhōng wén',         en: 'The Chinese language' },
+    { l: 1, zh: '文字',     py: 'wén zì',            en: 'Character / Writing' },
+    { l: 1, zh: '許多',     py: 'xǔ duō',            en: 'Many' },
+    { l: 1, zh: '也許',     py: 'yě xǔ',             en: 'Perhaps' },
+    { l: 1, zh: '河川',     py: 'hé chuān',          en: 'River' },
+    { l: 1, zh: '山川',     py: 'shān chuān',        en: 'Mountains and rivers' },
+    { l: 1, zh: '半天',     py: 'bàn tiān',          en: 'Half a day / A long while' },
+    { l: 1, zh: '一半',     py: 'yí bàn',            en: 'Half' },
+    { l: 1, zh: '站著',     py: 'zhàn zhe',          en: 'Standing' },
+    { l: 1, zh: '車站',     py: 'chē zhàn',          en: 'Station' },
+    { l: 1, zh: '寫字',     py: 'xiě zì',            en: 'To write' },
+    { l: 1, zh: '寫信',     py: 'xiě xìn',           en: 'To write a letter' },
+    { l: 1, zh: '咬一口',   py: 'yǎo yì kǒu',        en: 'To take a bite' },
+    { l: 1, zh: '表哥',     py: 'biǎo gē',           en: 'An elder male cousin' },
+    { l: 1, zh: '表演',     py: 'biǎo yǎn',          en: 'To perform / A performance' },
+    { l: 1, zh: '表示',     py: 'biǎo shì',          en: 'To express / Indication' },
+    { l: 1, zh: '收到',     py: 'shōu dào',          en: 'To receive' },
+    { l: 1, zh: '回收',     py: 'huí shōu',          en: 'To recycle' },
+    { l: 1, zh: '五點半',   py: 'wǔ diǎn bàn',       en: 'Half past five' },
+    { l: 1, zh: '點心',     py: 'diǎn xīn',          en: 'Snacks / Refreshments' },
+    { l: 1, zh: '事情',     py: 'shì qíng',          en: 'Matter / Business' },
+    { l: 1, zh: '故事',     py: 'gù shì',            en: 'Story' },
     // 第二課
-    { zh: '秋天',     py: 'qiū tiān',          en: 'Fall / Autumn' },
-    { zh: '中秋節',   py: 'zhōng qiū jié',     en: 'The Mid-Autumn Festival' },
-    { zh: '晚上',     py: 'wǎn shàng',         en: 'Evening / Night' },
-    { zh: '晚安',     py: 'wǎn ān',            en: 'Good evening / Good night!' },
-    { zh: '井水',     py: 'jǐng shuǐ',         en: 'Water from a well' },
-    { zh: '一口井',   py: 'yì kǒu jǐng',       en: 'A well' },
-    { zh: '兩隻鳥',   py: 'liǎng zhī niǎo',    en: 'Two birds' },
-    { zh: '面具',     py: 'miàn jù',           en: 'Mask' },
-    { zh: '裡面',     py: 'lǐ miàn',           en: 'Inside' },
-    { zh: '月亮',     py: 'yuè liàng',         en: 'The moon' },
-    { zh: '漂亮',     py: 'piào liàng',        en: 'Beautiful' },
-    { zh: '掉下來',   py: 'diào xià lái',      en: 'To fall' },
-    { zh: '擦掉',     py: 'cā diào',           en: 'To wipe / To erase' },
-    { zh: '拉開',     py: 'lā kāi',            en: 'To pull open' },
-    { zh: '拉肚子',   py: 'lā dù zi',          en: 'Diarrhea' },
-    { zh: '最好',     py: 'zuì hǎo',           en: 'The best' },
-    { zh: '最後',     py: 'zuì hòu',           en: 'The last' },
-    { zh: '放學',     py: 'fàng xué',          en: 'The class is dismissed' },
-    { zh: '放進去',   py: 'fàng jìn qù',       en: 'To put in' },
-    { zh: '抬頭',     py: 'tái tóu',           en: "To raise one's head" },
-    { zh: '抬起來',   py: 'tái qǐ lái',        en: 'To lift' },
-    { zh: '頭痛',     py: 'tóu tòng',          en: 'Headache' },
-    { zh: '頭髮',     py: 'tóu fà',            en: 'Hair' },
-    { zh: '興趣',     py: 'xìng qù',           en: 'Interest' },
-    { zh: '高興',     py: 'gāo xìng',          en: 'Happy' },
+    { l: 2, zh: '秋天',     py: 'qiū tiān',          en: 'Fall / Autumn' },
+    { l: 2, zh: '中秋節',   py: 'zhōng qiū jié',     en: 'The Mid-Autumn Festival' },
+    { l: 2, zh: '晚上',     py: 'wǎn shàng',         en: 'Evening / Night' },
+    { l: 2, zh: '晚安',     py: 'wǎn ān',            en: 'Good evening / Good night!' },
+    { l: 2, zh: '井水',     py: 'jǐng shuǐ',         en: 'Water from a well' },
+    { l: 2, zh: '一口井',   py: 'yì kǒu jǐng',       en: 'A well' },
+    { l: 2, zh: '兩隻鳥',   py: 'liǎng zhī niǎo',    en: 'Two birds' },
+    { l: 2, zh: '面具',     py: 'miàn jù',           en: 'Mask' },
+    { l: 2, zh: '裡面',     py: 'lǐ miàn',           en: 'Inside' },
+    { l: 2, zh: '月亮',     py: 'yuè liàng',         en: 'The moon' },
+    { l: 2, zh: '漂亮',     py: 'piào liàng',        en: 'Beautiful' },
+    { l: 2, zh: '掉下來',   py: 'diào xià lái',      en: 'To fall' },
+    { l: 2, zh: '擦掉',     py: 'cā diào',           en: 'To wipe / To erase' },
+    { l: 2, zh: '拉開',     py: 'lā kāi',            en: 'To pull open' },
+    { l: 2, zh: '拉肚子',   py: 'lā dù zi',          en: 'Diarrhea' },
+    { l: 2, zh: '最好',     py: 'zuì hǎo',           en: 'The best' },
+    { l: 2, zh: '最後',     py: 'zuì hòu',           en: 'The last' },
+    { l: 2, zh: '放學',     py: 'fàng xué',          en: 'The class is dismissed' },
+    { l: 2, zh: '放進去',   py: 'fàng jìn qù',       en: 'To put in' },
+    { l: 2, zh: '抬頭',     py: 'tái tóu',           en: "To raise one's head" },
+    { l: 2, zh: '抬起來',   py: 'tái qǐ lái',        en: 'To lift' },
+    { l: 2, zh: '頭痛',     py: 'tóu tòng',          en: 'Headache' },
+    { l: 2, zh: '頭髮',     py: 'tóu fà',            en: 'Hair' },
+    { l: 2, zh: '興趣',     py: 'xìng qù',           en: 'Interest' },
+    { l: 2, zh: '高興',     py: 'gāo xìng',          en: 'Happy' },
   ],
 
   // ── Previous books, kept for review. Swap a name onto `kyle` / `lindsey` to use. ──
@@ -1320,7 +1327,7 @@ const WORDS = {
 // ═══════════════════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════════════════
-let cfg = { grade: '2', dir: 'zh2en', mode: 'solo', count: 20, timer: 3 };
+let cfg = { grade: '2', dir: 'zh2en', mode: 'solo', count: 20, timer: 3, lesson: 'latest' };
 let queue = [], qIdx = 0, scores = { kyle: 0, lindsey: 0 }, streak = 0;
 let lastQueue = [];
 let currentPlayer = 'kyle'; // for versus
@@ -1338,8 +1345,63 @@ document.querySelectorAll('.opt-btn').forEach(btn => {
     document.querySelectorAll(`.opt-btn[data-group="${g}"]`).forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
     cfg[g] = btn.dataset.val;
+    if (g === 'grade') renderLessonRow();
   });
 });
+
+// ── Lesson picker for the kids' own banks ──
+const KID_BANKS = { kyle: 'Kyle', lindsey: 'Lindsey' };
+
+function lessonsIn(list) {
+  return [...new Set(list.map(w => w.l).filter(Boolean))].sort((a, b) => a - b);
+}
+
+function renderLessonRow() {
+  const show = ['kyle', 'lindsey', 'split'].includes(cfg.grade);
+  $('lessonGroup').style.display = show ? '' : 'none';
+  if (!show) return;
+
+  const row = $('lessonRow');
+  row.innerHTML = '';
+  const add = (val, label, sub) => {
+    const b = document.createElement('button');
+    b.className = 'opt-btn' + (String(cfg.lesson) === String(val) ? ' selected' : '');
+    b.dataset.group = 'lesson';
+    b.dataset.val = val;
+    b.innerHTML = label + (sub ? `<small>${sub}</small>` : '');
+    b.addEventListener('click', () => {
+      row.querySelectorAll('.opt-btn').forEach(x => x.classList.remove('selected'));
+      b.classList.add('selected');
+      cfg.lesson = val;
+    });
+    row.appendChild(b);
+  };
+
+  add('latest', '🆕 Newest lesson', cfg.grade === 'split' ? 'each kid\'s latest' : null);
+  if (cfg.grade !== 'split') {
+    lessonsIn(WORDS[cfg.grade]).forEach(n => {
+      const count = WORDS[cfg.grade].filter(w => w.l === n).length;
+      add(n, `第${'一二三四五六七八'[n - 1]}課`, `${count} words`);
+    });
+  }
+  add('all', 'All lessons');
+
+  // If a lesson number from another kid's bank is selected, fall back.
+  if (!row.querySelector('.opt-btn.selected')) {
+    cfg.lesson = 'latest';
+    row.querySelector('.opt-btn').classList.add('selected');
+  }
+}
+
+// Narrow a kid's bank to the chosen lesson(s).
+function byLesson(list) {
+  if (cfg.lesson === 'all') return list;
+  const lessons = lessonsIn(list);
+  if (!lessons.length) return list;
+  const target = cfg.lesson === 'latest' ? lessons[lessons.length - 1] : Number(cfg.lesson);
+  const picked = list.filter(w => w.l === target);
+  return picked.length ? picked : list;
+}
 
 $('startBtn').addEventListener('click', startGame);
 $('skipBtn').addEventListener('click', skipQuestion);
@@ -1431,12 +1493,12 @@ function speak(text, rate = 1) {
 // ═══════════════════════════════════════════════════════
 function buildPool(forPlayer) {
   // forPlayer: 'kyle' | 'lindsey' | undefined (used in split mode)
-  if (forPlayer === 'kyle')    return [...WORDS.kyle];
-  if (forPlayer === 'lindsey') return [...WORDS.lindsey];
+  if (forPlayer === 'kyle')    return byLesson(WORDS.kyle);
+  if (forPlayer === 'lindsey') return byLesson(WORDS.lindsey);
   if (cfg.grade === 'all')     return [...WORDS[2], ...WORDS[3], ...WORDS[4], ...WORDS[5], ...WORDS.kyle, ...WORDS.lindsey];
-  if (cfg.grade === 'kyle')    return [...WORDS.kyle];
-  if (cfg.grade === 'lindsey') return [...WORDS.lindsey];
-  if (cfg.grade === 'split')   return [...WORDS.kyle, ...WORDS.lindsey]; // combined pool for distractors
+  if (cfg.grade === 'kyle')    return byLesson(WORDS.kyle);
+  if (cfg.grade === 'lindsey') return byLesson(WORDS.lindsey);
+  if (cfg.grade === 'split')   return [...byLesson(WORDS.kyle), ...byLesson(WORDS.lindsey)]; // combined pool for distractors
   return [...WORDS[Number(cfg.grade)]];
 }
 
