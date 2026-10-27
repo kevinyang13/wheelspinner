@@ -183,10 +183,29 @@
     .times-table td.diag { color: var(--yellow); font-weight: 800; }
     .times-table .hl { background: rgba(61,158,255,0.16); color: var(--ink); }
     .times-table th.hl { background: rgba(61,158,255,0.3); }
+    /* ── Pi viewer ── */
+    .pi-head { font-size: 1.6rem; font-weight: 900; color: var(--sky); margin-bottom: 6px; }
+    .pi-rows {
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: clamp(0.8rem, 1.5vw, 1.05rem); line-height: 1.9;
+    }
+    .pi-row { display: flex; align-items: baseline; gap: 10px; white-space: nowrap; }
+    .pi-row:nth-child(even) { background: var(--card-alt); border-radius: 6px; }
+    .pi-idx {
+      flex: 0 0 auto; width: 4ch; text-align: right;
+      color: var(--muted); font-size: 0.78em; font-variant-numeric: tabular-nums;
+    }
+    .pi-blocks { display: flex; gap: 10px; letter-spacing: 1px; color: var(--ink); }
+    .pi-blocks b { font-weight: 700; }
+    .pi-rows.hidden-digits .pi-blocks b { color: transparent; background: var(--faint); border-radius: 4px; cursor: pointer; }
+    .pi-rows.hidden-digits .pi-blocks b.shown { color: var(--green); background: none; }
+
     .modal-hint { color: var(--muted); font-size: 0.85rem; margin-top: 14px; text-align: center; }
     @media (max-width: 600px) {
       .times-table th, .times-table td { padding: 7px 2px; font-size: 0.85rem; }
       .times-table { min-width: 400px; }
+      .pi-row { align-items: flex-start; }
+      .pi-blocks { flex-wrap: wrap; gap: 6px 10px; }
       .modal-head { flex-wrap: wrap; padding: 10px 12px; gap: 8px; }
       .modal-head h3 { font-size: 1rem; }
       .view-btn { padding: 5px 10px; font-size: 0.8rem; }
@@ -453,8 +472,29 @@
 
     <button class="start-btn" id="startBtn">Start Game 🚀</button>
     <button class="table-link" id="tableLink">✖️ View Multiplication Table</button>
+    <button class="table-link" id="piLink">π View 1,000 Digits of Pi</button>
   </div>
 
+
+  <!-- ══════════════ PI MODAL ══════════════ -->
+  <div class="modal-backdrop" id="piModal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>π Pi to 1,000 Digits</h3>
+        <label class="mask-toggle">
+          <input type="checkbox" id="piHideToggle" />
+          <span class="switch"></span>
+          <span class="switch-label">🙈 Memorize</span>
+        </label>
+        <button class="modal-close" id="piClose" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="pi-head">3.</div>
+        <div class="pi-rows" id="piRows"></div>
+        <div class="modal-hint" id="piHint">Ten digits per block, fifty per row — the number in front is how far along you are.</div>
+      </div>
+    </div>
+  </div>
 
   <!-- ══════════════ MULTIPLICATION TABLE MODAL ══════════════ -->
   <div class="modal-backdrop" id="tableModal">
@@ -752,6 +792,58 @@ function openTable() {
   $('tableModal').classList.add('show');
 }
 function closeTable() { $('tableModal').classList.remove('show'); }
+
+// ═══════════════════════════════════════════════════
+//  PI VIEWER
+// ═══════════════════════════════════════════════════
+// The 1,000 digits after the decimal point.
+const PI_DIGITS =
+  '1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679' +
+  '8214808651328230664709384460955058223172535940812848111745028410270193852110555964462294895493038196' +
+  '4428810975665933446128475648233786783165271201909145648566923460348610454326648213393607260249141273' +
+  '7245870066063155881748815209209628292540917153643678925903600113305305488204665213841469519415116094' +
+  '3305727036575959195309218611738193261179310511854807446237996274956735188575272489122793818301194912' +
+  '9833673362440656643086021394946395224737190702179860943702770539217176293176752384674818467669405132' +
+  '0005681271452635608277857713427577896091736371787214684409012249534301465495853710507922796892589235' +
+  '4201995611212902196086403441815981362977477130996051870721134999999837297804995105973173281609631859' +
+  '5024459455346908302642522308253344685035261931188171010003137838752886587533208381420617177669147303' +
+  '5982534904287554687311595628638823537875937519577818577805321712268066130019278766111959092164201989';
+
+function buildPiRows() {
+  const rows = $('piRows');
+  if (rows.children.length) return;                 // build once
+  let html = '';
+  for (let i = 0; i < PI_DIGITS.length; i += 50) {
+    const row = PI_DIGITS.slice(i, i + 50);
+    const blocks = row.match(/.{1,10}/g).map(b => `<b>${b}</b>`).join('');
+    html += `<div class="pi-row"><span class="pi-idx">${i + 1}</span><span class="pi-blocks">${blocks}</span></div>`;
+  }
+  rows.innerHTML = html;
+
+  // In memorize mode, tap a hidden block to check just that one.
+  rows.addEventListener('click', e => {
+    const b = e.target.closest('b');
+    if (b && rows.classList.contains('hidden-digits')) b.classList.toggle('shown');
+  });
+}
+
+function applyPiHide() {
+  const on = $('piHideToggle').checked;
+  $('piRows').classList.toggle('hidden-digits', on);
+  $('piRows').querySelectorAll('b.shown').forEach(b => b.classList.remove('shown'));
+  $('piHint').textContent = on
+    ? 'Memorize mode — recite from 3.14159… and tap a block to check yourself.'
+    : 'Ten digits per block, fifty per row — the number in front is how far along you are.';
+}
+
+function openPi()  { buildPiRows(); applyPiHide(); $('piModal').classList.add('show'); }
+function closePi() { $('piModal').classList.remove('show'); }
+
+$('piLink').addEventListener('click', openPi);
+$('piClose').addEventListener('click', closePi);
+$('piHideToggle').addEventListener('change', applyPiHide);
+$('piModal').addEventListener('click', e => { if (e.target.id === 'piModal') closePi(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closePi(); });
 
 $('tableLink').addEventListener('click', openTable);
 $('tableClose').addEventListener('click', closeTable);
