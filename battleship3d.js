@@ -14,7 +14,7 @@
   if (!ok) return;
 
   const SIZE = 10, HALF = SIZE / 2;
-  const SUN = new T.Vector3(-0.42, 0.17, -0.89).normalize();
+  const SUN = new T.Vector3(0.04, 0.16, -0.99).normalize();   // low sun dead ahead: its glitter runs down the middle
   const rnd = (a, b) => a + Math.random() * (b - a);
   const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
   const cellPos = (r, c) => ({ x: c - HALF + 0.5, z: r - HALF + 0.5 });
@@ -487,7 +487,162 @@
     }
   }
 
-  // ───────────────────────── one board ─────────────────────────
+  // ───────────────────────── a shell in flight (arena) ─────────────────────────
+  class Shell {
+    constructor(b, from, to, dur, onLand) {
+      this.b = b; this.t0 = b.now; this.from = from; this.to = to; this.dur = dur; this.onLand = onLand;
+      this.core = b.sprite('glow', T.AdditiveBlending); this.core.scale.set(.5, .5, 1);
+      this.trail = [];
+      for (let i = 0; i < 9; i++) { const sp = b.sprite('fire', T.AdditiveBlending); sp.material.color.setRGB(1, .6, .25); this.trail.push(sp); }
+      this.flash = b.sprite('glow', T.AdditiveBlending); this.flash.position.copy(from);
+      this.puff = [0, 1, 2].map(() => { const sp = b.sprite('smoke', T.NormalBlending); sp.position.copy(from); return sp; });
+      b.flashLight(from.x, from.y + .3, from.z, 2.6); b.shake = Math.max(b.shake, .05);
+    }
+    at(u) {
+      const v = new T.Vector3().lerpVectors(this.from, this.to, u);
+      v.y += 6.5 * 4 * u * (1 - u);
+      return v;
+    }
+    update(now) {
+      const t = now - this.t0, u = t / this.dur;
+      // muzzle blast
+      const f = Math.max(0, 1 - t / .35);
+      this.flash.scale.set(1.8 * (1 + t * 4), 1.8 * (1 + t * 4), 1); this.flash.material.opacity = f;
+      this.puff.forEach((sp, i) => {
+        const k = Math.min(1, t / 2.2);
+        sp.position.set(this.from.x + (i - 1) * .25 * k * 2, this.from.y + .2 + k * 1.2, this.from.z + (i - 1) * .3 * k);
+        const sc = .6 + k * 2; sp.scale.set(sc, sc, 1); sp.material.opacity = .55 * (1 - k);
+      });
+      if (u >= 1) { this.onLand(); return false; }
+      this.core.position.copy(this.at(u));
+      this.trail.forEach((sp, i) => {
+        const uu = Math.max(0, u - (i + 1) * .03);
+        sp.position.copy(this.at(uu));
+        const sc = .34 * (1 - i / 10); sp.scale.set(sc, sc, 1); sp.material.opacity = .85 * (1 - i / 9);
+      });
+      return true;
+    }
+    dispose() { [this.core, this.flash, ...this.trail, ...this.puff].forEach(s => this.b.kill(s)); }
+  }
+
+  // ───────────────────────── a 10x10 battlefield inside a board's scene ─────────────────────────
+  const FLIGHT = 1.3;             // seconds a shell is in the air
+  const ARENA_OX = 10.2;           // distance of each battlefield's centre from the middle of the sea
+
+  class Field {
+    constructor(b, index, ox, mirror) {
+      this.b = b; this.index = index; this.ox = ox; this.mirror = mirror;
+      this.ships = new Map(); this.cellType = new Map(); this.cellFx = new Map();
+      this.marks = null; this.opts = {}; this.ready = false;
+      this.buildOverlay();
+      const lg = new T.RingGeometry(.42, .5, 32); lg.rotateX(-Math.PI / 2);
+      this.lastRing = new T.Mesh(lg, new T.MeshBasicMaterial({ color: 0xffb454, transparent: true, opacity: .9, depthWrite: false }));
+      this.lastRing.position.y = .13; this.lastRing.visible = false; this.lastRing.renderOrder = 4;
+      b.scene.add(this.lastRing);
+    }
+    pos(r, c) { return { x: this.ox + (this.mirror ? HALF - .5 - c : c - HALF + .5), z: r - HALF + .5 }; }
+    cellAt(wx, wz) {
+      const c0 = Math.floor(wx - this.ox + HALF), r = Math.floor(wz + HALF);
+      if (r < 0 || r >= SIZE || c0 < 0 || c0 >= SIZE) return null;
+      return { r, c: this.mirror ? SIZE - 1 - c0 : c0 };
+    }
+    buildOverlay() {
+      const sc = this.b.scene, ox = this.ox;
+      const pg = new T.PlaneGeometry(SIZE, SIZE); pg.rotateX(-Math.PI / 2);
+      const tint = new T.Mesh(pg, new T.MeshBasicMaterial({ color: 0x66d0ff, transparent: true, opacity: .1, depthWrite: false }));
+      tint.position.set(ox, .1, 0); tint.renderOrder = 1; sc.add(tint);
+      const pos = [], w = .03;
+      for (let i = 0; i <= SIZE; i++) {
+        const p = i - HALF;
+        pos.push(-HALF, 0, p - w, HALF, 0, p - w, HALF, 0, p + w, -HALF, 0, p - w, HALF, 0, p + w, -HALF, 0, p + w);
+        pos.push(p - w, 0, -HALF, p - w, 0, HALF, p + w, 0, HALF, p - w, 0, -HALF, p + w, 0, HALF, p + w, 0, -HALF);
+      }
+      const lg = new T.BufferGeometry();
+      lg.setAttribute('position', new T.Float32BufferAttribute(pos, 3));
+      const lines = new T.Mesh(lg, new T.MeshBasicMaterial({ color: 0xffe2b8, transparent: true, opacity: .5, depthWrite: false, side: T.DoubleSide }));
+      lines.position.set(ox, .11, 0); lines.renderOrder = 2; sc.add(lines);
+      const label = (txt, x, z) => {
+        const s = new T.Sprite(new T.SpriteMaterial({ map: labelTex(txt), transparent: true, depthWrite: false, fog: false }));
+        s.position.set(x, .35, z); s.scale.set(.7, .7, 1); sc.add(s);
+      };
+      for (let i = 0; i < SIZE; i++) {
+        label('ABCDEFGHIJ'[this.mirror ? SIZE - 1 - i : i], ox + i - HALF + .5, HALF + .55);
+        label(String(i + 1), ox + (this.mirror ? HALF + .55 : -HALF - .55), i - HALF + .5);
+      }
+    }
+    update(marks, opts) {
+      this.opts = opts; this.marks = marks;
+      this.syncShips(opts.ships || []);
+      this.syncCells(marks);
+      if (opts.last) {
+        const p = this.pos(opts.last[0], opts.last[1]);
+        this.lastRing.position.set(p.x, .13, p.z); this.lastRing.visible = true;
+      } else this.lastRing.visible = false;
+      this.ready = true;
+    }
+    syncShips(list) {
+      const seen = new Set();
+      list.forEach(s => {
+        const sig = s.cells.map(c => c.join(',')).join('|');
+        seen.add(s.k);
+        let rig = this.ships.get(s.k);
+        if (rig && rig.sig !== sig) { this.removeShip(rig); this.ships.delete(s.k); rig = null; }
+        if (!rig) {
+          rig = this.makeRig(s, sig); this.ships.set(s.k, rig);
+          if (s.sunk) {
+            const animate = this.ready;                         // a ship revealed the moment it goes down
+            if (animate && this.b.arena) {                      // …after the killing shell lands
+              rig.outer.visible = false;
+              this.b.after(FLIGHT, () => { rig.outer.visible = true; this.sinkShip(rig, true); });
+            } else this.sinkShip(rig, animate);
+          }
+        } else if (s.sunk && !rig.sunk) this.sinkShip(rig, true);
+      });
+      [...this.ships.keys()].forEach(k => { if (!seen.has(k)) { this.removeShip(this.ships.get(k)); this.ships.delete(k); } });
+    }
+    makeRig(s, sig) {
+      const len = s.cells.length, ps = s.cells.map(c => this.pos(c[0], c[1]));
+      const cx = ps.reduce((a, p) => a + p.x, 0) / len, cz = ps.reduce((a, p) => a + p.z, 0) / len;
+      const vertical = len > 1 && ps.every(p => Math.abs(p.x - ps[0].x) < 1e-6);
+      const inner = buildShip(s.k, len), outer = new T.Group();
+      outer.add(inner); outer.position.set(cx, 0, cz);
+      let yaw;
+      if (vertical) yaw = this.b.arena && cz > 0 ? Math.PI / 2 : -Math.PI / 2;     // bows point at the centre line
+      else yaw = this.mirror ? Math.PI : 0;                                         // fleets face each other
+      outer.rotation.y = yaw;
+      this.b.scene.add(outer);
+      return { k: s.k, sig, outer, inner, sunk: false, phase: Math.random() * 6, sinkAt: 0, animate: false, baseY: s.k === 'sub' ? -.04 : 0, cx, cz, len, dir: 1, recoil: -9 };
+    }
+    removeShip(rig) {
+      this.b.scene.remove(rig.outer);
+      rig.outer.traverse(o => { if (o.geometry) o.geometry.dispose(); });
+    }
+    sinkShip(rig, animate) { this.b.sinkRig(rig, animate, 1.1 + rig.len * .12); }
+    syncCells(marks) {
+      const b = this.b;
+      for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) {
+        const m = marks[r][c], type = m === 'H' ? 'H' : m === 'X' ? 'X' : m === 'M' ? 'M' : '';
+        const key = r * SIZE + c, prev = this.cellType.get(key) || '';
+        if (type === prev) continue;
+        this.cellType.set(key, type);
+        const old = this.cellFx.get(key); if (old) { old.dispose(); this.cellFx.delete(key); }
+        if (!type) continue;
+        const { x, z } = this.pos(r, c), fresh = this.ready;
+        const apply = () => {
+          if (this.cellType.get(key) !== type) return;          // changed while the shell was flying
+          const o = this.cellFx.get(key); if (o) o.dispose();
+          let fx = null;
+          if (type === 'H') { fx = new Flame(b, x, z, .38, 1, false); if (fresh) b.fx.push(new Boom(b, x, .35, z, .85, false)); }
+          else if (type === 'X') fx = new Flame(b, x, z, .12, .85, true);
+          else fx = new Splash(b, x, z, fresh);
+          this.cellFx.set(key, fx);
+        };
+        b.deliver(this, x, z, fresh, apply);
+      }
+    }
+  }
+
+  // ───────────────────────── one board (a WebGL canvas) ─────────────────────────
   const boards = new Set();
   let looping = false;
   function loop(ts) {
@@ -500,11 +655,10 @@
   class Board {
     constructor(el, mode) {
       mats();
-      this.el = el; this.mode = mode; this.lite = mode === 'mine';
-      this.now = 0; this.ready = false; this.flames = 0; this.shake = 0; this.fireT = 0;
-      this.opts = {}; this.marks = null; this.hover = null; this.needSize = true;
-      this.ships = new Map(); this.fx = []; this.cellFx = new Map(); this.cellType = new Map();
-      this.sprites = [];
+      this.el = el; this.mode = mode; this.arena = mode === 'arena'; this.lite = mode === 'mine';
+      this.now = 0; this.flames = 0; this.shake = 0; this.fireT = 0;
+      this.opts = {}; this.hover = null; this.needSize = true;
+      this.fx = []; this.sprites = []; this.timers = []; this.over = false;
 
       const canvas = document.createElement('canvas');
       el.appendChild(canvas);
@@ -516,25 +670,26 @@
 
       const sc = this.scene = new T.Scene();
       sc.fog = new T.FogExp2(0xe39a62, .0105);
-      this.camera = new T.PerspectiveCamera(mode === 'mine' ? 40 : 38, 1.3, .1, 800);
+      this.camera = new T.PerspectiveCamera(40, 1.3, .1, 800);
 
-      this.buildSky(); this.buildWater(); this.buildLights(); this.buildBoardOverlay();
-      if (mode === 'tv') this.buildFarFleet();
+      this.buildSky(); this.buildWater(); this.buildLights();
+      this.fields = this.arena
+        ? [new Field(this, 0, -ARENA_OX, false), new Field(this, 1, ARENA_OX, true)]
+        : [new Field(this, 0, 0, false)];
+      if (this.arena) { this.buildFlagships(); this.buildFarFleet(); }
 
       this.hoverMesh = new T.Mesh(
         (() => { const g = new T.PlaneGeometry(.94, .94); g.rotateX(-Math.PI / 2); return g; })(),
         new T.MeshBasicMaterial({ color: 0xffb454, transparent: true, opacity: .4, depthWrite: false }));
       this.hoverMesh.position.y = .13; this.hoverMesh.visible = false; this.hoverMesh.renderOrder = 4;
       sc.add(this.hoverMesh);
-      const lg = new T.RingGeometry(.42, .5, 32); lg.rotateX(-Math.PI / 2);
-      this.lastRing = new T.Mesh(lg, new T.MeshBasicMaterial({ color: 0xffb454, transparent: true, opacity: .9, depthWrite: false }));
-      this.lastRing.position.y = .13; this.lastRing.visible = false; this.lastRing.renderOrder = 4;
-      sc.add(this.lastRing);
 
       this.ray = new T.Raycaster(); this.plane = new T.Plane(new T.Vector3(0, 1, 0), 0);
-      canvas.addEventListener('pointermove', e => this.onMove(e));
-      canvas.addEventListener('pointerleave', () => { this.hover = null; this.hoverMesh.visible = false; });
-      canvas.addEventListener('click', e => this.onClick(e));
+      if (!this.arena) {
+        canvas.addEventListener('pointermove', e => this.onMove(e));
+        canvas.addEventListener('pointerleave', () => { this.hover = null; this.hoverMesh.visible = false; });
+        canvas.addEventListener('click', e => this.onClick(e));
+      }
       if (window.ResizeObserver) new ResizeObserver(() => { this.needSize = true; }).observe(el);
       boards.add(this);
       if (!looping) { looping = true; requestAnimationFrame(loop); }
@@ -567,13 +722,13 @@
       }
     }
     buildWater() {
-      const seg = this.lite ? 56 : 84;
-      const geo = new T.PlaneGeometry(170, 170, seg, seg); geo.rotateX(-Math.PI / 2);
+      const seg = this.lite ? 56 : (this.arena ? 110 : 84);
+      const geo = new T.PlaneGeometry(this.arena ? 220 : 170, this.arena ? 220 : 170, seg, seg); geo.rotateX(-Math.PI / 2);
       this.waterBase = geo.attributes.position.array.slice();
       this.bump = tex('bump').clone(); this.bump.wrapS = this.bump.wrapT = T.RepeatWrapping;
-      this.bump.repeat.set(34, 34); this.bump.needsUpdate = true;
+      this.bump.repeat.set(this.arena ? 44 : 34, this.arena ? 44 : 34); this.bump.needsUpdate = true;
       const mat = new T.MeshPhongMaterial({
-        color: 0x072a45, emissive: 0x020e19, specular: 0x7a4a24, shininess: 90, bumpMap: this.bump, bumpScale: .16,
+        color: 0x072a45, emissive: 0x020e19, specular: 0x6a4020, shininess: 90, bumpMap: this.bump, bumpScale: .16,
       });
       this.water = new T.Mesh(geo, mat); this.water.receiveShadow = true; this.scene.add(this.water);
     }
@@ -584,38 +739,14 @@
       const d = this.sun = new T.DirectionalLight(0xffb27a, 1.9);
       d.position.copy(SUN).multiplyScalar(30).add(new T.Vector3(0, 7, 6));
       if (!this.lite) {
-        d.castShadow = true; d.shadow.mapSize.set(1024, 1024);
-        const c = d.shadow.camera; c.left = -9; c.right = 9; c.top = 9; c.bottom = -9; c.near = 1; c.far = 80;
+        d.castShadow = true; d.shadow.mapSize.set(this.arena ? 2048 : 1024, this.arena ? 2048 : 1024);
+        const c = d.shadow.camera, e = this.arena ? 20 : 9; c.left = -e; c.right = e; c.top = e; c.bottom = -e; c.near = 1; c.far = 90;
         d.shadow.bias = -.0006;
       }
       sc.add(d); sc.add(d.target);
+      const fill = new T.DirectionalLight(0xb9ccff, .75); fill.position.set(-6, 14, 22); sc.add(fill);
       this.fireLight = new T.PointLight(0xff7a22, 0, 9, 1.6);
       sc.add(this.fireLight);
-    }
-    buildBoardOverlay() {
-      const sc = this.scene;
-      // faint tint over the 10x10 battlefield + crisp grid lines + labels
-      const pg = new T.PlaneGeometry(SIZE, SIZE); pg.rotateX(-Math.PI / 2);
-      const tint = new T.Mesh(pg, new T.MeshBasicMaterial({ color: 0x66d0ff, transparent: true, opacity: .07, depthWrite: false }));
-      tint.position.y = .1; tint.renderOrder = 1; sc.add(tint);
-      const pos = [], w = .03;
-      for (let i = 0; i <= SIZE; i++) {
-        const p = i - HALF;
-        pos.push(-HALF, 0, p - w, HALF, 0, p - w, HALF, 0, p + w, -HALF, 0, p - w, HALF, 0, p + w, -HALF, 0, p + w);
-        pos.push(p - w, 0, -HALF, p - w, 0, HALF, p + w, 0, HALF, p - w, 0, -HALF, p + w, 0, HALF, p + w, 0, -HALF);
-      }
-      const lg = new T.BufferGeometry();
-      lg.setAttribute('position', new T.Float32BufferAttribute(pos, 3));
-      const lines = new T.Mesh(lg, new T.MeshBasicMaterial({ color: 0xffe2b8, transparent: true, opacity: .34, depthWrite: false, side: T.DoubleSide }));
-      lines.position.y = .11; lines.renderOrder = 2; sc.add(lines);
-      const label = (txt, x, z) => {
-        const s = new T.Sprite(new T.SpriteMaterial({ map: labelTex(txt), transparent: true, depthWrite: false, fog: false }));
-        s.position.set(x, .35, z); s.scale.set(.7, .7, 1); sc.add(s);
-      };
-      for (let i = 0; i < SIZE; i++) {
-        label('ABCDEFGHIJ'[i], i - HALF + .5, HALF + .55);
-        label(String(i + 1), -HALF - .55, i - HALF + .5);
-      }
     }
     buildFarFleet() {
       const ship = (k, len, x, z, ry, s) => {
@@ -624,13 +755,36 @@
       ship('battleship', 4, 30, -62, Math.PI, 1.6);
       ship('cruiser', 3, 52, -80, Math.PI * .96, 1.6);
       ship('destroyer', 2, -34, -90, .08, 1.7);
-      // a pillar of smoke on the horizon, like the photo
       for (let i = 0; i < 9; i++) {
         const sp = this.sprite('smoke', T.NormalBlending); sp.material.opacity = .75; sp.material.fog = false;
         const s = 20 + i * 6; sp.scale.set(s, s, 1); sp.position.set(32 + i * 2, 8 + i * 9, -64);
       }
       const fb = this.sprite('fire', T.AdditiveBlending); fb.material.fog = false;
       fb.scale.set(14, 14, 1); fb.position.set(30, 5, -62);
+    }
+    // Arena: a flagship for each side, nose to nose in the middle of the sea.
+    buildFlagships() {
+      this.flag = [0, 1].map(i => {
+        const inner = buildShip('battleship', 4), outer = new T.Group();
+        outer.add(inner);
+        const x = i === 0 ? -2.3 : 2.3, z = i === 0 ? 1.7 : -1.7;
+        outer.position.set(x, 0, z); outer.rotation.y = i === 0 ? 0 : Math.PI; outer.scale.setScalar(1.45);
+        this.scene.add(outer);
+        return { k: 'battleship', outer, inner, cx: x, cz: z, phase: i * 2.1, baseY: 0, sunk: false, animate: false, sinkAt: 0, len: 4, recoil: -9, dir: i === 0 ? 1 : -1 };
+      });
+      const glow = new T.Mesh(new T.PlaneGeometry(8, 3.2), new T.MeshBasicMaterial({
+        map: tex('glow'), color: 0xffb454, transparent: true, opacity: 0, depthWrite: false, blending: T.AdditiveBlending }));
+      glow.rotation.x = -Math.PI / 2; glow.position.y = .08; glow.renderOrder = 3; this.scene.add(glow);
+      this.turnGlow = glow; this.turnIdx = -1;
+    }
+    resetFlagships() {
+      this.flag.forEach(f => { this.scene.remove(f.outer); f.outer.traverse(o => { if (o.geometry) o.geometry.dispose(); }); });
+      this.buildFlagshipsKeepGlow();
+    }
+    buildFlagshipsKeepGlow() {
+      const glow = this.turnGlow, idx = this.turnIdx;
+      this.scene.remove(glow);
+      this.buildFlagships(); this.turnIdx = idx;
     }
 
     // — helpers —
@@ -642,7 +796,39 @@
       this.scene.remove(s); s.material.dispose();
       const i = this.sprites.indexOf(s); if (i >= 0) this.sprites.splice(i, 1);
     }
-    flashLight(x, y, z, intensity) { this.fireLight.position.set(x, y, z); this.fireT = Math.max(this.fireT, intensity); this.flashBoost = intensity; }
+    flashLight(x, y, z, intensity) { this.fireLight.position.set(x, y, z); this.fireT = Math.max(this.fireT, intensity); }
+    after(sec, fn) { this.timers.push({ at: this.now + sec, fn }); }
+    // A shot lands: in the arena it first flies in from the other side's flagship.
+    deliver(field, x, z, fresh, cb) {
+      if (!this.arena || !fresh) { cb(); return; }
+      const att = this.flag[1 - field.index];
+      if (att.sunk) { this.after(FLIGHT * .5, cb); return; }
+      att.recoil = this.now;
+      att.outer.updateMatrixWorld(true);
+      const from = att.inner.localToWorld(new T.Vector3(2.05, .62, 0));
+      this.fx.push(new Shell(this, from, new T.Vector3(x, .3, z), FLIGHT, cb));
+    }
+    sinkRig(rig, animate, size) {
+      if (rig.sunk) return;
+      rig.sunk = true; rig.animate = animate; rig.sinkAt = this.now;
+      rig.inner.traverse(o => { if (o.isMesh && o.material && !o.material.isMeshBasicMaterial) o.material = charMat(o.material); });
+      const foam = rig.inner.userData.foam; if (foam) foam.forEach(f => { f.visible = false; });
+      if (animate) this.fx.push(new Boom(this, rig.cx, .5, rig.cz, size, true));
+    }
+    setTurn(who) {
+      if (!this.arena) return;
+      this.turnIdx = who === 'kyle' ? 0 : who === 'lindsey' ? 1 : -1;
+    }
+    setWinner(who) {                                  // game over: the loser's flagship goes down
+      if (!this.arena) return;
+      if (who && !this.over) {
+        this.over = true;
+        const loser = this.flag[who === 'kyle' ? 1 : 0];
+        this.after(FLIGHT + .4, () => this.sinkRig(loser, true, 2.4));
+      } else if (!who && this.over) {
+        this.over = false; this.resetFlagships();
+      }
+    }
 
     // — sizing / camera —
     resize() {
@@ -650,17 +836,21 @@
       if (!w || !h) return false;
       this.renderer.setSize(w, h, false);
       const cam = this.camera; cam.aspect = w / h;
-      // elev = angle the camera sits above the board; pitch = how far it looks down.
-      // pitch < elev leaves room above the board for the horizon and sky.
-      const P = Object.assign(({ tv: { elev: 52, pitch: 50, fov: 36, top: .98 }, phone: { elev: 58, pitch: 58, fov: 38, top: .96 }, mine: { elev: 48, pitch: 48, fov: 40, top: .96 } })[this.mode], API.cfg[this.mode] || {});
+      // elev = angle the camera sits above the sea; pitch = how far it looks down.
+      const P = Object.assign(({
+        arena: { elev: 30, pitch: 18, fov: 44, top: .8 },
+        phone: { elev: 58, pitch: 58, fov: 38, top: .96 },
+        mine:  { elev: 48, pitch: 48, fov: 40, top: .96 },
+      })[this.mode], API.cfg[this.mode] || {});
       cam.fov = P.fov; cam.updateProjectionMatrix();
       const e = P.elev * Math.PI / 180, pt = P.pitch * Math.PI / 180;
       this.target = new T.Vector3(0, .3, 0);
-      const corners = [[-6.1, 0, 6.5], [6.1, 0, 6.5], [-6.1, 0, -5.7], [6.1, 0, -5.7], [0, 1.3, -5.2]].map(a => new T.Vector3(...a));
-      const margin = .96;
-      let d = P.dist || 6;
       if (P.tx !== undefined) this.target.set(P.tx, .3, P.tz);
-      for (; d < 90; d += .25) {
+      const hx = this.arena ? ARENA_OX + 6.0 : 6.1;
+      const corners = [[-hx, 0, 6.5], [hx, 0, 6.5], [-hx, 0, -5.7], [hx, 0, -5.7], [0, 1.6, -5.2], [-hx, 1.2, -5.2], [hx, 1.2, -5.2]].map(a => new T.Vector3(...a));
+      const margin = .97;
+      let d = P.dist || 6;
+      for (; d < 120; d += .25) {
         cam.position.set(0, d * Math.sin(e), d * Math.cos(e)).add(this.target);
         cam.lookAt(cam.position.x, cam.position.y - Math.sin(pt) * 50, cam.position.z - Math.cos(pt) * 50);
         cam.updateMatrixWorld(true);
@@ -674,100 +864,48 @@
     }
     visible() { return this.el.isConnected && this.el.clientWidth > 0 && this.el.clientHeight > 0; }
 
-    // — picking —
+    // — picking (single-field boards: the phones) —
     pick(e) {
       const rc = this.canvas.getBoundingClientRect();
       const nx = ((e.clientX - rc.left) / rc.width) * 2 - 1, ny = -((e.clientY - rc.top) / rc.height) * 2 + 1;
       this.ray.setFromCamera({ x: nx, y: ny }, this.camera);
       const p = new T.Vector3();
       if (!this.ray.ray.intersectPlane(this.plane, p)) return null;
-      const c = Math.floor(p.x + HALF), r = Math.floor(p.z + HALF);
-      return (r >= 0 && r < SIZE && c >= 0 && c < SIZE) ? { r, c } : null;
+      return this.fields[0].cellAt(p.x, p.z);
     }
     onMove(e) {
-      const cell = this.pick(e);
-      const ok = cell && this.opts.aim && this.marks && !this.marks[cell.r][cell.c];
+      const cell = this.pick(e), f = this.fields[0];
+      const ok = cell && f.opts.aim && f.marks && !f.marks[cell.r][cell.c];
       this.hover = ok ? cell : null;
       this.hoverMesh.visible = !!ok;
-      if (ok) { const p = cellPos(cell.r, cell.c); this.hoverMesh.position.set(p.x, .13, p.z); }
-      this.canvas.style.cursor = ok ? 'crosshair' : (this.opts.onCell ? 'pointer' : 'default');
+      if (ok) { const p = f.pos(cell.r, cell.c); this.hoverMesh.position.set(p.x, .13, p.z); }
+      this.canvas.style.cursor = ok ? 'crosshair' : (f.opts.onCell ? 'pointer' : 'default');
     }
     onClick(e) {
-      const cell = this.pick(e);
-      if (cell && this.opts.onCell) this.opts.onCell(cell.r, cell.c);
-    }
-
-    // — state sync —
-    update(marks, opts) {
-      this.opts = opts; this.marks = marks;
-      this.syncShips(opts.ships || []);
-      this.syncCells(marks);
-      if (opts.last) {
-        const p = cellPos(opts.last[0], opts.last[1]);
-        this.lastRing.position.set(p.x, .13, p.z); this.lastRing.visible = true;
-      } else this.lastRing.visible = false;
-      this.ready = true;
-    }
-    syncShips(list) {
-      const seen = new Set();
-      list.forEach(s => {
-        const sig = s.cells.map(c => c.join(',')).join('|');
-        seen.add(s.k);
-        let rig = this.ships.get(s.k);
-        if (rig && rig.sig !== sig) { this.removeShip(rig); this.ships.delete(s.k); rig = null; }
-        if (!rig) {
-          rig = this.makeRig(s, sig); this.ships.set(s.k, rig);
-          if (s.sunk) this.sinkShip(rig, this.ready);        // TV reveals a ship the moment it goes down
-        } else if (s.sunk && !rig.sunk) this.sinkShip(rig, true);
-      });
-      [...this.ships.keys()].forEach(k => { if (!seen.has(k)) { this.removeShip(this.ships.get(k)); this.ships.delete(k); } });
-    }
-    makeRig(s, sig) {
-      const len = s.cells.length, rows = s.cells.map(c => c[0]), cols = s.cells.map(c => c[1]);
-      const vertical = len > 1 && new Set(cols).size === 1;
-      const r0 = Math.min(...rows), c0 = Math.min(...cols);
-      const cx = vertical ? c0 + .5 : c0 + len / 2, cz = vertical ? r0 + len / 2 : r0 + .5;
-      const inner = buildShip(s.k, len), outer = new T.Group();
-      outer.add(inner);
-      outer.position.set(cx - HALF, 0, cz - HALF);
-      outer.rotation.y = vertical ? -Math.PI / 2 : 0;
-      this.scene.add(outer);
-      return { k: s.k, sig, outer, inner, sunk: false, phase: Math.random() * 6, sinkAt: 0, animate: false, baseY: s.k === 'sub' ? -.04 : 0, cx: outer.position.x, cz: outer.position.z, len, vertical };
-    }
-    removeShip(rig) {
-      this.scene.remove(rig.outer);
-      rig.outer.traverse(o => { if (o.geometry) o.geometry.dispose(); });
-    }
-    sinkShip(rig, animate) {
-      rig.sunk = true; rig.animate = animate; rig.sinkAt = this.now;
-      rig.inner.traverse(o => { if (o.isMesh && o.material && !o.material.isMeshBasicMaterial) o.material = charMat(o.material); });
-      const foam = rig.inner.userData.foam; if (foam) foam.forEach(f => { f.visible = false; });
-      if (animate) this.fx.push(new Boom(this, rig.cx, .5, rig.cz, 1.1 + rig.len * .12, true));
-    }
-    syncCells(marks) {
-      for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) {
-        const m = marks[r][c], type = m === 'H' ? 'H' : m === 'X' ? 'X' : m === 'M' ? 'M' : '';
-        const key = r * SIZE + c, prev = this.cellType.get(key) || '';
-        if (type === prev) continue;
-        this.cellType.set(key, type);
-        const old = this.cellFx.get(key); if (old) { old.dispose(); this.cellFx.delete(key); }
-        const { x, z } = cellPos(r, c);
-        let fx = null;
-        if (type === 'H') {
-          fx = new Flame(this, x, z, .38, 1, false);
-          if (this.ready) this.fx.push(new Boom(this, x, .35, z, .85, false));
-        } else if (type === 'X') fx = new Flame(this, x, z, .12, .85, true);
-        else if (type === 'M') fx = new Splash(this, x, z, this.ready);
-        if (fx) this.cellFx.set(key, fx);
-      }
+      const cell = this.pick(e), f = this.fields[0];
+      if (cell && f.opts.onCell) f.opts.onCell(cell.r, cell.c);
     }
 
     // — per frame —
+    bobRig(rig, t) {
+      const x = rig.cx, z = rig.cz, ph = rig.phase;
+      let y = waveH(x, z, t) + rig.baseY + Math.sin(t * 1.3 + ph) * .012;
+      let roll = Math.sin(t * .9 + ph) * .022, pitch = Math.cos(t * .7 + ph) * .014;
+      if (rig.sunk) {
+        const p = rig.animate ? Math.min(1, (t - rig.sinkAt) / 4.2) : 1, e = p * p * (3 - 2 * p);
+        y += -.46 * e; roll += .42 * e * (rig.len % 2 ? 1 : -1); pitch += -.1 * e;
+      }
+      rig.inner.position.set(-.16 * Math.pow(Math.max(0, 1 - (t - rig.recoil) / .45), 2), y, 0);
+      rig.inner.rotation.set(roll, 0, pitch);
+      const foam = rig.inner.userData.foam;
+      if (foam && !rig.sunk) foam.forEach((f, i) => { f.material.opacity = (i === 0 ? .26 : i === 1 ? .46 : .2) * (.8 + .2 * Math.sin(t * 2 + i + ph)); });
+    }
     frame(t) {
       if (!this.visible()) return;
       if (this.needSize && !this.resize()) return;
       if (!this.camBase) return;
       this.now = t;
+      if (this.timers.length) this.timers = this.timers.filter(tm => { if (this.now >= tm.at) { tm.fn(); return false; } return true; });
 
       // water
       const pos = this.water.geometry.attributes.position, base = this.waterBase;
@@ -776,21 +914,18 @@
       this.bump.offset.set(t * .006, t * .004);
 
       // ships bob on the swell; sunk ones settle
-      this.ships.forEach(rig => {
-        const x = rig.cx, z = rig.cz, ph = rig.phase;
-        let y = waveH(x, z, t) + rig.baseY + Math.sin(t * 1.3 + ph) * .012;
-        let roll = Math.sin(t * .9 + ph) * .022, pitch = Math.cos(t * .7 + ph) * .014;
-        if (rig.sunk) {
-          const p = rig.animate ? Math.min(1, (t - rig.sinkAt) / 4.2) : 1, e = p * p * (3 - 2 * p);
-          y += -.46 * e; roll += .42 * e * (rig.len % 2 ? 1 : -1); pitch += -.1 * e;
-        }
-        rig.inner.position.y = y; rig.inner.rotation.set(roll, 0, pitch);
-        const foam = rig.inner.userData.foam;
-        if (foam && !rig.sunk) foam.forEach((f, i) => { f.material.opacity = (i === 0 ? .26 : i === 1 ? .46 : .2) * (.8 + .2 * Math.sin(t * 2 + i + ph)); });
-      });
+      this.fields.forEach(f => f.ships.forEach(rig => this.bobRig(rig, t)));
+      if (this.flag) {
+        this.flag.forEach(rig => this.bobRig(rig, t));
+        const g = this.turnGlow;
+        if (this.turnIdx >= 0 && !this.over) {
+          const f = this.flag[this.turnIdx];
+          g.position.set(f.cx, .08, f.cz); g.material.opacity = .35 + .2 * Math.sin(t * 4);
+        } else g.material.opacity = 0;
+      }
 
       // effects
-      this.cellFx.forEach(fx => fx.update(t));
+      this.fields.forEach(f => f.cellFx.forEach(fx => fx.update(t)));
       this.fx = this.fx.filter(f => { if (f.update(t)) return true; f.dispose(); return false; });
 
       // fire light flicker follows the most recent burst
@@ -798,13 +933,14 @@
       const base_i = Math.min(1.4, this.flames * .18);
       this.fireLight.intensity = Math.max(this.fireT, base_i) * (.85 + .15 * Math.sin(t * 17) * Math.sin(t * 11));
       if (this.flames && this.fireT < .1) {
-        const f = [...this.cellFx.values()].find(x => x instanceof Flame);
-        if (f) this.fireLight.position.set(f.x, 1, f.z);
+        for (const f of this.fields) { const fl = [...f.cellFx.values()].find(x => x instanceof Flame); if (fl) { this.fireLight.position.set(fl.x, 1, fl.z); break; } }
       }
 
       // aim highlight + last-shot ring pulse
       if (this.hoverMesh.visible) this.hoverMesh.material.opacity = .3 + .15 * Math.sin(t * 6);
-      if (this.lastRing.visible) { const s = 1 + (t * 1.3 % 1) * .5; this.lastRing.scale.set(s, 1, s); this.lastRing.material.opacity = .9 * (1 - (t * 1.3 % 1)); }
+      this.fields.forEach(f => {
+        if (f.lastRing.visible) { const s = 1 + (t * 1.3 % 1) * .5; f.lastRing.scale.set(s, 1, s); f.lastRing.material.opacity = .9 * (1 - (t * 1.3 % 1)); }
+      });
 
       // camera shake
       const cam = this.camera;
@@ -818,12 +954,17 @@
     }
   }
 
+  function boardFor(el, mode) { return el._bs3d || (el._bs3d = new Board(el, mode)); }
+  // One battlefield (the phones).
   API.render = function (el, marks, opts) {
-    let b = el._bs3d;
-    if (!b) {
-      const mode = el.classList.contains('tv') ? 'tv' : el.classList.contains('mine') ? 'mine' : 'phone';
-      b = el._bs3d = new Board(el, mode);
-    }
-    b.update(marks, opts || {});
+    const mode = el.classList.contains('mine') ? 'mine' : 'phone';
+    boardFor(el, mode).fields[0].update(marks, opts || {});
+  };
+  // Both fleets on the same sea (the TV).  data = {kyle:{marks,opts}, lindsey:{marks,opts}, turn, winner}
+  API.renderArena = function (el, data) {
+    const b = boardFor(el, 'arena');
+    b.fields[0].update(data.kyle.marks, data.kyle.opts || {});
+    b.fields[1].update(data.lindsey.marks, data.lindsey.opts || {});
+    b.setTurn(data.turn); b.setWinner(data.winner || null);
   };
 })();
