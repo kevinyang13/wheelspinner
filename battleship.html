@@ -199,6 +199,7 @@
       position: fixed; left: 14px; bottom: 14px; z-index: 20; padding: 6px 14px; font-size: 0.78rem;
       background: rgba(8,24,44,0.72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
     }
+    .tvclient .reveal-btn, .tv2host .reveal-btn { display: none !important; }
     .reveal-btn.on { border-color: var(--red); color: var(--red); }
     .arena-hud .side { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
     .arena-hud .side.lindsey { align-items: flex-end; }
@@ -360,10 +361,12 @@
     <button class="ghost-btn" id="beLocalBtn">🙈 No TV — pass &amp; play on this device</button>
     <button class="ghost-btn" id="beCpuBtn">🤖 Play the computer on this device</button>
   </div>
+  <button class="ghost-btn" id="beTv2Btn">📺 I'm the second TV (two-TV game)</button>
   <div class="note">
     Open this page on the TV first. It shows a 4-letter code; each player opens the same
     page on their own phone and types the code in. Ships stay secret on the phones.
     Playing alone? Switch the TV to “vs Computer” — you can play from a phone <em>or</em> right on the TV.
+    Two players in different rooms? Switch the first TV to “Two TVs”, then open this page on the other TV and tap “I'm the second TV”.
   </div>
 </div>
 
@@ -394,6 +397,7 @@
   <div class="row" id="modeRow">
     <button class="ghost-btn on" id="modeTwo" type="button">👥 2 players</button>
     <button class="ghost-btn" id="modeCpu" type="button">🤖 vs Computer</button>
+    <button class="ghost-btn" id="modeTv2" type="button">📺📺 Two TVs</button>
   </div>
   <div class="row" id="cpuRow" style="display:none">
     <button class="ghost-btn" id="lvlEasy" type="button">Easy</button>
@@ -424,6 +428,7 @@
   <div class="row" id="tvActions">
     <button class="go-btn" id="tvAgainBtn" type="button" style="display:none">🔁 Play again</button>
     <button class="ghost-btn" id="tvShuffleBtn" type="button" style="display:none">🎲 Shuffle my fleet</button>
+    <button class="go-btn" id="tvReadyBtn" type="button" style="display:none">✅ Ready</button>
   </div>
   <div class="note" id="tvHint" style="display:none">Tap or click a square on the enemy’s waters (right) — or use the arrow keys + Enter.</div>
   <div class="note" id="overNote" style="display:none">Tap “Play again” on both phones for a rematch.</div>
@@ -438,7 +443,7 @@
       <div class="title">📱 Join the game<small>TYPE THE CODE SHOWN ON THE TV</small></div>
       <input class="code-input" id="codeInput" maxlength="4" autocomplete="off"
              autocorrect="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD" />
-      <div class="row">
+      <div class="row" id="pickRow">
         <button class="ghost-btn on" id="pickKyle">🟡 I'm Kyle</button>
         <button class="ghost-btn" id="pickLindsey">🩵 I'm Lindsey</button>
       </div>
@@ -580,6 +585,7 @@ function newGame() {
     log: '',
     solo: false,                                  // single-player vs the computer (the second side)
     level: 'hard',                                // easy | hard
+    tv2: false,                                   // two players, each on their own TV
   };
 }
 
@@ -635,7 +641,8 @@ function resetForRematch(game) {
   fresh.p.kyle.here = here.kyle;
   fresh.p.lindsey.here = here.lindsey;
   fresh.phase = 'place';
-  fresh.solo = game.solo; fresh.level = game.level;
+  fresh.solo = game.solo; fresh.level = game.level; fresh.tv2 = game.tv2;
+  if (fresh.tv2) fresh.p.kyle.here = true;
   if (fresh.solo) { fresh.p.lindsey.here = true; setFleet(fresh, 'lindsey', randomFleet()); }
   return fresh;
 }
@@ -731,7 +738,8 @@ function viewFor(game, who) {
     mine, theirs,
     myFleet:  fleetStatus(me), foeFleet: fleetStatus(foe),
     myShips: shipList(me), foeSunkShips: shipList(foe, true),
-    solo: !!game.solo,
+    solo: !!game.solo, tv2: !!game.tv2,
+    foeAllShips: game.phase === 'over' ? shipList(foe) : null,      // revealed once the game is over
   };
 }
 // Ship pictures to draw: key, cells, sunk. `onlySunk` = what the enemy may see.
@@ -937,7 +945,7 @@ function syncRevealBtns() {
     b.textContent = tvReveal ? '👁 Ships shown on TV — everyone can see!' : '🙈 Ships hidden on TV';
   });
 }
-let conns = { kyle: null, lindsey: null };
+let conns = { kyle: [], lindsey: [] };       // every phone / second TV attached to each player
 let lastShot = null;
 
 // A QR of the join link, so a phone can point its camera at the TV instead of
@@ -995,7 +1003,8 @@ function hostWithFreshCode(attempt) {
     conn.on('data', msg => handlePhoneMsg(conn, msg));
     conn.on('close', () => {
       for (const who of ['kyle', 'lindsey']) {
-        if (conns[who] === conn) { conns[who] = null; game.p[who].here = false; }
+        conns[who] = conns[who].filter(c => c !== conn);
+        if (!conns[who].length && !(game.tv2 && who === 'kyle')) game.p[who].here = false;   // the host TV is always Kyle
       }
       renderTv();
     });
@@ -1007,11 +1016,11 @@ function handlePhoneMsg(conn, msg) {
 
   if (msg.t === 'hello') {
     const who = !game.solo && msg.name === 'lindsey' ? 'lindsey' : 'kyle';   // vs computer: the phone is always Kyle
-    if (conns[who] && conns[who] !== conn && conns[who].open) {
+    if (!game.tv2 && conns[who].some(c => c !== conn && c.open)) {
       conn.send({ t: 'err', m: `${NAMES[who]} is already on another phone.` });
       return;
     }
-    conns[who] = conn;
+    if (!conns[who].includes(conn)) conns[who].push(conn);
     game.p[who].here = true;
     if (game.phase === 'lobby' && game.p.kyle.here && game.p.lindsey.here) game.phase = 'place';
     pushAll();
@@ -1019,7 +1028,7 @@ function handlePhoneMsg(conn, msg) {
     return;
   }
 
-  const who = conns.kyle === conn ? 'kyle' : conns.lindsey === conn ? 'lindsey' : null;
+  const who = conns.kyle.includes(conn) ? 'kyle' : conns.lindsey.includes(conn) ? 'lindsey' : null;
   if (!who) return;
 
   if (msg.t === 'fleet') {
@@ -1052,25 +1061,28 @@ function handlePhoneMsg(conn, msg) {
 }
 
 // ── single-player controls on the TV ──
-function setMode(solo) {
-  if (!!game.solo === solo) return;
+function setMode(mode) {                         // 'two' | 'solo' | 'tv2'
+  const solo = mode === 'solo', tv2 = mode === 'tv2';
+  if (!!game.solo === solo && !!game.tv2 === tv2) return;
   clearTimeout(cpuTimer);
-  const kyleHere = !!conns.kyle;
-  game = newGame(); game.solo = solo; lastShot = null;
+  const hadKyle = conns.kyle.length > 0, hadLindsey = conns.lindsey.length > 0;
+  game = newGame(); game.solo = solo; game.tv2 = tv2; lastShot = null; tvPreview = null;
   setSolo(solo);
-  game.p.kyle.here = kyleHere;
+  game.p.kyle.here = hadKyle || tv2;              // two TVs: this TV is Kyle
   if (solo) {
     game.p.lindsey.here = true;
     setFleet(game, 'lindsey', randomFleet());
-    if (conns.lindsey) { conns.lindsey.send({ t: 'err', m: 'The TV switched to single-player.' }); conns.lindsey = null; }
+    conns.lindsey.forEach(c => c.send({ t: 'err', m: 'The TV switched to single-player.' }));
+    conns.lindsey = [];
   } else {
-    game.p.lindsey.here = !!conns.lindsey;
+    game.p.lindsey.here = hadLindsey;
     if (game.p.kyle.here && game.p.lindsey.here) game.phase = 'place';
   }
   pushAll(); renderTv();
 }
-$('modeTwo').addEventListener('click', () => setMode(false));
-$('modeCpu').addEventListener('click', () => setMode(true));
+$('modeTwo').addEventListener('click', () => setMode('two'));
+$('modeCpu').addEventListener('click', () => setMode('solo'));
+$('modeTv2').addEventListener('click', () => setMode('tv2'));
 $('lvlEasy').addEventListener('click', () => { game.level = 'easy'; renderTv(); });
 $('lvlHard').addEventListener('click', () => { game.level = 'hard'; renderTv(); });
 $('tvPlayBtn').addEventListener('click', () => {          // no phone: random fleet, play on the TV itself
@@ -1079,26 +1091,45 @@ $('tvPlayBtn').addEventListener('click', () => {          // no phone: random fl
   pushAll(); renderTv();
 });
 $('tvAgainBtn').addEventListener('click', () => {
+  if (tvRole === 'client') { myConn.send({ t: 'rematch' }); return; }
+  if (game.tv2) { game = resetForRematch(game); lastShot = null; tvPreview = null; pushAll(); renderTv(); return; }
   if (!game.solo) return;
   clearTimeout(cpuTimer);
   game = resetForRematch(game); lastShot = null;
-  if (!conns.kyle) setFleet(game, 'kyle', randomFleet());
+  if (!conns.kyle.length) setFleet(game, 'kyle', randomFleet());
   pushAll(); renderTv();
 });
 function noShotsYet() {
   return ['kyle', 'lindsey'].every(w => game.p[w].incoming.every(row => row.every(x => !x)));
 }
 $('tvShuffleBtn').addEventListener('click', () => {
-  if (!(game.solo && game.phase === 'battle' && !conns.kyle && noShotsYet())) return;
+  if (tvRole === 'client' || game.tv2) { tvPreview = randomFleet(); refreshTvPlayer(); return; }   // two TVs: reshuffle the preview
+  if (!(game.solo && game.phase === 'battle' && !conns.kyle.length && noShotsYet())) return;
   game.p.kyle.fleet = randomFleet().map(f => ({ k: f.k, cells: f.cells, hits: 0 }));
   renderTv();
 });
+// ── two TVs: each TV plays its own side. The host TV is Kyle; the second TV joins as Lindsey. ──
+let tvRole = 'host';           // 'host' = this page runs the game · 'client' = the second TV
+let tvPreview = null;          // my fleet while I'm still placing it on the TV
+$('tvReadyBtn').addEventListener('click', () => {
+  if (!tvPreview) return;
+  if (tvRole === 'client') { myConn.send({ t: 'fleet', fleet: tvPreview }); return; }
+  if (!game.tv2 || !setFleet(game, 'kyle', tvPreview)) return;
+  pushAll(); renderTv();
+});
+function refreshTvPlayer() { if (tvRole === 'client') { if (myView) renderTvPlayer(myView); } else renderTv(); }
+function tvPlacing() {
+  const v = tvRole === 'client' ? myView : (game.tv2 ? viewFor(game, 'kyle') : null);
+  return !!v && (v.phase === 'place' || v.phase === 'lobby') && !v.ready && $('tvBattle').classList.contains('active');
+}
 function tvHumanTurn() {
-  return !localMode && game.solo && game.phase === 'battle' && game.turn === 'kyle' &&
-         $('tvBattle').classList.contains('active');
+  if (localMode || !$('tvBattle').classList.contains('active')) return false;
+  if (tvRole === 'client') return !!myView && myView.phase === 'battle' && myView.turn === myView.you;
+  return (game.solo || game.tv2) && game.phase === 'battle' && game.turn === 'kyle';
 }
 function tvHumanFire(r, c) {
   if (!tvHumanTurn()) return;
+  if (tvRole === 'client') { myConn.send({ t: 'fire', r, c }); return; }
   const res = fire(game, 'kyle', r, c);
   if (!res) return;
   noteShot(res);
@@ -1108,11 +1139,16 @@ function tvHumanFire(r, c) {
 // Remote / keyboard: arrows move the cursor over the enemy waters, Enter or Space fires.
 let tvCur = { r: 4, c: 4 };
 document.addEventListener('keydown', e => {
+  if (tvPlacing()) {                                  // placing on a TV: Space / ↓ shuffles, Enter is Ready
+    if (e.key === 'Enter') { e.preventDefault(); $('tvReadyBtn').click(); }
+    else if (e.key === ' ' || e.key === 'ArrowDown') { e.preventDefault(); $('tvShuffleBtn').click(); }
+    return;
+  }
   if (!tvHumanTurn()) return;
   const d = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] }[e.key];
   if (d) {
     tvCur = { r: Math.min(SIZE - 1, Math.max(0, tvCur.r + d[0])), c: Math.min(SIZE - 1, Math.max(0, tvCur.c + d[1])) };
-    e.preventDefault(); renderTv();
+    e.preventDefault(); refreshTvPlayer();
   } else if (e.key === 'Enter' || e.key === ' ') {
     e.preventDefault(); tvHumanFire(tvCur.r, tvCur.c);
   }
@@ -1120,13 +1156,14 @@ document.addEventListener('keydown', e => {
 
 function pushAll() {
   for (const who of ['kyle', 'lindsey']) {
-    const c = conns[who];
-    if (c && c.open) c.send({ t: 'view', v: viewFor(game, who) });
+    conns[who].forEach(c => { if (c.open) c.send({ t: 'view', v: viewFor(game, who) }); });
   }
 }
 
 function renderTv() {
   syncRevealBtns();
+  document.body.classList.toggle('tv2host', !!game.tv2);
+  if (game.tv2 && game.phase !== 'lobby') { renderTvPlayer(viewFor(game, 'kyle')); return; }
   if (game.phase === 'lobby' || game.phase === 'place') {
     showScreen('tvLobby');
     for (const who of ['kyle', 'lindsey']) {
@@ -1140,8 +1177,9 @@ function renderTv() {
     $('tvLobbyNote').textContent = game.phase === 'place'
       ? 'Both players connected — placing ships on their phones.'
       : 'On each phone: open the address above, tap “I\'m a player”, type the code.';
-    $('modeTwo').classList.toggle('on', !game.solo);
+    $('modeTwo').classList.toggle('on', !game.solo && !game.tv2);
     $('modeCpu').classList.toggle('on', !!game.solo);
+    $('modeTv2').classList.toggle('on', !!game.tv2);
     $('cpuRow').style.display = game.solo ? '' : 'none';
     $('lvlEasy').classList.toggle('on', game.level === 'easy');
     $('lvlHard').classList.toggle('on', game.level !== 'easy');
@@ -1151,6 +1189,12 @@ function renderTv() {
       if (!game.p.kyle.here) $('slotKyle').querySelector('.sstate').textContent = 'waiting for phone… or play on this TV';
       $('tvLobbyNote').textContent = 'Playing the computer: scan the code with one phone, or press “Play on this TV” and tap the board (or use arrow keys + Enter).';
     }
+    if (game.tv2) {
+      $('slotKyle').classList.add('here');
+      $('slotKyle').querySelector('.sstate').textContent = 'this TV';
+      $('slotLindsey').querySelector('.sstate').textContent = game.p.lindsey.here ? '📺 connected' : 'waiting for the other TV…';
+      $('tvLobbyNote').textContent = 'Two TVs: on the other TV open this page, tap “I’m the second TV” and type the code. Each player plays on their own TV (tap the board, or arrow keys + Enter) — phones can join too.';
+    }
     return;
   }
 
@@ -1158,6 +1202,8 @@ function renderTv() {
     showScreen('tvBattle');
     const over = game.phase === 'over', t = game.turn, w = game.winner;
     const humanTurn = tvHumanTurn();
+    setHud('kyle', 'lindsey', false);
+    $('tvReadyBtn').style.display = 'none';
     $('turnBanner').className = over ? `turn-banner ${w}` : `turn-banner ${t}`;
     $('turnBanner').textContent = over ? `🏆 ${EMOJI[w]} ${NAMES[w]} wins!`
       : game.solo ? (t === 'kyle' ? `${EMOJI.kyle} Your turn — pick a target!` : `${EMOJI.lindsey} Computer is firing…`)
@@ -1165,7 +1211,7 @@ function renderTv() {
     $('shotLog').textContent = game.log || ' ';
     $('overNote').style.display = over && !game.solo ? '' : 'none';
     $('tvAgainBtn').style.display = over && game.solo ? '' : 'none';
-    $('tvShuffleBtn').style.display = game.solo && game.phase === 'battle' && !conns.kyle && noShotsYet() ? '' : 'none';
+    $('tvShuffleBtn').style.display = game.solo && game.phase === 'battle' && !conns.kyle.length && noShotsYet() ? '' : 'none';
     $('tvHint').style.display = humanTurn ? '' : 'none';
     // The TV shows shots only — ships stay hidden until they sink (everything is revealed at the end, or all
     // the time if the “show ships” toggle is on). Against the computer your own fleet is always shown.
@@ -1186,6 +1232,58 @@ function renderTv() {
       $(who === 'kyle' ? 'kyleSub' : 'lindseySub').textContent = `${alive} of ${SHIPS.length} afloat`;
     }
     return;
+  }
+}
+
+// Left board-name / right board-name of the arena HUD.
+function setHud(left, right, youLeft) {
+  const L = document.querySelector('.arena-hud .side.kyle .board-name'), R = document.querySelector('.arena-hud .side.lindsey .board-name');
+  L.className = `board-name ${left}`;  L.textContent = `${EMOJI[left]} ${NAMES[left]}'s fleet${youLeft ? ' (you)' : ''}`;
+  R.className = `board-name ${right}`; R.textContent = `${EMOJI[right]} ${NAMES[right]}'s fleet`;
+}
+let lastSoundLog = '';
+// One TV playing its own side (two-TV games): my fleet on the left, the enemy's waters on the right.
+// `v` is the same private view a phone gets. Used by the host TV (as Kyle) and by the second TV.
+function renderTvPlayer(v) {
+  showScreen('tvBattle');
+  const me = v.you, foe = other(me);
+  const place = v.phase === 'place' || v.phase === 'lobby', over = v.phase === 'over';
+  if (place && !v.ready && !tvPreview) tvPreview = randomFleet();
+  if (over) tvPreview = null;
+  const canAim = tvHumanTurn();
+  setHud(me, foe, true);
+
+  let banner, cls = me;
+  if (place) banner = v.ready ? `⚓ Fleet locked in — waiting for ${NAMES[foe]}…` : '🎲 Place your fleet — shuffle until you like it, then press Ready';
+  else if (over) { banner = v.winner === me ? '🏆 You win!' : `💀 ${NAMES[foe]} wins`; cls = v.winner; }
+  else if (v.turn === me) banner = `${EMOJI[me]} Your turn — pick a target!`;
+  else { banner = `⏳ ${NAMES[foe]} is aiming…`; cls = foe; }
+  $('turnBanner').className = `turn-banner ${cls}`;
+  $('turnBanner').textContent = banner;
+  $('shotLog').textContent = place && !v.ready ? 'Space or ↓ = shuffle · Enter = Ready' : (v.log || ' ');
+  $('overNote').style.display = 'none';
+  $('tvAgainBtn').style.display = over ? '' : 'none';
+  $('tvShuffleBtn').style.display = place && !v.ready ? '' : 'none';
+  $('tvReadyBtn').style.display = place && !v.ready ? '' : 'none';
+  $('tvHint').style.display = canAim ? '' : 'none';
+
+  const previewShips = place && !v.ready && tvPreview ? tvPreview.map(f => ({ k: f.k, cells: f.cells, sunk: false })) : null;
+  const data = {
+    kyle:    { marks: v.mine, opts: { ships: previewShips || v.myShips } },
+    lindsey: { marks: v.theirs, opts: { ships: over ? (v.foeAllShips || v.foeSunkShips) : v.foeSunkShips,
+                                        aim: canAim, onCell: canAim ? tvHumanFire : null } },
+    turn: place || over ? null : (v.turn === me ? 'kyle' : 'lindsey'),
+    winner: over ? (v.winner === me ? 'kyle' : 'lindsey') : null,
+  };
+  if (window.BS3D && BS3D.supported) BS3D.renderArena($('arena'), data); else renderArenaFlat($('arena'), data);
+  if (window.BS3D && BS3D.supported) BS3D.setCursor($('arena'), canAim ? 1 : -1, tvCur.r, tvCur.c);
+  renderFleet($('fleetKyle'), v.myFleet);
+  renderFleet($('fleetLindsey'), v.foeFleet);
+  $('kyleSub').textContent = `${v.myFleet.filter(x => !x.sunk).length} of ${SHIPS.length} afloat`;
+  $('lindseySub').textContent = `${v.foeFleet.filter(x => !x.sunk).length} of ${SHIPS.length} afloat`;
+  if (tvRole === 'client' && v.log && v.log !== lastSoundLog) {      // the host TV already plays the shot sounds
+    lastSoundLog = v.log;
+    if (/whole fleet/.test(v.log)) sndWin(); else if (/sank/.test(v.log)) sndSunk(); else if (/hit/.test(v.log)) sndHit(); else if (/miss/.test(v.log)) sndMiss();
   }
 }
 
@@ -1211,6 +1309,7 @@ function fullGrid(who) {
 //  PHONE (CONTROLLER)
 // ═══════════════════════════════════════════════════
 let myName = 'kyle';
+let joinAs = 'phone';          // 'phone' | 'tv' (the second TV of a two-TV game)
 let myConn = null;
 let myView = null;
 let horiz = true;
@@ -1240,22 +1339,49 @@ $('joinBtn').addEventListener('click', () => {
     const conn = peer.connect(peerIdFor(code), { reliable: true });
     conn.on('open', () => {
       myConn = conn;
-      conn.send({ t: 'hello', name: myName });
+      conn.send({ t: 'hello', name: joinAs === 'tv' ? 'lindsey' : myName, device: joinAs });
       $('joinStatus').textContent = '';
+      if (joinAs === 'tv') { enterTvClient(); return; }
       $('pJoin').style.display = 'none';
       $('pPlay').style.display = 'flex';
       startPlacing();
     });
-    conn.on('data', msg => {
-      if (msg.t === 'view') { myView = msg.v; renderPhone(); }
-      if (msg.t === 'err')  { $('pStatus').className = 'status err'; $('pStatus').textContent = msg.m; }
+    conn.on('data', msg => onHostMsg(msg));
+    conn.on('close', () => {
+      if (joinAs === 'tv') { $('turnBanner').className = 'turn-banner'; $('turnBanner').textContent = 'Lost the host TV — reload this page to rejoin.'; return; }
+      $('pStatus').className = 'status err'; $('pStatus').textContent = 'Lost the TV. Reload to rejoin.';
     });
-    conn.on('close', () => { $('pStatus').className = 'status err'; $('pStatus').textContent = 'Lost the TV. Reload to rejoin.'; });
     setTimeout(() => {
       if (!myConn) $('joinStatus').textContent = 'No game with that code. Check the TV screen.';
     }, 6000);
   });
   peer.on('error', () => { $('joinStatus').textContent = 'Could not connect. Check the code and the internet.'; });
+});
+
+// What the host sends us — a phone or the second TV.
+function onHostMsg(msg) {
+  if (!msg) return;
+  if (msg.t === 'view') { myView = msg.v; if (joinAs === 'tv') renderTvPlayer(myView); else renderPhone(); }
+  if (msg.t === 'err') {
+    if (joinAs === 'tv') $('shotLog').textContent = msg.m;
+    else { $('pStatus').className = 'status err'; $('pStatus').textContent = msg.m; }
+  }
+}
+// This page is the second TV: same arena as the host, from Lindsey's side.
+function enterTvClient() {
+  tvRole = 'client'; setSolo(false);
+  document.body.classList.add('tvclient');
+  showScreen('tvBattle');
+  $('turnBanner').className = 'turn-banner';
+  $('turnBanner').textContent = 'Connected — waiting for the host TV…';
+  $('shotLog').textContent = ' ';
+}
+$('beTv2Btn').addEventListener('click', () => {
+  joinAs = 'tv';
+  showScreen('phoneScreen');
+  $('pickRow').style.display = 'none';
+  $('pJoin').querySelector('.title').innerHTML = '📺 Second TV<small>TYPE THE CODE SHOWN ON THE FIRST TV</small>';
+  $('codeInput').focus();
 });
 
 $('codeInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('joinBtn').click(); });
