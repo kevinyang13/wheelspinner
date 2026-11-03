@@ -164,6 +164,43 @@
       50%      { transform: translateZ(calc(var(--zs) + var(--cell) * 0.06)); }
     }
 
+
+    /* ── sinking: fireball + shockwave + sparks, then the hull rolls and goes dark ── */
+    .ship3d.sunk.sinking { animation: sinkroll 2.4s ease-in forwards; }
+    .ship3d.sunk.sinking svg { animation: darken 2.4s ease-in forwards; }
+    @keyframes sinkroll {
+      0%   { transform: translateZ(var(--zs)) rotate(0); }
+      25%  { transform: translateZ(calc(var(--zs) * 1.6)) rotate(-4deg); }
+      60%  { transform: translateZ(0) rotate(3deg); }
+      100% { transform: translateZ(calc(var(--cell) * 0.03)) rotate(0); }
+    }
+    @keyframes darken { from { filter: none; } to { filter: brightness(0.42) saturate(0.5); } }
+    .blast {
+      display: grid; place-items: center;
+      transform-origin: 50% 60%;
+      transform: translateZ(calc(var(--cell) * 1.0)) rotateX(calc(var(--tilt) * -1));
+    }
+    .blast i { position: absolute; display: block; pointer-events: none; }
+    .blast .core {
+      width: calc(var(--cell) * 2.4); height: calc(var(--cell) * 2.4); border-radius: 50%;
+      background: radial-gradient(circle, #fffbe0 0%, #ffd24a 25%, #ff7a1a 55%, rgba(214,43,26,0.5) 75%, transparent 100%);
+      opacity: 0; animation: blastcore 1.4s ease-out forwards;
+    }
+    .blast .ring {
+      width: calc(var(--cell) * 2.6); height: calc(var(--cell) * 2.6); border-radius: 50%;
+      border: 4px solid rgba(255,255,255,0.9); opacity: 0; animation: blastring 1.2s ease-out 0.1s forwards;
+    }
+    .blast .spark {
+      width: 7px; height: 7px; border-radius: 50%; background: #ffd24a; box-shadow: 0 0 6px #ff9a1a;
+      opacity: 0; animation: blastspark 1.1s ease-out forwards;
+    }
+    @keyframes blastcore { 0% { transform: scale(0.1); opacity: 1; } 35% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+    @keyframes blastring { 0% { transform: scale(0.2); opacity: 0.9; } 100% { transform: scale(1.7); opacity: 0; } }
+    @keyframes blastspark {
+      0%   { transform: rotate(var(--a)) translateX(0); opacity: 1; }
+      100% { transform: rotate(var(--a)) translateX(calc(var(--cell) * 1.7)); opacity: 0; }
+    }
+
     /* Flames stand upright and face the viewer, whatever the tilt. */
     .mark.flame {
       transform-origin: 50% 88%;
@@ -756,6 +793,11 @@ function renderGrid(el, marks, opts = {}) {
     }
   }
 
+  // A ship that went down since the last draw of this board gets the big show.
+  const before = el._sunkShips;
+  el._sunkShips = new Set((ships || []).filter(x => x.sunk).map(x => x.k));
+  const justSunk = k => before && !before.has(k) && el._sunkShips.has(k);
+
   // Ships first, then fire & ripples above them.
   (ships || []).forEach(s => {
     const spec = SHIPS.find(x => x.k === s.k);
@@ -764,11 +806,21 @@ function renderGrid(el, marks, opts = {}) {
     const r0 = Math.min(...rows), c0 = Math.min(...cols);
     const vertical = s.cells.length > 1 && new Set(cols).size === 1;
     const d = document.createElement('div');
-    d.className = 'ov ship3d' + (s.sunk ? ' sunk' : '');
+    const boom = s.sunk && justSunk(s.k);
+    d.className = 'ov ship3d' + (s.sunk ? ' sunk' : '') + (boom ? ' sinking' : '');
     d.style.gridRow    = vertical ? `${r0 + 2} / span ${spec.len}` : `${r0 + 2}`;
     d.style.gridColumn = vertical ? `${c0 + 2}` : `${c0 + 2} / span ${spec.len}`;
     d.innerHTML = shipSvg(s.k, spec.len, vertical);
     el.appendChild(d);
+    if (boom) {
+      const b = document.createElement('div');
+      b.className = 'ov blast';
+      b.style.gridRow = d.style.gridRow;
+      b.style.gridColumn = d.style.gridColumn;
+      b.innerHTML = '<i class="core"></i><i class="ring"></i>' +
+        Array.from({ length: 12 }, (_, i) => `<i class="spark" style="--a:${i * 30 + 7}deg"></i>`).join('');
+      el.appendChild(b);
+    }
   });
   overlays.forEach(([kind, r, c]) => {
     const d = document.createElement('div');
