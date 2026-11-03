@@ -688,11 +688,13 @@
       sc.add(this.hoverMesh);
 
       this.ray = new T.Raycaster(); this.plane = new T.Plane(new T.Vector3(0, 1, 0), 0);
-      if (!this.arena) {
-        canvas.addEventListener('pointermove', e => this.onMove(e));
-        canvas.addEventListener('pointerleave', () => { this.hover = null; this.hoverMesh.visible = false; });
-        canvas.addEventListener('click', e => this.onClick(e));
-      }
+      const cg = new T.RingGeometry(.34, .5, 4, 1, Math.PI / 4); cg.rotateX(-Math.PI / 2);
+      this.cursorMesh = new T.Mesh(cg, new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .9, depthWrite: false, side: T.DoubleSide }));
+      this.cursorMesh.position.y = .14; this.cursorMesh.visible = false; this.cursorMesh.renderOrder = 5;
+      sc.add(this.cursorMesh);
+      canvas.addEventListener('pointermove', e => this.onMove(e));
+      canvas.addEventListener('pointerleave', () => { this.hover = null; this.hoverMesh.visible = false; });
+      canvas.addEventListener('click', e => this.onClick(e));
       if (window.ResizeObserver) new ResizeObserver(() => { this.needSize = true; }).observe(el);
       boards.add(this);
       if (!looping) { looping = true; requestAnimationFrame(loop); }
@@ -867,26 +869,34 @@
     }
     visible() { return this.el.isConnected && this.el.clientWidth > 0 && this.el.clientHeight > 0; }
 
-    // — picking (single-field boards: the phones) —
+    // — picking: works on whichever battlefield has a handler (phones: the one board; TV vs computer: the enemy waters) —
     pick(e) {
       const rc = this.canvas.getBoundingClientRect();
       const nx = ((e.clientX - rc.left) / rc.width) * 2 - 1, ny = -((e.clientY - rc.top) / rc.height) * 2 + 1;
       this.ray.setFromCamera({ x: nx, y: ny }, this.camera);
       const p = new T.Vector3();
       if (!this.ray.ray.intersectPlane(this.plane, p)) return null;
-      return this.fields[0].cellAt(p.x, p.z);
+      for (const f of this.fields) { const cell = f.cellAt(p.x, p.z); if (cell) return { f, cell }; }
+      return null;
     }
     onMove(e) {
-      const cell = this.pick(e), f = this.fields[0];
-      const ok = cell && f.opts.aim && f.marks && !f.marks[cell.r][cell.c];
-      this.hover = ok ? cell : null;
+      const hit = this.pick(e);
+      const ok = hit && hit.f.opts.aim && hit.f.marks && !hit.f.marks[hit.cell.r][hit.cell.c];
+      this.hover = ok ? hit : null;
       this.hoverMesh.visible = !!ok;
-      if (ok) { const p = f.pos(cell.r, cell.c); this.hoverMesh.position.set(p.x, .13, p.z); }
-      this.canvas.style.cursor = ok ? 'crosshair' : (f.opts.onCell ? 'pointer' : 'default');
+      if (ok) { const p = hit.f.pos(hit.cell.r, hit.cell.c); this.hoverMesh.position.set(p.x, .13, p.z); }
+      this.canvas.style.cursor = ok ? 'crosshair' : (hit && hit.f.opts.onCell ? 'pointer' : 'default');
     }
     onClick(e) {
-      const cell = this.pick(e), f = this.fields[0];
-      if (cell && f.opts.onCell) f.opts.onCell(cell.r, cell.c);
+      const hit = this.pick(e);
+      if (hit && hit.f.opts.onCell) hit.f.opts.onCell(hit.cell.r, hit.cell.c);
+    }
+    // Keyboard / remote cursor over one field (idx < 0 hides it).
+    setCursor(idx, r, c) {
+      const f = this.fields[idx];
+      if (!f) { this.cursorMesh.visible = false; return; }
+      const p = f.pos(r, c);
+      this.cursorMesh.position.set(p.x, .14, p.z); this.cursorMesh.visible = true;
     }
 
     // — per frame —
@@ -950,6 +960,7 @@
 
       // aim highlight + last-shot ring pulse
       if (this.hoverMesh.visible) this.hoverMesh.material.opacity = .3 + .15 * Math.sin(t * 6);
+      if (this.cursorMesh.visible) { const k = 1 + .08 * Math.sin(t * 7); this.cursorMesh.scale.set(k, 1, k); }
       this.fields.forEach(f => {
         if (f.lastRing.visible) { const s = 1 + (t * 1.3 % 1) * .5; f.lastRing.scale.set(s, 1, s); f.lastRing.material.opacity = .9 * (1 - (t * 1.3 % 1)); }
       });
@@ -973,6 +984,7 @@
     boardFor(el, mode).fields[0].update(marks, opts || {});
   };
   // Both fleets on the same sea (the TV).  data = {kyle:{marks,opts}, lindsey:{marks,opts}, turn, winner}
+  API.setCursor = function (el, idx, r, c) { if (el._bs3d) el._bs3d.setCursor(idx, r, c); };
   API.renderArena = function (el, data) {
     const b = boardFor(el, 'arena');
     b.fields[0].update(data.kyle.marks, data.kyle.opts || {});
