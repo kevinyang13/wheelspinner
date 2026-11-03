@@ -115,12 +115,20 @@
     .board-name.lindsey { color: var(--teal); }
     .board-sub { font-size: 0.8rem; color: var(--muted); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
 
+    /* The board is a real 3D scene: tilted back in perspective, with ships,
+       flames and ripples lifted off the water (translateZ). */
     .grid {
-      display: grid; gap: 2px; background: var(--border); padding: 2px;
-      border-radius: 10px; --cell: 34px;
+      display: grid; gap: 2px; background: #0e3050; padding: 2px;
+      border-radius: 10px; --cell: 34px; --tilt: 24deg;
       grid-template-columns: repeat(11, var(--cell));
+      grid-template-rows: repeat(11, var(--cell));
+      transform: perspective(900px) rotateX(var(--tilt));
+      transform-style: preserve-3d;
+      box-shadow: 0 18px 28px -10px rgba(0,0,0,0.45);
+      margin: calc(var(--cell) * -0.6) 0 calc(var(--cell) * 0.5);
     }
-    .grid.tv { --cell: clamp(24px, 4.4vmin, 58px); }
+    .grid.mine { --cell: min(6.6vw, 28px); --tilt: 18deg; }
+    .grid.tv { --cell: clamp(24px, 4.4vmin, 58px); --tilt: 32deg; }
     .cell {
       width: var(--cell); height: var(--cell);
       display: flex; align-items: center; justify-content: center;
@@ -128,15 +136,62 @@
       font-weight: 800; line-height: 1; user-select: none;
     }
     .cell.head {
-      background: transparent; color: var(--muted);
+      background: transparent; color: #cfe6f7;
       font-size: calc(var(--cell) * 0.38); font-weight: 800;
     }
-    .cell.sea   { background: var(--card-alt); }
+    .cell.sea   { background: linear-gradient(155deg, #4aa3dc 0%, #2b79b5 55%, #1f5f98 100%); }
     .cell.ship  { background: var(--steel); color: #fff; }
-    .cell.miss  { color: var(--muted); }
-    .cell.hit   { background: rgba(224,112,111,0.22); }
-    .cell.sunk  { background: var(--red); color: #fff; }
-    .cell.aim   { cursor: pointer; }
+    .cell.miss  { background: linear-gradient(155deg, #63b9ea 0%, #3a8cc6 100%); }
+    .cell.hit   { background: linear-gradient(155deg, #6f8397 0%, #3f566b 100%); }
+    .cell.sunk  { background: linear-gradient(155deg, #254963 0%, #122b3d 100%); }
+    .cell.aim   { cursor: crosshair; }
+
+    /* ── 3D pieces that sit on top of the water ── */
+    .ov { pointer-events: none; position: relative; min-width: 0; min-height: 0; }
+    .ov svg { display: block; overflow: visible; }
+    .ship3d {
+      --zs: calc(var(--cell) * 0.12);
+      transform: translateZ(var(--zs));
+      animation: bob 3.2s ease-in-out infinite;
+    }
+    .ship3d:nth-of-type(2n) { animation-delay: -1.1s; }
+    .ship3d:nth-of-type(3n) { animation-delay: -2.2s; }
+    .ship3d svg { width: 100%; height: 100%; }
+    .ship3d.sunk { animation: none; transform: translateZ(calc(var(--cell) * 0.03)); }
+    .ship3d.sunk svg { filter: brightness(0.42) saturate(0.5); }
+    @keyframes bob {
+      0%, 100% { transform: translateZ(var(--zs)); }
+      50%      { transform: translateZ(calc(var(--zs) + var(--cell) * 0.06)); }
+    }
+
+    /* Flames stand upright and face the viewer, whatever the tilt. */
+    .mark.flame {
+      transform-origin: 50% 88%;
+      transform: translateZ(calc(var(--cell) * 0.2)) rotateX(calc(var(--tilt) * -1));
+    }
+    .mark.flame svg { position: absolute; left: -15%; bottom: 0; width: 130%; height: 140%; }
+    .mark.flame.small svg { left: 5%; width: 90%; height: 100%; }
+    .mark.flame .fl { transform-box: fill-box; transform-origin: 50% 100%; animation: flick 0.45s ease-in-out infinite alternate; }
+    .mark.flame .smk { transform-box: fill-box; transform-origin: center; animation: smoke 2.4s ease-out infinite; opacity: 0; }
+    .mark.flame .smk.b { animation-delay: 1.2s; }
+    .mark.flame.fresh svg { animation: boom 0.7s ease-out 1; }
+    @keyframes flick { from { transform: scale(1, 0.9) skewX(-4deg); } to { transform: scale(0.93, 1.06) skewX(4deg); } }
+    @keyframes smoke { 0% { transform: translateY(0) scale(0.5); opacity: 0.6; } 100% { transform: translateY(-34px) scale(1.5); opacity: 0; } }
+    @keyframes boom  { 0% { transform: scale(0.1); } 60% { transform: scale(1.35); } 100% { transform: scale(1); } }
+
+    .mark.ripple { transform: translateZ(calc(var(--cell) * 0.02)); }
+    .mark.ripple svg { width: 100%; height: 100%; }
+    .mark.ripple .rp { fill: none; stroke: #fff; stroke-width: 4; transform-box: fill-box; transform-origin: center; animation: rip 2.4s ease-out infinite; opacity: 0; }
+    .mark.ripple .rp.d1 { animation-delay: 0.8s; }
+    .mark.ripple .rp.d2 { animation-delay: 1.6s; }
+    .mark.ripple.fresh svg { animation: splash 0.6s ease-out 1; }
+    @keyframes rip    { 0% { transform: scale(0.25); opacity: 0.9; } 100% { transform: scale(1); opacity: 0; } }
+    @keyframes splash { 0% { transform: scale(1.8); opacity: 0.2; } 100% { transform: scale(1); opacity: 1; } }
+
+    /* little ship pictures in the fleet list / placing tray */
+    .mini { display: block; height: 20px; width: calc(var(--len) * 20px); flex: none; }
+    .mini svg { width: 100%; height: 100%; display: block; }
+    .fleet-row.sunk .mini svg { filter: brightness(0.45) saturate(0.5); }
     .cell.aim:hover { outline: 3px solid var(--sky); outline-offset: -3px; }
     .cell.sel   { outline: 4px solid var(--sky); outline-offset: -4px; }
     .cell.last  { animation: pulse 1.2s ease-out 2; }
@@ -191,9 +246,8 @@
     }
     .tray-item.cur    { border-color: var(--sky); background: rgba(var(--ink-rgb),0.04); }
     .tray-item.placed { color: var(--green); border-color: var(--green); }
-    .tray-item .blocks { display: flex; gap: 2px; margin-left: auto; }
-    .tray-item .blk { width: 12px; height: 12px; border-radius: 3px; background: var(--steel); }
-    .tray-item.placed .blk { background: var(--green); }
+    .tray-item .mini { margin-left: auto; height: 22px; width: calc(var(--len) * 22px); }
+    .tray-item.placed .mini { opacity: 0.55; }
 
     .status {
       font-size: 1.05rem; font-weight: 800; text-align: center; min-height: 1.5em;
@@ -216,12 +270,46 @@
     @media (max-width: 600px) {
       .title { font-size: 1.9rem; }
       .big-btn { min-width: 0; width: 100%; }
-      .grid { --cell: min(8.2vw, 34px); }
+      .grid { --cell: min(8.2vw, 34px); --tilt: 20deg; }
+      .grid.mine { --cell: min(6.6vw, 28px); --tilt: 18deg; }
       .code-card { padding: 20px 24px; }
     }
   </style>
 </head>
 <body>
+
+<!-- Shared paint for the 3D ship / fire graphics (referenced by url(#bs…)). -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="bsHull" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d6dee5"/><stop offset=".5" stop-color="#93a0ab"/><stop offset="1" stop-color="#55616c"/>
+    </linearGradient>
+    <linearGradient id="bsDeck" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b3bec7"/><stop offset="1" stop-color="#76838e"/>
+    </linearGradient>
+    <linearGradient id="bsFlat" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#737c85"/><stop offset="1" stop-color="#4a5259"/>
+    </linearGradient>
+    <linearGradient id="bsTower" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eef2f5"/><stop offset="1" stop-color="#a3aeb7"/>
+    </linearGradient>
+    <radialGradient id="bsTurret" cx=".35" cy=".3" r=".8">
+      <stop offset="0" stop-color="#d4dbe0"/><stop offset=".55" stop-color="#7f8b95"/><stop offset="1" stop-color="#454e56"/>
+    </radialGradient>
+    <linearGradient id="bsSub" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7a90a3"/><stop offset=".5" stop-color="#43576a"/><stop offset="1" stop-color="#25313b"/>
+    </linearGradient>
+    <linearGradient id="bsSubTop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8ba0b2"/><stop offset="1" stop-color="#394a58"/>
+    </linearGradient>
+    <linearGradient id="bsFlameOut" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#c9231a"/><stop offset=".55" stop-color="#ff7a1a"/><stop offset="1" stop-color="#ffd24a"/>
+    </linearGradient>
+    <linearGradient id="bsFlameIn" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#ffb52e"/><stop offset="1" stop-color="#fff6c4"/>
+    </linearGradient>
+  </defs>
+</svg>
 
 <nav>
   <a href="index.html">← Home</a>
@@ -350,6 +438,8 @@
       <div id="fireTools" style="display:none;flex-direction:column;align-items:center;gap:10px;width:100%">
         <div class="fleet" id="pFleet"></div>
         <div class="note" id="fireNote">Tap a square on the enemy grid to fire.</div>
+        <div class="board-sub" style="margin-top:14px">⚓ Your waters — your fleet</div>
+        <div class="grid mine" id="pMineGrid"></div>
       </div>
 
       <button class="ghost-btn" id="rematchBtn" style="display:none">🔁 Play again</button>
@@ -528,57 +618,174 @@ function viewFor(game, who) {
     foeHere: foe.here, foeReady: !!foe.fleet, ready: !!me.fleet,
     mine, theirs,
     myFleet:  fleetStatus(me), foeFleet: fleetStatus(foe),
+    myShips: shipList(me), foeSunkShips: shipList(foe, true),
   };
+}
+// Ship pictures to draw: key, cells, sunk. `onlySunk` = what the enemy may see.
+function shipList(side, onlySunk = false) {
+  return (side.fleet || [])
+    .map(f => ({ k: f.k, cells: f.cells, sunk: f.hits === f.cells.length }))
+    .filter(f => !onlySunk || f.sunk);
 }
 function fleetStatus(side) {
   return SHIPS.map(s => {
     const ship = (side.fleet || []).find(f => f.k === s.k);
-    return { n: s.n, len: s.len, sunk: !!ship && ship.hits === ship.cells.length };
+    return { k: s.k, n: s.n, len: s.len, sunk: !!ship && ship.hits === ship.cells.length };
   });
 }
+
+// ═══════════════════════════════════════════════════
+//  SHIP ART — top-down, shaded, drawn as SVG. The board is tilted in CSS
+//  so they read as 3D models floating on the water.
+// ═══════════════════════════════════════════════════
+function hullPath(W, inset = 0, narrow = 0) {
+  const t = 15 + narrow + inset, b = 85 - narrow - inset;
+  const x0 = 8 + inset, x1 = W - 8 - inset, bow = 46;
+  return `M${x0+8},${t} L${x1-bow},${t} Q${x1-8},${t+4} ${x1},50 Q${x1-8},${b-4} ${x1-bow},${b} ` +
+         `L${x0+8},${b} Q${x0},${b} ${x0},${b-8} L${x0},${t+8} Q${x0},${t} ${x0+8},${t}Z`;
+}
+const gun = (cx, cy, r) => `<g>
+  <rect x="${cx}" y="${cy-4.5}" width="${r*2.1}" height="3.2" rx="1.5" fill="#262d33"/>
+  <rect x="${cx}" y="${cy+1.3}" width="${r*2.1}" height="3.2" rx="1.5" fill="#262d33"/>
+  <circle cx="${cx+1.5}" cy="${cy+2.5}" r="${r}" fill="rgba(0,0,0,.3)"/>
+  <circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#bsTurret)" stroke="#1f262c" stroke-width="1.4"/>
+  <ellipse cx="${cx-r*.3}" cy="${cy-r*.35}" rx="${r*.38}" ry="${r*.24}" fill="rgba(255,255,255,.4)"/></g>`;
+const bridge = (x, y, w, h) => `<g>
+  <rect x="${x+2}" y="${y+3}" width="${w}" height="${h}" rx="4" fill="rgba(0,0,0,.3)"/>
+  <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="4" fill="url(#bsTower)" stroke="#39434b" stroke-width="1.2"/>
+  <rect x="${x+4}" y="${y+h*.35}" width="${w-8}" height="${h*.18}" rx="1.5" fill="#33414c"/></g>`;
+const funnel = (cx, cy, r) => `<g>
+  <circle cx="${cx+2}" cy="${cy+3}" r="${r}" fill="rgba(0,0,0,.3)"/>
+  <circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#bsTower)" stroke="#39434b" stroke-width="1.2"/>
+  <circle cx="${cx}" cy="${cy}" r="${r*.55}" fill="#232a30"/></g>`;
+const plane = (x, y, rot = 0) => `<g transform="translate(${x} ${y}) rotate(${rot})" fill="#e3e9ee" stroke="#3b454d" stroke-width=".9">
+  <rect x="-9" y="-2.5" width="22" height="5" rx="2.5"/><rect x="-1" y="-10" width="6" height="20" rx="2"/>
+  <rect x="-9" y="-5" width="4" height="10" rx="1.5"/></g>`;
+
+function shipArt(k, len) {
+  const W = len * 100;
+  const hull = (narrow = 0, deck = 'bsDeck') => `
+    <path d="${hullPath(W, 0, narrow)}" transform="translate(3,7)" fill="#000" opacity=".3"/>
+    <path d="${hullPath(W, 0, narrow)}" fill="url(#bsHull)" stroke="rgba(255,255,255,.75)" stroke-width="2.2"/>
+    <path d="${hullPath(W, 5, narrow)}" fill="url(#${deck})" stroke="rgba(0,0,0,.25)" stroke-width="1"/>`;
+  switch (k) {
+    case 'carrier': return hull(0, 'bsFlat') + `
+      <line x1="34" y1="50" x2="${W-96}" y2="50" stroke="#eef2f5" stroke-width="2.4" stroke-dasharray="14 10" opacity=".85"/>
+      <line x1="${W*.3}" y1="70" x2="${W-64}" y2="44" stroke="#f2c14e" stroke-width="2" opacity=".85"/>
+      ${plane(W*.2, 60, -8)}${plane(W*.34, 36, 6)}${plane(W*.46, 64, -4)}
+      ${bridge(W*.6, 20, 50, 20)}
+      <line x1="${W*.6+25}" y1="20" x2="${W*.6+25}" y2="11" stroke="#39434b" stroke-width="2"/>`;
+    case 'battleship': return hull() +
+      gun(64, 50, 16) + gun(116, 50, 16) + bridge(162, 35, 50, 30) + funnel(240, 50, 12) +
+      gun(292, 50, 16) + gun(334, 50, 13);
+    case 'cruiser': return hull() +
+      gun(56, 50, 14) + bridge(110, 36, 44, 28) + funnel(182, 50, 11) + gun(230, 50, 13);
+    case 'destroyer': return hull(4) +
+      gun(46, 50, 11) + bridge(80, 38, 32, 24) + funnel(130, 50, 9);
+    case 'sub': {
+      const x0 = 12, x1 = W - 12, cx = W / 2;
+      return `
+        <rect x="${x0+3}" y="32" width="${x1-x0}" height="50" rx="25" fill="#000" opacity=".3"/>
+        <rect x="${x0}" y="25" width="${x1-x0}" height="50" rx="25" fill="url(#bsSub)" stroke="rgba(255,255,255,.55)" stroke-width="2"/>
+        <rect x="${x0+26}" y="31" width="${x1-x0-62}" height="6" rx="3" fill="rgba(255,255,255,.28)"/>
+        <rect x="${x0+10}" y="42" width="12" height="16" rx="3" fill="#27333c"/>
+        <rect x="${cx-20}" y="38" width="48" height="26" rx="10" fill="rgba(0,0,0,.3)" transform="translate(2,3)"/>
+        <rect x="${cx-22}" y="36" width="48" height="26" rx="10" fill="url(#bsSubTop)" stroke="#1c262e" stroke-width="1.4"/>
+        <circle cx="${cx-8}" cy="49" r="4.5" fill="#222d36" stroke="#6c8296" stroke-width="1"/>
+        <rect x="${cx+6}" y="46" width="15" height="3" rx="1.5" fill="#1c262e"/>`;
+    }
+  }
+  return hull();
+}
+function shipSvg(k, len, vertical = false) {
+  const W = len * 100;
+  return vertical
+    ? `<svg viewBox="0 0 100 ${W}" preserveAspectRatio="none" aria-hidden="true"><g transform="translate(100 0) rotate(90)">${shipArt(k, len)}</g></svg>`
+    : `<svg viewBox="0 0 ${W} 100" preserveAspectRatio="none" aria-hidden="true">${shipArt(k, len)}</svg>`;
+}
+
+const FLAME_SVG = `<svg viewBox="0 0 100 100" aria-hidden="true">
+  <ellipse cx="50" cy="90" rx="30" ry="7" fill="rgba(0,0,0,.4)"/>
+  <circle class="smk" cx="50" cy="26" r="10" fill="rgba(45,45,45,.65)"/>
+  <circle class="smk b" cx="56" cy="22" r="8" fill="rgba(45,45,45,.6)"/>
+  <g class="fl">
+    <path d="M50 8 C58 28 78 36 74 62 C72 80 60 90 50 90 C38 90 26 80 26 62 C26 46 38 40 40 26 C46 32 48 20 50 8Z" fill="url(#bsFlameOut)"/>
+    <path d="M50 38 C56 52 66 56 63 72 C61 82 55 86 50 86 C44 86 38 82 38 72 C38 62 46 58 50 38Z" fill="url(#bsFlameIn)"/>
+  </g></svg>`;
+const RIPPLE_SVG = `<svg viewBox="0 0 100 100" aria-hidden="true">
+  <circle class="rp" cx="50" cy="50" r="40"/><circle class="rp d1" cx="50" cy="50" r="40"/><circle class="rp d2" cx="50" cy="50" r="40"/>
+  <circle cx="50" cy="50" r="10" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="3.5"/></svg>`;
 
 // ═══════════════════════════════════════════════════
 //  GRID RENDERING
 // ═══════════════════════════════════════════════════
 // marks: '' sea · 'S' my ship · 'H' hit · 'M' miss · 'X' sunk · 'P' preview · 'B' bad preview
+// ships: [{k, cells, sunk}] — drawn as 3D ship models over the water.
 function renderGrid(el, marks, opts = {}) {
-  const { onCell = null, aim = false, hideShips = false, last = null } = opts;
+  const { onCell = null, aim = false, hideShips = false, last = null, ships = null } = opts;
   el.innerHTML = '';
-  const add = (cls, txt) => {
+  // Every item is placed explicitly so the ships/flames can overlap the cells.
+  const add = (cls, txt, row, col) => {
     const d = document.createElement('div');
     d.className = cls;
     d.textContent = txt;
+    d.style.gridRow = row;
+    d.style.gridColumn = col;
     el.appendChild(d);
     return d;
   };
-  add('cell head', '');
-  for (let c = 0; c < SIZE; c++) add('cell head', LET[c]);
+  const overlays = [];
+  add('cell head', '', 1, 1);
+  for (let c = 0; c < SIZE; c++) add('cell head', LET[c], 1, c + 2);
 
   for (let r = 0; r < SIZE; r++) {
-    add('cell head', r + 1);
+    add('cell head', r + 1, r + 2, 1);
     for (let c = 0; c < SIZE; c++) {
       const m = marks[r][c];
       let cls = 'cell sea', txt = '';
-      if (m === 'S' && !hideShips) { cls = 'cell ship'; txt = '▪'; }
+      if (m === 'S' && !hideShips) { if (!ships) { cls = 'cell ship'; txt = '▪'; } }
       else if (m === 'P') { cls = 'cell ship'; txt = '▪'; }
       else if (m === 'B') { cls = 'cell bad';  txt = '✕'; }
-      else if (m === 'H') { cls = 'cell hit';  txt = '💥'; }
-      else if (m === 'X') { cls = 'cell sunk'; txt = '💀'; }
-      else if (m === 'M') { cls = 'cell miss'; txt = '•'; }
+      else if (m === 'H') { cls = 'cell hit';  overlays.push(['flame', r, c]); }
+      else if (m === 'X') { cls = 'cell sunk'; overlays.push(['flame small', r, c]); }
+      else if (m === 'M') { cls = 'cell miss'; overlays.push(['ripple', r, c]); }
       if (aim && !m) cls += ' aim';
-      const cell = add(cls, txt);
+      const cell = add(cls, txt, r + 2, c + 2);
       if (last && last[0] === r && last[1] === c) cell.classList.add('last');
       if (onCell) cell.addEventListener('click', () => onCell(r, c));
     }
   }
+
+  // Ships first, then fire & ripples above them.
+  (ships || []).forEach(s => {
+    const spec = SHIPS.find(x => x.k === s.k);
+    if (!spec || !s.cells.length) return;
+    const rows = s.cells.map(x => x[0]), cols = s.cells.map(x => x[1]);
+    const r0 = Math.min(...rows), c0 = Math.min(...cols);
+    const vertical = s.cells.length > 1 && new Set(cols).size === 1;
+    const d = document.createElement('div');
+    d.className = 'ov ship3d' + (s.sunk ? ' sunk' : '');
+    d.style.gridRow    = vertical ? `${r0 + 2} / span ${spec.len}` : `${r0 + 2}`;
+    d.style.gridColumn = vertical ? `${c0 + 2}` : `${c0 + 2} / span ${spec.len}`;
+    d.innerHTML = shipSvg(s.k, spec.len, vertical);
+    el.appendChild(d);
+  });
+  overlays.forEach(([kind, r, c]) => {
+    const d = document.createElement('div');
+    const fresh = last && last[0] === r && last[1] === c;
+    d.className = `ov mark ${kind}` + (fresh ? ' fresh' : '');
+    d.style.gridRow = r + 2;
+    d.style.gridColumn = c + 2;
+    d.innerHTML = kind.startsWith('ripple') ? RIPPLE_SVG : FLAME_SVG;
+    el.appendChild(d);
+  });
 }
 function renderFleet(el, status, label) {
   el.innerHTML = '';
   status.forEach(s => {
     const row = document.createElement('div');
     row.className = 'fleet-row' + (s.sunk ? ' sunk' : '');
-    row.innerHTML = `<span>${s.sunk ? '💀' : '🚢'} ${s.n}</span>
-      <span class="pips">${'<span class="pip"></span>'.repeat(s.len)}</span>`;
+    row.innerHTML = `<span class="mini" style="--len:${s.len}">${shipSvg(s.k, s.len)}</span><span>${s.n}</span>`;
     el.appendChild(row);
   });
   if (label) el.setAttribute('aria-label', label);
@@ -755,6 +962,7 @@ function renderTv() {
       // The TV shows shots only — ships stay hidden until they sink.
       renderGrid($(who === 'kyle' ? 'gridKyle' : 'gridLindsey'), publicGrid(who), {
         hideShips: true,
+        ships: shipList(game.p[who], true),
         last: game.turn !== who ? null : lastShot,
       });
       renderFleet($(who === 'kyle' ? 'fleetKyle' : 'fleetLindsey'), fleetStatus(game.p[who]));
@@ -769,7 +977,7 @@ function renderTv() {
     const w = game.winner;
     $('overTitle').innerHTML = `🏆 ${EMOJI[w]} ${NAMES[w]} wins!<small>${game.log}</small>`;
     for (const who of ['kyle', 'lindsey']) {
-      renderGrid($(who === 'kyle' ? 'overGridKyle' : 'overGridLindsey'), fullGrid(who));
+      renderGrid($(who === 'kyle' ? 'overGridKyle' : 'overGridLindsey'), fullGrid(who), { ships: shipList(game.p[who]) });
     }
   }
 }
@@ -870,7 +1078,7 @@ function drawTray() {
     const done = !!placed[s.k];
     item.className = 'tray-item' + (done ? ' placed' : '') + (s.k === curShip ? ' cur' : '');
     item.innerHTML = `<span>${done ? '⚓' : '🚢'} ${s.n}</span>
-      <span class="blocks">${'<span class="blk"></span>'.repeat(s.len)}</span>`;
+      <span class="mini" style="--len:${s.len}">${shipSvg(s.k, s.len)}</span>`;
     item.addEventListener('click', () => {
       if (placed[s.k]) {                       // pick it back up
         placed[s.k].forEach(([r, c]) => { placing[r][c] = ''; });
@@ -886,6 +1094,7 @@ function drawTray() {
 function drawPlacing() {
   renderGrid($('pGrid'), placing, {
     onCell: (r, c) => tryPlace(r, c),
+    ships: Object.entries(placed).map(([k, cells]) => ({ k, cells })),
   });
 }
 
@@ -966,7 +1175,7 @@ function renderPhone() {
       $('pStatus').textContent = v.foeHere
         ? 'Fleet locked in. Waiting for the other player…'
         : 'Fleet locked in. Waiting for the other phone to join…';
-      renderGrid($('pGrid'), v.mine);
+      renderGrid($('pGrid'), v.mine, { ships: v.myShips });
     } else if ($('placeTools').style.display === 'none') {
       startPlacing();                 // new round (rematch) — place again
     }
@@ -985,9 +1194,11 @@ function renderPhone() {
       : 'This is where your shots have landed.';
     renderGrid($('pGrid'), v.theirs, {
       aim: mine,
+      ships: v.foeSunkShips,
       onCell: mine ? ((r, c) => sendFire(r, c)) : null,
     });
     renderFleet($('pFleet'), v.foeFleet);
+    renderGrid($('pMineGrid'), v.mine, { ships: v.myShips });
     return;
   }
 
@@ -998,7 +1209,7 @@ function renderPhone() {
     $('rematchBtn').style.display = '';
     $('pStatus').className = 'status ' + (won ? 'go' : 'err');
     $('pStatus').textContent = won ? '🏆 You win!' : '💀 Your fleet is sunk.';
-    renderGrid($('pGrid'), v.mine);
+    renderGrid($('pGrid'), v.mine, { ships: v.myShips });
   }
 }
 
