@@ -527,7 +527,7 @@
 
   // ───────────────────────── a 10x10 battlefield inside a board's scene ─────────────────────────
   const FLIGHT = 1.3;             // seconds a shell is in the air
-  const ARENA_OX = 10.2;           // distance of each battlefield's centre from the middle of the sea
+  const ARENA_OX = 8.7;           // distance of each battlefield's centre from the middle of the sea
 
   class Field {
     constructor(b, index, ox, mirror) {
@@ -731,7 +731,7 @@
       this.bump = tex('bump').clone(); this.bump.wrapS = this.bump.wrapT = T.RepeatWrapping;
       this.bump.repeat.set(this.arena ? 44 : 34, this.arena ? 44 : 34); this.bump.needsUpdate = true;
       const mat = new T.MeshPhongMaterial({
-        color: 0x072a45, emissive: 0x020e19, specular: 0x6a4020, shininess: 90, bumpMap: this.bump, bumpScale: .16,
+        color: 0x072a45, emissive: 0x020e19, specular: 0x24160a, shininess: 60, bumpMap: this.bump, bumpScale: .1,
       });
       this.water = new T.Mesh(geo, mat); this.water.receiveShadow = true; this.scene.add(this.water);
     }
@@ -770,12 +770,12 @@
       this.flag = [0, 1].map(i => {
         const inner = buildShip('battleship', 4), outer = new T.Group();
         outer.add(inner);
-        const x = i === 0 ? -2.3 : 2.3, z = i === 0 ? 1.7 : -1.7;
-        outer.position.set(x, 0, z); outer.rotation.y = i === 0 ? 0 : Math.PI; outer.scale.setScalar(1.45);
+        const x = i === 0 ? -1.6 : 1.6, z = i === 0 ? 1.6 : -1.6;
+        outer.position.set(x, 0, z); outer.rotation.y = i === 0 ? 0 : Math.PI; outer.scale.setScalar(1.15);
         this.scene.add(outer);
         return { k: 'battleship', outer, inner, cx: x, cz: z, phase: i * 2.1, baseY: 0, sunk: false, animate: false, sinkAt: 0, len: 4, recoil: -9, dir: i === 0 ? 1 : -1 };
       });
-      const glow = new T.Mesh(new T.PlaneGeometry(8, 3.2), new T.MeshBasicMaterial({
+      const glow = new T.Mesh(new T.PlaneGeometry(6.4, 2.6), new T.MeshBasicMaterial({
         map: tex('glow'), color: 0xffb454, transparent: true, opacity: 0, depthWrite: false, blending: T.AdditiveBlending }));
       glow.rotation.x = -Math.PI / 2; glow.position.y = .08; glow.renderOrder = 3; this.scene.add(glow);
       this.turnGlow = glow; this.turnIdx = -1;
@@ -841,7 +841,7 @@
       const cam = this.camera; cam.aspect = w / h;
       // elev = angle the camera sits above the sea; pitch = how far it looks down.
       const P = Object.assign(({
-        arena: { elev: 30, pitch: 18, fov: 44, top: .8 },
+        arena: { elev: 57, pitch: 57, fov: 38, top: .96 },
         phone: { elev: 58, pitch: 58, fov: 38, top: .96 },
         mine:  { elev: 48, pitch: 48, fov: 40, top: .96 },
       })[this.mode], API.cfg[this.mode] || {});
