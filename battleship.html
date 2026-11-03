@@ -188,6 +188,9 @@
     }
     .grid canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
     .grid.arena { width: min(96vw, 70vh * 2.7); max-width: none; aspect-ratio: 2.7 / 1; }
+    .grid.arena.phonearena { width: 100%; max-width: 900px; aspect-ratio: 1 / 1.05; }
+    @media (orientation: landscape) and (min-width: 600px) { .grid.arena.phonearena { aspect-ratio: 2.2 / 1; width: min(100%, calc((100vh - 170px) * 2.2)); } }
+    .phone-wrap.wide { max-width: min(96vw, 1000px); }
     .arena-wrap { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px; }
     .arena-hud, .arena-fleets {
       width: min(96vw, 70vh * 2.7); display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
@@ -448,6 +451,8 @@
       <div class="you-chip" id="youChip">—</div>
       <div class="status" id="pStatus">—</div>
       <div class="grid" id="pGrid"></div>
+      <div class="grid arena phonearena" id="pArena" style="display:none"></div>
+      <button class="ghost-btn" id="viewToggle" type="button" style="display:none">🔭 Wide view</button>
 
       <div id="placeTools" style="display:flex;flex-direction:column;align-items:center;gap:12px;width:100%">
         <div class="tray" id="pTray"></div>
@@ -1257,6 +1262,7 @@ $('codeInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('join
 
 // ── placing ──
 function startPlacing() {
+  showPhoneBoard();
   placing = emptyGrid();
   placed = {};
   curShip = SHIPS[0].k;
@@ -1361,11 +1367,39 @@ $('rematchBtn').addEventListener('click', () => {
   $('pStatus').textContent = 'Waiting for the other player…';
 });
 
+// The one-device single-player battle uses the same side-by-side arena as the TV. On a tall (portrait) phone the
+// camera zooms onto the enemy waters for your shot and pulls back to the wide view while the computer fires.
+let phoneWide = false;
+function showPhoneBoard() {
+  $('pArena').style.display = 'none'; $('viewToggle').style.display = 'none';
+  $('pGrid').style.display = ''; $('pMineGrid').style.display = '';
+  document.querySelector('.phone-wrap').classList.remove('wide');
+}
+function showPhoneArena(v) {
+  const over = v.phase === 'over', mineTurn = !over && v.turn === v.you;
+  $('pGrid').style.display = 'none'; $('pMineGrid').style.display = 'none';
+  $('pArena').style.display = ''; $('viewToggle').style.display = '';
+  document.querySelector('.phone-wrap').classList.add('wide');
+  BS3D.renderArena($('pArena'), {
+    kyle:    { marks: v.mine, opts: { ships: v.myShips } },
+    lindsey: { marks: over ? fullGrid('lindsey') : v.theirs,
+               opts: { ships: over ? shipList(game.p.lindsey) : v.foeSunkShips, aim: mineTurn, onCell: mineTurn ? sendFire : null } },
+    turn: over ? null : v.turn, winner: over ? v.winner : null,
+  });
+  const el = $('pArena'), tall = el.clientWidth / Math.max(1, el.clientHeight) < 1.5;
+  BS3D.setFocus(el, !tall || phoneWide || !mineTurn ? 'wide' : 'enemy');
+  $('viewToggle').textContent = phoneWide ? '🎯 Zoom on enemy waters' : '🔭 Wide view';
+  $('viewToggle').style.display = tall ? '' : 'none';
+}
+$('viewToggle').addEventListener('click', () => { phoneWide = !phoneWide; renderPhone(); });
+const soloArena = v => localMode && v.solo && window.BS3D && BS3D.supported;
+
 // ── render whatever the host told us ──
 function renderPhone() {
   const v = myView;
   if (!v) return;
   setSolo(!!v.solo);
+  if (v.phase === 'place' || v.phase === 'lobby') showPhoneBoard();
   $('youChip').className = `you-chip ${v.you}`;
   $('youChip').textContent = `${EMOJI[v.you]} ${NAMES[v.you]}`;
 
@@ -1395,6 +1429,7 @@ function renderPhone() {
     $('fireNote').textContent = mine
       ? 'Tap a square to fire at the enemy.'
       : 'This is where your shots have landed.';
+    if (soloArena(v)) { showPhoneArena(v); renderFleet($('pFleet'), v.foeFleet); return; }
     renderGrid($('pGrid'), v.theirs, {
       aim: mine,
       ships: v.foeSunkShips,
@@ -1412,6 +1447,7 @@ function renderPhone() {
     $('rematchBtn').style.display = '';
     $('pStatus').className = 'status ' + (won ? 'go' : 'err');
     $('pStatus').textContent = won ? '🏆 You win!' : '💀 Your fleet is sunk.';
+    if (soloArena(v)) { showPhoneArena(v); return; }
     renderGrid($('pGrid'), v.mine, { ships: v.myShips });
   }
 }

@@ -842,31 +842,39 @@
       this.renderer.setSize(w, h, false);
       const cam = this.camera; cam.aspect = w / h;
       // elev = angle the camera sits above the sea; pitch = how far it looks down.
+      // A tall (phone) frame gets a steeper, tighter view.
+      const tall = this.arena && cam.aspect < 1.5;
       const P = Object.assign(({
-        arena: { elev: 57, pitch: 57, fov: 38, top: .96 },
+        arena: tall ? { elev: 62, pitch: 62, fov: 40, top: .96 } : { elev: 57, pitch: 57, fov: 38, top: .96 },
         phone: { elev: 58, pitch: 58, fov: 38, top: .96 },
         mine:  { elev: 48, pitch: 48, fov: 40, top: .96 },
       })[this.mode], API.cfg[this.mode] || {});
       cam.fov = P.fov; cam.updateProjectionMatrix();
       const e = P.elev * Math.PI / 180, pt = P.pitch * Math.PI / 180;
-      this.target = new T.Vector3(0, .3, 0);
-      if (P.tx !== undefined) this.target.set(P.tx, .3, P.tz);
-      const hx = this.arena ? ARENA_OX + 6.0 : 6.1;
-      const corners = [[-hx, 0, 6.5], [hx, 0, 6.5], [-hx, 0, -5.7], [hx, 0, -5.7], [0, 1.6, -5.2], [-hx, 1.2, -5.2], [hx, 1.2, -5.2]].map(a => new T.Vector3(...a));
       const margin = .97;
-      let d = P.dist || 6;
-      for (; d < 120; d += .25) {
-        cam.position.set(0, d * Math.sin(e), d * Math.cos(e)).add(this.target);
-        cam.lookAt(cam.position.x, cam.position.y - Math.sin(pt) * 50, cam.position.z - Math.cos(pt) * 50);
-        cam.updateMatrixWorld(true);
-        const fit = corners.every(c => { const v = c.clone().project(cam); return Math.abs(v.x) < margin && v.y > -margin && v.y < P.top; });
-        if (fit || P.dist) break;
-      }
-      this.dFit = d; this.camBase = cam.position.clone();
-      this.lookAtPt = new T.Vector3(cam.position.x, cam.position.y - Math.sin(pt) * 50, cam.position.z - Math.cos(pt) * 50);
+      // Smallest distance at which `corners` all fit, looking straight down the middle of `tx`.
+      const fit = (corners, tx) => {
+        const vs = corners.map(a => new T.Vector3(...a));
+        let d = P.dist || 6, pos, look;
+        for (; d < 140; d += .25) {
+          pos = new T.Vector3(tx, d * Math.sin(e) + .3, d * Math.cos(e));
+          look = new T.Vector3(pos.x, pos.y - Math.sin(pt) * 50, pos.z - Math.cos(pt) * 50);
+          cam.position.copy(pos); cam.lookAt(look); cam.updateMatrixWorld(true);
+          if (P.dist || vs.every(c => { const v = c.clone().project(cam); return Math.abs(v.x) < margin && v.y > -margin && v.y < P.top; })) break;
+        }
+        return { pos, look };
+      };
+      const box = (cx, hx) => [[cx - hx, 0, 6.5], [cx + hx, 0, 6.5], [cx - hx, 0, -5.7], [cx + hx, 0, -5.7], [cx, 1.6, -5.2], [cx - hx, 1.2, -5.2], [cx + hx, 1.2, -5.2]];
+      this.cams = this.arena
+        ? { wide: fit(box(0, ARENA_OX + 6.0), 0), mine: fit(box(-ARENA_OX, 6.1), -ARENA_OX), enemy: fit(box(ARENA_OX, 6.1), ARENA_OX) }
+        : { wide: fit(box(0, 6.1), 0) };
+      const g = this.cams[this.focus] || this.cams.wide;
+      if (!this.camBase) { this.camBase = g.pos.clone(); this.lookAtPt = g.look.clone(); }
       this.needSize = false;
       return true;
     }
+    // Arena camera: 'wide' (both fleets), 'enemy' or 'mine' (zoom onto one side). Glides there.
+    setFocus(key) { this.focus = key; }
     visible() { return this.el.isConnected && this.el.clientWidth > 0 && this.el.clientHeight > 0; }
 
     // — picking: works on whichever battlefield has a handler (phones: the one board; TV vs computer: the enemy waters) —
@@ -965,6 +973,12 @@
         if (f.lastRing.visible) { const s = 1 + (t * 1.3 % 1) * .5; f.lastRing.scale.set(s, 1, s); f.lastRing.material.opacity = .9 * (1 - (t * 1.3 % 1)); }
       });
 
+      // glide the camera toward the chosen focus
+      const goal = this.cams[this.focus] || this.cams.wide;
+      const dt = Math.min(.1, Math.max(0, t - (this.lastT || t))); this.lastT = t;
+      const k = 1 - Math.exp(-dt * 4.5);
+      this.camBase.lerp(goal.pos, k); this.lookAtPt.lerp(goal.look, k);
+
       // camera shake
       const cam = this.camera;
       if (this.shake > .002) {
@@ -984,6 +998,7 @@
     boardFor(el, mode).fields[0].update(marks, opts || {});
   };
   // Both fleets on the same sea (the TV).  data = {kyle:{marks,opts}, lindsey:{marks,opts}, turn, winner}
+  API.setFocus = function (el, key) { if (el._bs3d) el._bs3d.setFocus(key); };
   API.setCursor = function (el, idx, r, c) { if (el._bs3d) el._bs3d.setCursor(idx, r, c); };
   API.renderArena = function (el, data) {
     const b = boardFor(el, 'arena');
