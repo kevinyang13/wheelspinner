@@ -596,7 +596,10 @@
               this.b.after(FLIGHT, () => { rig.outer.visible = true; this.sinkShip(rig, true); });
             } else this.sinkShip(rig, animate);
           }
-        } else if (s.sunk && !rig.sunk) this.sinkShip(rig, true);
+        } else if (s.sunk && !rig.sunk) {
+          if (this.b.arena && this.ready) this.b.after(FLIGHT, () => this.sinkShip(rig, true));   // once the shell lands
+          else this.sinkShip(rig, true);
+        }
       });
       [...this.ships.keys()].forEach(k => { if (!seen.has(k)) { this.removeShip(this.ships.get(k)); this.ships.delete(k); } });
     }

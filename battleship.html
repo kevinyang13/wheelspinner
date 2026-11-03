@@ -168,6 +168,11 @@
     .arena-hud, .arena-fleets {
       width: min(96vw, 66vh * 2.25); display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
     }
+    .reveal-btn {
+      position: fixed; left: 14px; bottom: 14px; z-index: 20; padding: 6px 14px; font-size: 0.78rem;
+      background: rgba(8,24,44,0.72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    }
+    .reveal-btn.on { border-color: var(--red); color: var(--red); }
     .arena-hud .side { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
     .arena-hud .side.lindsey { align-items: flex-end; }
     .arena-fleets .fleet { max-width: none; flex-direction: row; flex-wrap: wrap; gap: 4px 12px; }
@@ -353,6 +358,7 @@
       <div class="sstate">waiting for phone…</div>
     </div>
   </div>
+  <button class="ghost-btn reveal-btn" type="button">🙈 Ships hidden on TV</button>
   <div class="note" id="tvLobbyNote">On each phone: scan the square, or open the address and tap “I'm a player”.</div>
   <div class="warn" id="tvError"></div>
 </div>
@@ -361,6 +367,7 @@
 <div class="screen" id="tvBattle">
   <div class="turn-banner" id="turnBanner">—</div>
   <div class="shot-log" id="shotLog">&nbsp;</div>
+  <button class="ghost-btn reveal-btn" type="button">🙈 Ships hidden on TV</button>
   <div class="arena-wrap">
     <div class="arena-hud">
       <div class="side kyle"><div class="board-name kyle">🟡 Kyle's fleet</div><div class="board-sub" id="kyleSub">fleet afloat</div></div>
@@ -787,6 +794,18 @@ const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';   // no I or O — too easy to mi
 const peerIdFor = code => `wsbship-${code}`;
 
 let game = newGame();
+// Show every ship on the TV (spoils the secret!). Off by default; ships only appear once sunk.
+let tvReveal = false;
+document.querySelectorAll('.reveal-btn').forEach(btn => btn.addEventListener('click', () => {
+  tvReveal = !tvReveal;
+  renderTv();
+}));
+function syncRevealBtns() {
+  document.querySelectorAll('.reveal-btn').forEach(b => {
+    b.classList.toggle('on', tvReveal);
+    b.textContent = tvReveal ? '👁 Ships shown on TV — everyone can see!' : '🙈 Ships hidden on TV';
+  });
+}
 let conns = { kyle: null, lindsey: null };
 let lastShot = null;
 
@@ -907,6 +926,7 @@ function pushAll() {
 }
 
 function renderTv() {
+  syncRevealBtns();
   if (game.phase === 'lobby' || game.phase === 'place') {
     showScreen('tvLobby');
     for (const who of ['kyle', 'lindsey']) {
@@ -930,10 +950,12 @@ function renderTv() {
     $('turnBanner').textContent = over ? `🏆 ${EMOJI[w]} ${NAMES[w]} wins!` : `${EMOJI[t]} ${NAMES[t]}'s turn — fire!`;
     $('shotLog').textContent = game.log || ' ';
     $('overNote').style.display = over ? '' : 'none';
+    const show = over || tvReveal;
     const side = who => ({
-      // The TV shows shots only — ships stay hidden until they sink (everything is revealed at the end).
-      marks: over ? fullGrid(who) : publicGrid(who),
-      opts: { hideShips: !over, ships: shipList(game.p[who], !over), last: game.turn !== who ? null : lastShot },
+      // The TV shows shots only — ships stay hidden until they sink (everything is revealed at the end,
+      // or all the time if the “show ships” toggle is on).
+      marks: show ? fullGrid(who) : publicGrid(who),
+      opts: { hideShips: !show, ships: shipList(game.p[who], !show), last: game.turn !== who ? null : lastShot },
     });
     const data = { kyle: side('kyle'), lindsey: side('lindsey'), turn: over ? null : t, winner: over ? w : null };
     if (window.BS3D && BS3D.supported) BS3D.renderArena($('arena'), data);
