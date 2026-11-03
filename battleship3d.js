@@ -88,10 +88,10 @@
   }
   function labelTex(text) {
     return canvasTex(64, 64, (x, w, h) => {
-      x.font = '800 40px Nunito, system-ui, sans-serif';
+      x.font = '900 46px Nunito, system-ui, sans-serif';
       x.textAlign = 'center'; x.textBaseline = 'middle';
-      x.shadowColor = 'rgba(0,0,0,.8)'; x.shadowBlur = 6;
-      x.fillStyle = '#ffe6bd';
+      x.shadowColor = 'rgba(0,0,0,.95)'; x.shadowBlur = 8;
+      x.fillStyle = '#fff3d6';
       x.fillText(text, w / 2, h / 2 + 2);
     });
   }
@@ -551,23 +551,36 @@
       const pg = new T.PlaneGeometry(SIZE, SIZE); pg.rotateX(-Math.PI / 2);
       const tint = new T.Mesh(pg, new T.MeshBasicMaterial({ color: 0x66d0ff, transparent: true, opacity: .1, depthWrite: false }));
       tint.position.set(ox, .1, 0); tint.renderOrder = 1; sc.add(tint);
-      const pos = [], w = .03;
-      for (let i = 0; i <= SIZE; i++) {
+      // Grid: thicker on small screens so the squares stay readable, plus a faint checkerboard and a bold border.
+      const compact = this.b.compact, w = compact ? .055 : .035;
+      const quad = (arr, x0, z0, x1, z1) => arr.push(x0, 0, z0, x1, 0, z0, x1, 0, z1, x0, 0, z0, x1, 0, z1, x0, 0, z1);
+      const pos = [];
+      for (let i = 1; i < SIZE; i++) {                      // inner lines
         const p = i - HALF;
-        pos.push(-HALF, 0, p - w, HALF, 0, p - w, HALF, 0, p + w, -HALF, 0, p - w, HALF, 0, p + w, -HALF, 0, p + w);
-        pos.push(p - w, 0, -HALF, p - w, 0, HALF, p + w, 0, HALF, p - w, 0, -HALF, p + w, 0, HALF, p + w, 0, -HALF);
+        quad(pos, -HALF, p - w, HALF, p + w);
+        quad(pos, p - w, -HALF, p + w, HALF);
       }
-      const lg = new T.BufferGeometry();
-      lg.setAttribute('position', new T.Float32BufferAttribute(pos, 3));
-      const lines = new T.Mesh(lg, new T.MeshBasicMaterial({ color: 0xffe2b8, transparent: true, opacity: .5, depthWrite: false, side: T.DoubleSide }));
-      lines.position.set(ox, .11, 0); lines.renderOrder = 2; sc.add(lines);
+      const mkMesh = (arr, color, opacity, y, order) => {
+        const g = new T.BufferGeometry();
+        g.setAttribute('position', new T.Float32BufferAttribute(arr, 3));
+        const m = new T.Mesh(g, new T.MeshBasicMaterial({ color, transparent: true, opacity, depthWrite: false, side: T.DoubleSide }));
+        m.position.set(ox, y, 0); m.renderOrder = order; sc.add(m); return m;
+      };
+      mkMesh(pos, 0xfff1d6, compact ? .9 : .65, .11, 2);
+      const fr = [], fw = w * 2.4;                          // border
+      quad(fr, -HALF - fw, -HALF - fw, HALF + fw, -HALF + fw); quad(fr, -HALF - fw, HALF - fw, HALF + fw, HALF + fw);
+      quad(fr, -HALF - fw, -HALF - fw, -HALF + fw, HALF + fw); quad(fr, HALF - fw, -HALF - fw, HALF + fw, HALF + fw);
+      mkMesh(fr, 0xffd98a, 1, .115, 3);
+      const ck = [];                                        // checkerboard
+      for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) if ((r + c) % 2 === 0) quad(ck, c - HALF, r - HALF, c - HALF + 1, r - HALF + 1);
+      mkMesh(ck, 0x0a1e36, compact ? .22 : .12, .105, 1);
       const label = (txt, x, z) => {
         const s = new T.Sprite(new T.SpriteMaterial({ map: labelTex(txt), transparent: true, depthWrite: false, fog: false }));
-        s.position.set(x, .35, z); s.scale.set(.7, .7, 1); sc.add(s);
+        s.position.set(x, .35, z); const k = compact ? 1.05 : .75; s.scale.set(k, k, 1); sc.add(s);
       };
       for (let i = 0; i < SIZE; i++) {
-        label('ABCDEFGHIJ'[this.mirror ? SIZE - 1 - i : i], ox + i - HALF + .5, HALF + .55);
-        label(String(i + 1), ox + (this.mirror ? HALF + .55 : -HALF - .55), i - HALF + .5);
+        label('ABCDEFGHIJ'[this.mirror ? SIZE - 1 - i : i], ox + i - HALF + .5, HALF + (compact ? .75 : .55));
+        label(String(i + 1), ox + (this.mirror ? HALF + (compact ? .75 : .55) : -HALF - (compact ? .75 : .55)), i - HALF + .5);
       }
     }
     update(marks, opts) {
@@ -662,6 +675,7 @@
       this.now = 0; this.flames = 0; this.shake = 0; this.fireT = 0;
       this.opts = {}; this.hover = null; this.needSize = true;
       this.fx = []; this.sprites = []; this.timers = []; this.over = false;
+      this.compact = mode === 'phone' || mode === 'mine' || window.innerWidth < 800;   // small screens: bolder grid, calmer water
 
       const canvas = document.createElement('canvas');
       el.appendChild(canvas);
@@ -733,7 +747,7 @@
       this.bump = tex('bump').clone(); this.bump.wrapS = this.bump.wrapT = T.RepeatWrapping;
       this.bump.repeat.set(this.arena ? 44 : 34, this.arena ? 44 : 34); this.bump.needsUpdate = true;
       const mat = new T.MeshPhongMaterial({
-        color: 0x072a45, emissive: 0x020e19, specular: 0x24160a, shininess: 60, bumpMap: this.bump, bumpScale: .1,
+        color: 0x072a45, emissive: 0x020e19, specular: this.compact ? 0x120a04 : 0x24160a, shininess: 60, bumpMap: this.bump, bumpScale: this.compact ? .04 : .1,
       });
       this.water = new T.Mesh(geo, mat); this.water.receiveShadow = true; this.scene.add(this.water);
     }
