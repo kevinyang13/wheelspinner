@@ -908,7 +908,11 @@
       if (this.needSize && !this.resize()) return;
       if (!this.camBase) return;
       this.now = t;
-      if (this.timers.length) this.timers = this.timers.filter(tm => { if (this.now >= tm.at) { tm.fn(); return false; } return true; });
+      if (this.timers.length) {
+        const due = this.timers.filter(tm => this.now >= tm.at);
+        this.timers = this.timers.filter(tm => this.now < tm.at);
+        due.forEach(tm => tm.fn());
+      }
 
       // water
       const pos = this.water.geometry.attributes.position, base = this.waterBase;
@@ -929,7 +933,12 @@
 
       // effects
       this.fields.forEach(f => f.cellFx.forEach(fx => fx.update(t)));
-      this.fx = this.fx.filter(f => { if (f.update(t)) return true; f.dispose(); return false; });
+      // Effects can spawn more effects while updating (a landing shell starts the explosion), so
+      // iterate a snapshot and keep anything added meanwhile — otherwise those would be orphaned.
+      const cur = this.fx; this.fx = [];
+      const live = [];
+      cur.forEach(f => { if (f.update(t)) live.push(f); else f.dispose(); });
+      this.fx = live.concat(this.fx);
 
       // fire light flicker follows the most recent burst
       this.fireT *= .94;
