@@ -91,6 +91,7 @@
     .game-card:active { transform: translateY(-1px); }
 
     /* Per-card accent colors */
+    .card-battleship { --card-accent: var(--sky); --card-shadow: rgba(90,159,224,0.2); --card-glow: radial-gradient(ellipse at top left, rgba(90,159,224,0.07), transparent 70%); }
     .card-wheel    { --card-accent: var(--gold); --card-shadow: rgba(240,192,64,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(240,192,64,0.07), transparent 70%); }
     .card-memory   { --card-accent: var(--teal); --card-shadow: rgba(34,166,179,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(34,166,179,0.07), transparent 70%); }
     .card-pinball  { --card-accent: var(--purple); --card-shadow: rgba(190,46,221,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(190,46,221,0.07), transparent 70%); }
@@ -336,6 +337,18 @@
   <div class="section-label" id="playing-label" style="margin-top:36px">🎮 Playing Games</div>
 
   <div class="game-grid" id="playing-grid">
+
+    <a href="battleship.html" class="game-card card-battleship" data-category="playing">
+      <div class="card-icon">🚢</div>
+      <div class="card-title">Battleship</div>
+      <div class="card-desc">Play on the TV with phones as controllers — ships stay secret on each phone. Pass &amp; play works too!</div>
+      <div class="card-tags">
+        <span class="tag">2 Players</span>
+        <span class="tag">TV + Phones</span>
+        <span class="tag">Strategy</span>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
 
     <a href="wheel.html" class="game-card card-wheel" data-category="playing">
       <div class="card-icon">🎡</div>

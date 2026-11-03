@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <title>Battleship – Kyle &amp; Lindsey</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 12px 16px 40px;
+    }
+
+    nav {
+      width: 100%; max-width: 1400px;
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 10px;
+    }
+    nav a { color: var(--sky); text-decoration: none; font-size: 0.9rem; opacity: 0.8; }
+    nav a:hover { opacity: 1; }
+    nav span { font-size: 1rem; font-weight: bold; }
+
+    .screen { display: none; width: 100%; flex-direction: column; align-items: center; gap: 22px; }
+    .screen.active { display: flex; }
+    #tvBattle.active { gap: 12px; }
+    #tvBattle .fleet { flex-direction: row; flex-wrap: wrap; gap: 4px 12px; max-width: none; justify-content: center; }
+    #tvBattle .fleet-row { font-size: 0.78rem; }
+
+    .title { font-size: 2.4rem; font-weight: 900; text-align: center; line-height: 1.15; }
+    .title small { display: block; font-size: 0.95rem; color: var(--muted); font-weight: 500; margin-top: 8px; letter-spacing: 1px; }
+
+    .big-btn {
+      padding: 18px 40px; border-radius: 20px; border: 2px solid var(--border);
+      background: var(--card); color: var(--ink);
+      font-size: 1.15rem; font-weight: 800; cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      min-width: 240px; transition: transform 0.12s, border-color 0.2s;
+    }
+    .big-btn span.em { font-size: 2.4rem; }
+    .big-btn small { font-size: 0.78rem; font-weight: 500; color: var(--muted); }
+    .big-btn:hover { transform: translateY(-3px); border-color: var(--sky); }
+
+    .go-btn {
+      padding: 14px 44px; border-radius: 28px; border: none;
+      background: linear-gradient(135deg, var(--sky), var(--indigo));
+      color: #fff; font-size: 1.1rem; font-weight: 800; cursor: pointer;
+      transition: transform 0.12s, opacity 0.2s;
+    }
+    .go-btn:hover { transform: scale(1.03); }
+    .go-btn:disabled { opacity: 0.45; cursor: default; transform: none; }
+
+    .ghost-btn {
+      padding: 10px 22px; border-radius: 14px; font-size: 0.9rem; font-weight: 700;
+      border: 2px solid var(--border); background: transparent; color: var(--ink2); cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .ghost-btn:hover { border-color: var(--sky); color: var(--sky); }
+    .ghost-btn.on { border-color: var(--sky); color: var(--sky); background: rgba(var(--ink-rgb),0.04); }
+
+    .row { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+    .note { color: var(--muted); font-size: 0.85rem; text-align: center; max-width: 520px; line-height: 1.6; }
+    .warn { color: var(--red); font-weight: 700; text-align: center; }
+
+    /* ── Lobby (TV) ── */
+    .code-card {
+      background: var(--card); border: 2px solid var(--border); border-radius: 24px;
+      padding: 28px 44px; text-align: center;
+    }
+    .code-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); }
+    .code-value {
+      font-size: clamp(3rem, 11vw, 7rem); font-weight: 900; letter-spacing: 0.12em;
+      color: var(--sky); line-height: 1.1; font-variant-numeric: tabular-nums;
+    }
+    .code-url { font-size: clamp(0.9rem, 2vw, 1.3rem); color: var(--ink2); font-weight: 700; margin-top: 6px; }
+
+    .slots { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+    .slot {
+      min-width: 240px; padding: 20px 26px; border-radius: 20px;
+      border: 3px dashed var(--border); background: var(--card);
+      text-align: center; transition: border-color 0.2s, background 0.2s;
+    }
+    .slot .sname { font-size: 1.6rem; font-weight: 900; }
+    .slot .sstate { font-size: 0.9rem; color: var(--muted); margin-top: 4px; font-weight: 700; }
+    .slot.kyle    .sname { color: var(--gold); }
+    .slot.lindsey .sname { color: var(--teal); }
+    .slot.here    { border-style: solid; }
+    .slot.kyle.here    { border-color: var(--gold); }
+    .slot.lindsey.here { border-color: var(--teal); }
+    .slot.ready .sstate { color: var(--green); }
+
+    /* ── Boards ── */
+    .boards { display: flex; gap: clamp(16px, 4vw, 64px); flex-wrap: wrap; justify-content: center; align-items: flex-start; }
+    .board-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .board-name { font-size: clamp(1.1rem, 2.4vw, 2rem); font-weight: 900; }
+    .board-name.kyle    { color: var(--gold); }
+    .board-name.lindsey { color: var(--teal); }
+    .board-sub { font-size: 0.8rem; color: var(--muted); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+
+    .grid {
+      display: grid; gap: 2px; background: var(--border); padding: 2px;
+      border-radius: 10px; --cell: 34px;
+      grid-template-columns: repeat(11, var(--cell));
+    }
+    .grid.tv { --cell: clamp(24px, 4.4vmin, 58px); }
+    .cell {
+      width: var(--cell); height: var(--cell);
+      display: flex; align-items: center; justify-content: center;
+      background: var(--card); font-size: calc(var(--cell) * 0.5);
+      font-weight: 800; line-height: 1; user-select: none;
+    }
+    .cell.head {
+      background: transparent; color: var(--muted);
+      font-size: calc(var(--cell) * 0.38); font-weight: 800;
+    }
+    .cell.sea   { background: var(--card-alt); }
+    .cell.ship  { background: var(--steel); color: #fff; }
+    .cell.miss  { color: var(--muted); }
+    .cell.hit   { background: rgba(224,112,111,0.22); }
+    .cell.sunk  { background: var(--red); color: #fff; }
+    .cell.aim   { cursor: pointer; }
+    .cell.aim:hover { outline: 3px solid var(--sky); outline-offset: -3px; }
+    .cell.sel   { outline: 4px solid var(--sky); outline-offset: -4px; }
+    .cell.last  { animation: pulse 1.2s ease-out 2; }
+    @keyframes pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(90,159,224,0.8); }
+      100% { box-shadow: 0 0 0 14px rgba(90,159,224,0); }
+    }
+    .cell.bad { background: rgba(224,112,111,0.35); }
+
+    /* Fleet status */
+    .fleet { display: flex; flex-direction: column; gap: 5px; width: 100%; max-width: 280px; }
+    .fleet-row {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.85rem; font-weight: 700; color: var(--ink2);
+    }
+    .fleet-row .pips { display: flex; gap: 2px; }
+    .fleet-row .pip { width: 11px; height: 11px; border-radius: 3px; background: var(--steel); }
+    .fleet-row.sunk { color: var(--red); text-decoration: line-through; }
+    .fleet-row.sunk .pip { background: var(--red); }
+
+    /* ── TV battle header ── */
+    .turn-banner {
+      font-size: clamp(1.2rem, 2.6vw, 2.1rem); font-weight: 900; text-align: center;
+      padding: 8px 26px; border-radius: 18px; background: var(--card); border: 3px solid var(--border);
+    }
+    .turn-banner.kyle    { border-color: var(--gold); color: var(--gold); }
+    .turn-banner.lindsey { border-color: var(--teal); color: var(--teal); }
+    .shot-log { font-size: clamp(0.9rem, 2vw, 1.4rem); color: var(--ink2); font-weight: 700; min-height: 1.6em; text-align: center; }
+
+    /* ── Phone ── */
+    .phone-wrap { width: 100%; max-width: 520px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+    .you-chip {
+      padding: 6px 18px; border-radius: 99px; font-weight: 800; font-size: 0.95rem;
+      border: 2px solid var(--border);
+    }
+    .you-chip.kyle    { color: var(--gold); border-color: var(--gold); }
+    .you-chip.lindsey { color: var(--teal); border-color: var(--teal); }
+
+    .code-input {
+      font-size: 2rem; font-weight: 900; letter-spacing: 0.3em; text-align: center;
+      text-transform: uppercase; width: 100%; max-width: 320px;
+      padding: 14px; border-radius: 16px; border: 2px solid var(--border);
+      background: var(--card); color: var(--ink); outline: none;
+    }
+    .code-input:focus { border-color: var(--sky); }
+
+    .tray { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 320px; }
+    .tray-item {
+      display: flex; align-items: center; gap: 10px; padding: 9px 14px;
+      border-radius: 12px; border: 2px solid var(--border); background: var(--card);
+      font-weight: 800; cursor: pointer; font-size: 0.92rem;
+    }
+    .tray-item.cur    { border-color: var(--sky); background: rgba(var(--ink-rgb),0.04); }
+    .tray-item.placed { color: var(--green); border-color: var(--green); }
+    .tray-item .blocks { display: flex; gap: 2px; margin-left: auto; }
+    .tray-item .blk { width: 12px; height: 12px; border-radius: 3px; background: var(--steel); }
+    .tray-item.placed .blk { background: var(--green); }
+
+    .status {
+      font-size: 1.05rem; font-weight: 800; text-align: center; min-height: 1.5em;
+    }
+    .status.go   { color: var(--green); }
+    .status.wait { color: var(--muted); }
+    .status.err  { color: var(--red); }
+
+    /* Pass-and-play curtain */
+    .curtain {
+      position: fixed; inset: 0; z-index: 50; display: none;
+      flex-direction: column; align-items: center; justify-content: center; gap: 24px;
+      background: var(--bg); text-align: center; padding: 24px;
+    }
+    .curtain.show { display: flex; }
+    .curtain h2 { font-size: clamp(1.6rem, 6vw, 3rem); font-weight: 900; }
+    .curtain h2.kyle    { color: var(--gold); }
+    .curtain h2.lindsey { color: var(--teal); }
+
+    @media (max-width: 600px) {
+      .title { font-size: 1.9rem; }
+      .big-btn { min-width: 0; width: 100%; }
+      .grid { --cell: min(8.2vw, 34px); }
+      .code-card { padding: 20px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html">← Home</a>
+  <span>🚢 Battleship</span>
+</nav>
+
+<!-- ══════════════ ROLE PICKER ══════════════ -->
+<div class="screen active" id="roleScreen">
+  <div class="title">🚢 Battleship
+    <small>PHONES ARE THE CONTROLLERS · THE TV IS THE BOARD</small>
+  </div>
+  <div class="row">
+    <button class="big-btn" id="beTvBtn">
+      <span class="em">📺</span>This is the TV
+      <small>Shows the board. Start here.</small>
+    </button>
+    <button class="big-btn" id="bePhoneBtn">
+      <span class="em">📱</span>I'm a player
+      <small>Join with the code on the TV</small>
+    </button>
+  </div>
+  <button class="ghost-btn" id="beLocalBtn">🙈 No TV — pass &amp; play on this device</button>
+  <div class="note">
+    Open this page on the TV first. It shows a 4-letter code; each player opens the same
+    page on their own phone and types the code in. Ships stay secret on the phones.
+  </div>
+</div>
+
+<!-- ══════════════ TV: LOBBY ══════════════ -->
+<div class="screen" id="tvLobby">
+  <div class="title">🚢 Battleship</div>
+  <div class="code-card">
+    <div class="code-label">Game code</div>
+    <div class="code-value" id="codeValue">····</div>
+    <div class="code-url" id="codeUrl"></div>
+  </div>
+  <div class="slots">
+    <div class="slot kyle" id="slotKyle">
+      <div class="sname">🟡 Kyle</div>
+      <div class="sstate">waiting for phone…</div>
+    </div>
+    <div class="slot lindsey" id="slotLindsey">
+      <div class="sname">🩵 Lindsey</div>
+      <div class="sstate">waiting for phone…</div>
+    </div>
+  </div>
+  <div class="note" id="tvLobbyNote">On each phone: open the address above, tap “I'm a player”, type the code.</div>
+  <div class="warn" id="tvError"></div>
+</div>
+
+<!-- ══════════════ TV: BATTLE ══════════════ -->
+<div class="screen" id="tvBattle">
+  <div class="turn-banner" id="turnBanner">—</div>
+  <div class="shot-log" id="shotLog">&nbsp;</div>
+  <div class="boards">
+    <div class="board-wrap">
+      <div class="board-name kyle">🟡 Kyle's waters</div>
+      <div class="board-sub" id="kyleSub">fleet afloat</div>
+      <div class="grid tv" id="gridKyle"></div>
+      <div class="fleet" id="fleetKyle"></div>
+    </div>
+    <div class="board-wrap">
+      <div class="board-name lindsey">🩵 Lindsey's waters</div>
+      <div class="board-sub" id="lindseySub">fleet afloat</div>
+      <div class="grid tv" id="gridLindsey"></div>
+      <div class="fleet" id="fleetLindsey"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ TV: GAME OVER ══════════════ -->
+<div class="screen" id="tvOver">
+  <div class="title" id="overTitle">🏆</div>
+  <div class="boards">
+    <div class="board-wrap">
+      <div class="board-name kyle">🟡 Kyle</div>
+      <div class="grid tv" id="overGridKyle"></div>
+    </div>
+    <div class="board-wrap">
+      <div class="board-name lindsey">🩵 Lindsey</div>
+      <div class="grid tv" id="overGridLindsey"></div>
+    </div>
+  </div>
+  <div class="note" id="overNote">Tap “Play again” on both phones for a rematch.</div>
+</div>
+
+<!-- ══════════════ PHONE ══════════════ -->
+<div class="screen" id="phoneScreen">
+  <div class="phone-wrap">
+
+    <!-- join -->
+    <div id="pJoin" style="display:flex;flex-direction:column;align-items:center;gap:16px;width:100%">
+      <div class="title">📱 Join the game<small>TYPE THE CODE SHOWN ON THE TV</small></div>
+      <input class="code-input" id="codeInput" maxlength="4" autocomplete="off"
+             autocorrect="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD" />
+      <div class="row">
+        <button class="ghost-btn on" id="pickKyle">🟡 I'm Kyle</button>
+        <button class="ghost-btn" id="pickLindsey">🩵 I'm Lindsey</button>
+      </div>
+      <button class="go-btn" id="joinBtn">Join →</button>
+      <div class="status err" id="joinStatus"></div>
+    </div>
+
+    <!-- placing + firing -->
+    <div id="pPlay" style="display:none;flex-direction:column;align-items:center;gap:14px;width:100%">
+      <div class="you-chip" id="youChip">—</div>
+      <div class="status" id="pStatus">—</div>
+      <div class="grid" id="pGrid"></div>
+
+      <div id="placeTools" style="display:flex;flex-direction:column;align-items:center;gap:12px;width:100%">
+        <div class="tray" id="pTray"></div>
+        <div class="row">
+          <button class="ghost-btn" id="rotateBtn">↔️ Across</button>
+          <button class="ghost-btn" id="randomBtn">🎲 Random</button>
+          <button class="ghost-btn" id="clearBtn">✕ Clear</button>
+        </div>
+        <button class="go-btn" id="readyBtn" disabled>Ready to battle ⚓</button>
+      </div>
+
+      <div id="fireTools" style="display:none;flex-direction:column;align-items:center;gap:10px;width:100%">
+        <div class="fleet" id="pFleet"></div>
+        <div class="note" id="fireNote">Tap a square on the enemy grid to fire.</div>
+      </div>
+
+      <button class="ghost-btn" id="rematchBtn" style="display:none">🔁 Play again</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- pass-and-play curtain -->
+<div class="curtain" id="curtain">
+  <h2 id="curtainName">Pass to Kyle</h2>
+  <div class="note">Other player: look away! 🙈</div>
+  <button class="go-btn" id="curtainBtn">I'm ready 👀</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════
+//  SHARED RULES
+// ═══════════════════════════════════════════════════
+const SIZE  = 10;
+const LET   = 'ABCDEFGHIJ';
+const SHIPS = [
+  { k: 'carrier',   n: 'Carrier',    len: 5 },
+  { k: 'battleship', n: 'Battleship', len: 4 },
+  { k: 'cruiser',   n: 'Cruiser',    len: 3 },
+  { k: 'sub',       n: 'Submarine',  len: 3 },
+  { k: 'destroyer', n: 'Destroyer',  len: 2 },
+];
+const NAMES = { kyle: 'Kyle', lindsey: 'Lindsey' };
+const EMOJI = { kyle: '🟡', lindsey: '🩵' };
+
+const $ = id => document.getElementById(id);
+const other = p => (p === 'kyle' ? 'lindsey' : 'kyle');
+const coord = (r, c) => `${LET[c]}${r + 1}`;
+const emptyGrid = () => Array.from({ length: SIZE }, () => Array(SIZE).fill(''));
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id));
+}
+
+// Does this ship fit on the board without touching another one?
+function fits(cells, taken) {
+  return cells.every(([r, c]) =>
+    r >= 0 && r < SIZE && c >= 0 && c < SIZE && !taken.has(`${r},${c}`));
+}
+function shipCells(r, c, len, horiz) {
+  return Array.from({ length: len }, (_, i) => horiz ? [r, c + i] : [r + i, c]);
+}
+function randomFleet() {
+  const taken = new Set(), fleet = [];
+  for (const s of SHIPS) {
+    for (;;) {
+      const horiz = Math.random() < 0.5;
+      const r = Math.floor(Math.random() * SIZE);
+      const c = Math.floor(Math.random() * SIZE);
+      const cells = shipCells(r, c, s.len, horiz);
+      if (!fits(cells, taken)) continue;
+      cells.forEach(([rr, cc]) => taken.add(`${rr},${cc}`));
+      fleet.push({ k: s.k, cells });
+      break;
+    }
+  }
+  return fleet;
+}
+// The host never trusts a fleet that arrives from a phone.
+function validFleet(fleet) {
+  if (!Array.isArray(fleet) || fleet.length !== SHIPS.length) return false;
+  const taken = new Set();
+  for (const spec of SHIPS) {
+    const ship = fleet.find(f => f && f.k === spec.k);
+    if (!ship || !Array.isArray(ship.cells) || ship.cells.length !== spec.len) return false;
+    const rows = ship.cells.map(c => c[0]), cols = ship.cells.map(c => c[1]);
+    const straight =
+      (new Set(rows).size === 1 && isRun(cols)) ||
+      (new Set(cols).size === 1 && isRun(rows));
+    if (!straight || !fits(ship.cells, taken)) return false;
+    ship.cells.forEach(([r, c]) => taken.add(`${r},${c}`));
+  }
+  return true;
+}
+function isRun(ns) {
+  const sorted = [...ns].sort((a, b) => a - b);
+  return sorted.every((n, i) => i === 0 || n === sorted[i - 1] + 1);
+}
+
+// ═══════════════════════════════════════════════════
+//  ENGINE — lives on the host (TV, or this device in pass & play)
+// ═══════════════════════════════════════════════════
+function newGame() {
+  return {
+    phase: 'lobby',                               // lobby | place | battle | over
+    p: {
+      kyle:    { here: false, fleet: null, incoming: emptyGrid(), sunk: [] },
+      lindsey: { here: false, fleet: null, incoming: emptyGrid(), sunk: [] },
+    },
+    turn: 'kyle',
+    winner: null,
+    log: '',
+  };
+}
+
+function setFleet(game, who, fleet) {
+  if (!validFleet(fleet)) return false;
+  game.p[who].fleet = fleet.map(f => ({ k: f.k, cells: f.cells, hits: 0 }));
+  if (game.p.kyle.fleet && game.p.lindsey.fleet) {
+    game.phase = 'battle';
+    game.log = `${EMOJI[game.turn]} ${NAMES[game.turn]} fires first!`;
+  } else {
+    game.phase = 'place';
+  }
+  return true;
+}
+
+function fire(game, who, r, c) {
+  if (game.phase !== 'battle' || game.turn !== who) return null;
+  if (r < 0 || r >= SIZE || c < 0 || c >= SIZE) return null;
+  const foe = other(who);
+  const board = game.p[foe].incoming;
+  if (board[r][c]) return null;                   // already shot there
+
+  const ship = game.p[foe].fleet.find(s => s.cells.some(([sr, sc]) => sr === r && sc === c));
+  board[r][c] = ship ? 'H' : 'M';
+
+  let sunkName = null;
+  if (ship) {
+    ship.hits++;
+    if (ship.hits === ship.cells.length) {
+      sunkName = SHIPS.find(s => s.k === ship.k).n;
+      game.p[foe].sunk.push(ship.k);
+    }
+  }
+
+  const allSunk = game.p[foe].fleet.every(s => s.hits === s.cells.length);
+  if (allSunk) {
+    game.phase = 'over';
+    game.winner = who;
+    game.log = `${EMOJI[who]} ${NAMES[who]} sank the whole fleet!`;
+  } else {
+    game.log = sunkName
+      ? `💥 ${coord(r, c)} — ${NAMES[who]} sank ${NAMES[foe]}'s ${sunkName}!`
+      : ship ? `💥 ${coord(r, c)} — hit!`
+             : `🌊 ${coord(r, c)} — miss.`;
+    game.turn = foe;
+  }
+  return { hit: !!ship, sunkName, r, c };
+}
+
+function resetForRematch(game) {
+  const here = { kyle: game.p.kyle.here, lindsey: game.p.lindsey.here };
+  const fresh = newGame();
+  fresh.p.kyle.here = here.kyle;
+  fresh.p.lindsey.here = here.lindsey;
+  fresh.phase = 'place';
+  return fresh;
+}
+
+// What one player is allowed to know.
+function viewFor(game, who) {
+  const me = game.p[who], foe = game.p[other(who)];
+  const mine = emptyGrid(), theirs = emptyGrid();
+
+  (me.fleet || []).forEach(s => s.cells.forEach(([r, c]) => { mine[r][c] = 'S'; }));
+  for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) {
+    if (me.incoming[r][c]) mine[r][c] = me.incoming[r][c];     // hit / miss on me
+    if (foe.incoming[r][c]) theirs[r][c] = foe.incoming[r][c]; // my shots at them
+  }
+  // Reveal sunk enemy ships in full.
+  (foe.fleet || []).forEach(s => {
+    if (s.hits === s.cells.length) s.cells.forEach(([r, c]) => { theirs[r][c] = 'X'; });
+  });
+
+  return {
+    phase: game.phase, you: who, turn: game.turn, winner: game.winner, log: game.log,
+    foeHere: foe.here, foeReady: !!foe.fleet, ready: !!me.fleet,
+    mine, theirs,
+    myFleet:  fleetStatus(me), foeFleet: fleetStatus(foe),
+  };
+}
+function fleetStatus(side) {
+  return SHIPS.map(s => {
+    const ship = (side.fleet || []).find(f => f.k === s.k);
+    return { n: s.n, len: s.len, sunk: !!ship && ship.hits === ship.cells.length };
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  GRID RENDERING
+// ═══════════════════════════════════════════════════
+// marks: '' sea · 'S' my ship · 'H' hit · 'M' miss · 'X' sunk · 'P' preview · 'B' bad preview
+function renderGrid(el, marks, opts = {}) {
+  const { onCell = null, aim = false, hideShips = false, last = null } = opts;
+  el.innerHTML = '';
+  const add = (cls, txt) => {
+    const d = document.createElement('div');
+    d.className = cls;
+    d.textContent = txt;
+    el.appendChild(d);
+    return d;
+  };
+  add('cell head', '');
+  for (let c = 0; c < SIZE; c++) add('cell head', LET[c]);
+
+  for (let r = 0; r < SIZE; r++) {
+    add('cell head', r + 1);
+    for (let c = 0; c < SIZE; c++) {
+      const m = marks[r][c];
+      let cls = 'cell sea', txt = '';
+      if (m === 'S' && !hideShips) { cls = 'cell ship'; txt = '▪'; }
+      else if (m === 'P') { cls = 'cell ship'; txt = '▪'; }
+      else if (m === 'B') { cls = 'cell bad';  txt = '✕'; }
+      else if (m === 'H') { cls = 'cell hit';  txt = '💥'; }
+      else if (m === 'X') { cls = 'cell sunk'; txt = '💀'; }
+      else if (m === 'M') { cls = 'cell miss'; txt = '•'; }
+      if (aim && !m) cls += ' aim';
+      const cell = add(cls, txt);
+      if (last && last[0] === r && last[1] === c) cell.classList.add('last');
+      if (onCell) cell.addEventListener('click', () => onCell(r, c));
+    }
+  }
+}
+function renderFleet(el, status, label) {
+  el.innerHTML = '';
+  status.forEach(s => {
+    const row = document.createElement('div');
+    row.className = 'fleet-row' + (s.sunk ? ' sunk' : '');
+    row.innerHTML = `<span>${s.sunk ? '💀' : '🚢'} ${s.n}</span>
+      <span class="pips">${'<span class="pip"></span>'.repeat(s.len)}</span>`;
+    el.appendChild(row);
+  });
+  if (label) el.setAttribute('aria-label', label);
+}
+
+// ── little sound cues, so the TV carries across the room ──
+let actx = null;
+function beep(freq, ms, type = 'sine') {
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(0.15, actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + ms / 1000);
+    o.connect(g); g.connect(actx.destination);
+    o.start(); o.stop(actx.currentTime + ms / 1000);
+  } catch {}
+}
+const sndMiss = () => beep(220, 180, 'sine');
+const sndHit  = () => { beep(140, 260, 'square'); setTimeout(() => beep(90, 320, 'sawtooth'), 90); };
+const sndSunk = () => { [330, 262, 196, 131].forEach((f, i) => setTimeout(() => beep(f, 320, 'square'), i * 140)); };
+const sndWin  = () => { [392, 523, 659, 784].forEach((f, i) => setTimeout(() => beep(f, 260), i * 150)); };
+
+// ═══════════════════════════════════════════════════
+//  TV (HOST)
+// ═══════════════════════════════════════════════════
+const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';   // no I or O — too easy to misread
+const peerIdFor = code => `wsbship-${code}`;
+
+let game = newGame();
+let conns = { kyle: null, lindsey: null };
+let lastShot = null;
+
+function startTv() {
+  showScreen('tvLobby');
+  $('codeUrl').textContent = location.host + location.pathname.replace(/\/$/, '');
+  hostWithFreshCode(0);
+}
+
+function hostWithFreshCode(attempt) {
+  if (typeof Peer === 'undefined') {
+    $('tvError').textContent = 'Could not load the connection library — check the internet, or use pass & play.';
+    return;
+  }
+  if (attempt > 4) {
+    $('tvError').textContent = 'Could not open a game. Reload to try again.';
+    return;
+  }
+  const code = Array.from({ length: 4 }, () =>
+    CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join('');
+
+  const peer = new Peer(peerIdFor(code));
+  peer.on('open', () => {
+    $('codeValue').textContent = code;
+    $('tvError').textContent = '';
+  });
+  peer.on('error', err => {
+    if (err.type === 'unavailable-id') { peer.destroy(); hostWithFreshCode(attempt + 1); return; }
+    $('tvError').textContent = `Connection problem (${err.type}). Reload the TV page to try again.`;
+  });
+  peer.on('connection', conn => {
+    conn.on('data', msg => handlePhoneMsg(conn, msg));
+    conn.on('close', () => {
+      for (const who of ['kyle', 'lindsey']) {
+        if (conns[who] === conn) { conns[who] = null; game.p[who].here = false; }
+      }
+      renderTv();
+    });
+  });
+}
+
+function handlePhoneMsg(conn, msg) {
+  if (!msg || typeof msg !== 'object') return;
+
+  if (msg.t === 'hello') {
+    const who = msg.name === 'lindsey' ? 'lindsey' : 'kyle';
+    if (conns[who] && conns[who] !== conn && conns[who].open) {
+      conn.send({ t: 'err', m: `${NAMES[who]} is already on another phone.` });
+      return;
+    }
+    conns[who] = conn;
+    game.p[who].here = true;
+    if (game.phase === 'lobby' && game.p.kyle.here && game.p.lindsey.here) game.phase = 'place';
+    pushAll();
+    renderTv();
+    return;
+  }
+
+  const who = conns.kyle === conn ? 'kyle' : conns.lindsey === conn ? 'lindsey' : null;
+  if (!who) return;
+
+  if (msg.t === 'fleet') {
+    if (game.phase !== 'place' && game.phase !== 'lobby') return;
+    if (!setFleet(game, who, msg.fleet)) {
+      conn.send({ t: 'err', m: 'That fleet looked wrong — place the ships again.' });
+      return;
+    }
+    if (game.p.kyle.fleet && game.p.lindsey.fleet) game.phase = 'battle';
+  }
+
+  if (msg.t === 'fire') {
+    const res = fire(game, who, msg.r | 0, msg.c | 0);
+    if (!res) return;
+    lastShot = [res.r, res.c];
+    if (game.winner) sndWin();
+    else if (res.sunkName) sndSunk();
+    else if (res.hit) sndHit();
+    else sndMiss();
+  }
+
+  if (msg.t === 'rematch') {
+    game = resetForRematch(game);
+    lastShot = null;
+  }
+
+  pushAll();
+  renderTv();
+}
+
+function pushAll() {
+  for (const who of ['kyle', 'lindsey']) {
+    const c = conns[who];
+    if (c && c.open) c.send({ t: 'view', v: viewFor(game, who) });
+  }
+}
+
+function renderTv() {
+  if (game.phase === 'lobby' || game.phase === 'place') {
+    showScreen('tvLobby');
+    for (const who of ['kyle', 'lindsey']) {
+      const el = $(who === 'kyle' ? 'slotKyle' : 'slotLindsey');
+      const ready = !!game.p[who].fleet;
+      el.classList.toggle('here', game.p[who].here);
+      el.classList.toggle('ready', ready);
+      el.querySelector('.sstate').textContent =
+        !game.p[who].here ? 'waiting for phone…' : ready ? '⚓ fleet ready!' : 'placing ships…';
+    }
+    $('tvLobbyNote').textContent = game.phase === 'place'
+      ? 'Both players connected — placing ships on their phones.'
+      : 'On each phone: open the address above, tap “I\'m a player”, type the code.';
+    return;
+  }
+
+  if (game.phase === 'battle') {
+    showScreen('tvBattle');
+    const t = game.turn;
+    $('turnBanner').className = `turn-banner ${t}`;
+    $('turnBanner').textContent = `${EMOJI[t]} ${NAMES[t]}'s turn — fire!`;
+    $('shotLog').textContent = game.log || ' ';
+    for (const who of ['kyle', 'lindsey']) {
+      // The TV shows shots only — ships stay hidden until they sink.
+      renderGrid($(who === 'kyle' ? 'gridKyle' : 'gridLindsey'), publicGrid(who), {
+        hideShips: true,
+        last: game.turn !== who ? null : lastShot,
+      });
+      renderFleet($(who === 'kyle' ? 'fleetKyle' : 'fleetLindsey'), fleetStatus(game.p[who]));
+      const alive = SHIPS.length - game.p[who].sunk.length;
+      $(who === 'kyle' ? 'kyleSub' : 'lindseySub').textContent = `${alive} of ${SHIPS.length} afloat`;
+    }
+    return;
+  }
+
+  if (game.phase === 'over') {
+    showScreen('tvOver');
+    const w = game.winner;
+    $('overTitle').innerHTML = `🏆 ${EMOJI[w]} ${NAMES[w]} wins!<small>${game.log}</small>`;
+    for (const who of ['kyle', 'lindsey']) {
+      renderGrid($(who === 'kyle' ? 'overGridKyle' : 'overGridLindsey'), fullGrid(who));
+    }
+  }
+}
+
+// Shots fired at `who`, with their ships hidden unless sunk.
+function publicGrid(who) {
+  const side = game.p[who], g = emptyGrid();
+  (side.fleet || []).forEach(s => {
+    if (s.hits === s.cells.length) s.cells.forEach(([r, c]) => { g[r][c] = 'X'; });
+  });
+  for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) {
+    if (side.incoming[r][c] && g[r][c] !== 'X') g[r][c] = side.incoming[r][c];
+  }
+  return g;
+}
+// Everything, for the end-of-game reveal.
+function fullGrid(who) {
+  const side = game.p[who], g = publicGrid(who);
+  (side.fleet || []).forEach(s => s.cells.forEach(([r, c]) => { if (!g[r][c]) g[r][c] = 'S'; }));
+  return g;
+}
+
+// ═══════════════════════════════════════════════════
+//  PHONE (CONTROLLER)
+// ═══════════════════════════════════════════════════
+let myName = 'kyle';
+let myConn = null;
+let myView = null;
+let horiz = true;
+let placing = emptyGrid();     // 'S' where a ship sits
+let placed = {};               // shipKey -> cells
+let curShip = SHIPS[0].k;
+let localMode = false;         // pass & play on one device
+
+$('pickKyle').addEventListener('click',    () => pickName('kyle'));
+$('pickLindsey').addEventListener('click', () => pickName('lindsey'));
+function pickName(n) {
+  myName = n;
+  $('pickKyle').classList.toggle('on', n === 'kyle');
+  $('pickLindsey').classList.toggle('on', n === 'lindsey');
+}
+
+$('joinBtn').addEventListener('click', () => {
+  const code = $('codeInput').value.trim().toUpperCase();
+  if (code.length !== 4) { $('joinStatus').textContent = 'The code is 4 letters.'; return; }
+  if (typeof Peer === 'undefined') {
+    $('joinStatus').textContent = 'Could not load the connection library — check the internet.';
+    return;
+  }
+  $('joinStatus').textContent = 'Connecting…';
+  const peer = new Peer();
+  peer.on('open', () => {
+    const conn = peer.connect(peerIdFor(code), { reliable: true });
+    conn.on('open', () => {
+      myConn = conn;
+      conn.send({ t: 'hello', name: myName });
+      $('joinStatus').textContent = '';
+      $('pJoin').style.display = 'none';
+      $('pPlay').style.display = 'flex';
+      startPlacing();
+    });
+    conn.on('data', msg => {
+      if (msg.t === 'view') { myView = msg.v; renderPhone(); }
+      if (msg.t === 'err')  { $('pStatus').className = 'status err'; $('pStatus').textContent = msg.m; }
+    });
+    conn.on('close', () => { $('pStatus').className = 'status err'; $('pStatus').textContent = 'Lost the TV. Reload to rejoin.'; });
+    setTimeout(() => {
+      if (!myConn) $('joinStatus').textContent = 'No game with that code. Check the TV screen.';
+    }, 6000);
+  });
+  peer.on('error', () => { $('joinStatus').textContent = 'Could not connect. Check the code and the internet.'; });
+});
+
+$('codeInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('joinBtn').click(); });
+
+// ── placing ──
+function startPlacing() {
+  placing = emptyGrid();
+  placed = {};
+  curShip = SHIPS[0].k;
+  horiz = true;
+  $('placeTools').style.display = 'flex';
+  $('fireTools').style.display = 'none';
+  $('rematchBtn').style.display = 'none';
+  $('youChip').className = `you-chip ${myName}`;
+  $('youChip').textContent = `${EMOJI[myName]} ${NAMES[myName]}`;
+  $('pStatus').className = 'status';
+  $('pStatus').textContent = 'Place your 5 ships.';
+  drawTray();
+  drawPlacing();
+}
+
+function drawTray() {
+  const tray = $('pTray');
+  tray.innerHTML = '';
+  SHIPS.forEach(s => {
+    const item = document.createElement('div');
+    const done = !!placed[s.k];
+    item.className = 'tray-item' + (done ? ' placed' : '') + (s.k === curShip ? ' cur' : '');
+    item.innerHTML = `<span>${done ? '⚓' : '🚢'} ${s.n}</span>
+      <span class="blocks">${'<span class="blk"></span>'.repeat(s.len)}</span>`;
+    item.addEventListener('click', () => {
+      if (placed[s.k]) {                       // pick it back up
+        placed[s.k].forEach(([r, c]) => { placing[r][c] = ''; });
+        delete placed[s.k];
+      }
+      curShip = s.k;
+      drawTray(); drawPlacing(); updateReady();
+    });
+    tray.appendChild(item);
+  });
+}
+
+function drawPlacing() {
+  renderGrid($('pGrid'), placing, {
+    onCell: (r, c) => tryPlace(r, c),
+  });
+}
+
+function tryPlace(r, c) {
+  const spec = SHIPS.find(s => s.k === curShip);
+  if (!spec) return;
+  if (placed[curShip]) {                        // tapping again moves it
+    placed[curShip].forEach(([rr, cc]) => { placing[rr][cc] = ''; });
+    delete placed[curShip];
+  }
+  const taken = new Set();
+  Object.values(placed).flat().forEach(([rr, cc]) => taken.add(`${rr},${cc}`));
+  const cells = shipCells(r, c, spec.len, horiz);
+  if (!fits(cells, taken)) {
+    $('pStatus').className = 'status err';
+    $('pStatus').textContent = 'That ship does not fit there.';
+    return;
+  }
+  cells.forEach(([rr, cc]) => { placing[rr][cc] = 'S'; });
+  placed[curShip] = cells;
+  const next = SHIPS.find(s => !placed[s.k]);
+  curShip = next ? next.k : curShip;
+  $('pStatus').className = 'status';
+  $('pStatus').textContent = next ? `Now place the ${SHIPS.find(s => s.k === next.k).n}.` : 'All ships placed!';
+  drawTray(); drawPlacing(); updateReady();
+}
+
+function updateReady() { $('readyBtn').disabled = SHIPS.some(s => !placed[s.k]); }
+
+$('rotateBtn').addEventListener('click', () => {
+  horiz = !horiz;
+  $('rotateBtn').textContent = horiz ? '↔️ Across' : '↕️ Down';
+});
+$('randomBtn').addEventListener('click', () => {
+  const fleet = randomFleet();
+  placing = emptyGrid(); placed = {};
+  fleet.forEach(f => {
+    placed[f.k] = f.cells;
+    f.cells.forEach(([r, c]) => { placing[r][c] = 'S'; });
+  });
+  $('pStatus').className = 'status';
+  $('pStatus').textContent = 'Fleet scattered! Tap Ready, or move any ship.';
+  drawTray(); drawPlacing(); updateReady();
+});
+$('clearBtn').addEventListener('click', () => { startPlacing(); });
+
+$('readyBtn').addEventListener('click', () => {
+  const fleet = SHIPS.map(s => ({ k: s.k, cells: placed[s.k] }));
+  if (!validFleet(fleet)) { $('pStatus').textContent = 'Something is off — try Random.'; return; }
+  $('placeTools').style.display = 'none';
+  $('pStatus').className = 'status wait';
+  $('pStatus').textContent = 'Fleet locked in. Waiting for the other player…';
+  if (localMode) localFleetReady(fleet);
+  else myConn.send({ t: 'fleet', fleet });
+});
+
+$('rematchBtn').addEventListener('click', () => {
+  if (localMode) { localRematch(); return; }
+  myConn.send({ t: 'rematch' });
+  $('rematchBtn').style.display = 'none';
+  $('pStatus').className = 'status wait';
+  $('pStatus').textContent = 'Waiting for the other player…';
+});
+
+// ── render whatever the host told us ──
+function renderPhone() {
+  const v = myView;
+  if (!v) return;
+  $('youChip').className = `you-chip ${v.you}`;
+  $('youChip').textContent = `${EMOJI[v.you]} ${NAMES[v.you]}`;
+
+  if (v.phase === 'place' || v.phase === 'lobby') {
+    if (v.ready) {
+      $('placeTools').style.display = 'none';
+      $('fireTools').style.display = 'none';
+      $('rematchBtn').style.display = 'none';
+      $('pStatus').className = 'status wait';
+      $('pStatus').textContent = v.foeHere
+        ? 'Fleet locked in. Waiting for the other player…'
+        : 'Fleet locked in. Waiting for the other phone to join…';
+      renderGrid($('pGrid'), v.mine);
+    } else if ($('placeTools').style.display === 'none') {
+      startPlacing();                 // new round (rematch) — place again
+    }
+    return;
+  }
+
+  if (v.phase === 'battle') {
+    $('placeTools').style.display = 'none';
+    $('fireTools').style.display = 'flex';
+    $('rematchBtn').style.display = 'none';
+    const mine = v.turn === v.you;
+    $('pStatus').className = 'status ' + (mine ? 'go' : 'wait');
+    $('pStatus').textContent = mine ? '🎯 Your turn — fire!' : `Waiting for ${NAMES[other(v.you)]}…`;
+    $('fireNote').textContent = mine
+      ? 'Tap a square to fire at the enemy.'
+      : 'This is where your shots have landed.';
+    renderGrid($('pGrid'), v.theirs, {
+      aim: mine,
+      onCell: mine ? ((r, c) => sendFire(r, c)) : null,
+    });
+    renderFleet($('pFleet'), v.foeFleet);
+    return;
+  }
+
+  if (v.phase === 'over') {
+    const won = v.winner === v.you;
+    $('fireTools').style.display = 'none';
+    $('placeTools').style.display = 'none';
+    $('rematchBtn').style.display = '';
+    $('pStatus').className = 'status ' + (won ? 'go' : 'err');
+    $('pStatus').textContent = won ? '🏆 You win!' : '💀 Your fleet is sunk.';
+    renderGrid($('pGrid'), v.mine);
+  }
+}
+
+function sendFire(r, c) {
+  if (localMode) { localFire(r, c); return; }
+  myConn.send({ t: 'fire', r, c });
+}
+
+// ═══════════════════════════════════════════════════
+//  PASS & PLAY — same phone UI, one device, no network
+// ═══════════════════════════════════════════════════
+let localTurnOwner = 'kyle';
+
+function startLocal() {
+  localMode = true;
+  game = newGame();
+  game.p.kyle.here = game.p.lindsey.here = true;
+  game.phase = 'place';
+  lastShot = null;
+  localTurnOwner = 'kyle';
+  showScreen('phoneScreen');
+  $('pJoin').style.display = 'none';
+  $('pPlay').style.display = 'flex';
+  curtain(`${NAMES.kyle}, place your fleet`, 'kyle', () => {
+    myName = 'kyle';
+    startPlacing();
+  });
+}
+
+function localFleetReady(fleet) {
+  setFleet(game, myName, fleet);
+  if (!game.p.lindsey.fleet) {
+    curtain(`${NAMES.lindsey}, place your fleet`, 'lindsey', () => {
+      myName = 'lindsey';
+      startPlacing();
+    });
+  } else {
+    game.phase = 'battle';
+    localHandOver();
+  }
+}
+
+function localFire(r, c) {
+  const res = fire(game, myName, r, c);
+  if (!res) return;
+  lastShot = [r, c];
+  if (game.winner) sndWin();
+  else if (res.sunkName) sndSunk();
+  else if (res.hit) sndHit();
+  else sndMiss();
+
+  myView = viewFor(game, myName);
+  renderPhone();
+
+  if (game.phase === 'over') return;
+  setTimeout(localHandOver, 1200);
+}
+
+function localHandOver() {
+  localTurnOwner = game.turn;
+  curtain(`Pass to ${NAMES[localTurnOwner]}`, localTurnOwner, () => {
+    myName = localTurnOwner;
+    myView = viewFor(game, myName);
+    renderPhone();
+  });
+}
+
+function localRematch() {
+  game = resetForRematch(game);
+  lastShot = null;
+  curtain(`${NAMES.kyle}, place your fleet`, 'kyle', () => {
+    myName = 'kyle';
+    startPlacing();
+  });
+}
+
+function curtain(text, who, after) {
+  const el = $('curtain');
+  $('curtainName').className = who;
+  $('curtainName').textContent = text;
+  el.classList.add('show');
+  $('curtainBtn').onclick = () => { el.classList.remove('show'); after(); };
+}
+
+// ═══════════════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════════════
+$('beTvBtn').addEventListener('click', startTv);
+$('bePhoneBtn').addEventListener('click', () => {
+  showScreen('phoneScreen');
+  $('codeInput').focus();
+});
+$('beLocalBtn').addEventListener('click', startLocal);
+
+// ?code=ABCD jumps straight to the join screen with it filled in.
+const qs = new URLSearchParams(location.search);
+if (qs.get('code')) {
+  showScreen('phoneScreen');
+  $('codeInput').value = qs.get('code').toUpperCase().slice(0, 4);
+}
+</script>
+</body>
+</html>
