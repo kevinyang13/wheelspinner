@@ -59,6 +59,30 @@
       backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
     }
     .note, .shot-log, .board-sub, .status { text-shadow: 0 1px 6px rgba(0,0,0,0.6); }
+    /* Dark frosted backing so text never sits straight on the bright sky / horizon. */
+    body .note {
+      color: #eef3fb; background: rgba(8,24,44,0.66); padding: 10px 16px; border-radius: 14px;
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); text-shadow: none;
+    }
+    body .title small {
+      width: fit-content; max-width: 100%; margin: 10px auto 0; padding: 5px 14px; border-radius: 99px;
+      color: #f4f7fc; background: rgba(8,24,44,0.66); text-shadow: none; font-weight: 700;
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    }
+    nav a, nav span {
+      background: rgba(8,24,44,0.66); padding: 5px 14px; border-radius: 99px; opacity: 1;
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    }
+    body .ghost-btn { background: rgba(8,24,44,0.74); color: #f1f5fb; border-color: rgba(255,255,255,0.4); }
+    body .ghost-btn:hover { background: rgba(8,24,44,0.9); }
+    body .ghost-btn.on { background: rgba(8,24,44,0.9); color: #ffd27a; border-color: #ffb454; }
+    .panel {
+      width: min(100%, 780px); padding: 28px 24px 24px; border-radius: 26px;
+      background: rgba(8,24,44,0.72); border: 1px solid rgba(255,255,255,0.2);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 20px 50px -18px rgba(0,0,0,0.7);
+    }
+    body .panel .note { background: transparent; padding: 0; backdrop-filter: none; -webkit-backdrop-filter: none; color: #dfe7f5; }
 
     nav {
       width: 100%; max-width: 1400px;
@@ -232,6 +256,8 @@
       background: var(--card); color: var(--ink); outline: none;
     }
     .code-input:focus { border-color: var(--sky); }
+    body .code-input { background: rgba(4,14,28,0.9); color: #fff; border-color: rgba(255,255,255,0.4); }
+    .code-input::placeholder { color: #8ea3c4; opacity: 1; }
 
     .tray { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 320px; }
     .tray-item {
@@ -313,7 +339,7 @@
 </nav>
 
 <!-- ══════════════ ROLE PICKER ══════════════ -->
-<div class="screen active" id="roleScreen">
+<div class="screen active panel" id="roleScreen">
   <div class="title">🚢 Battleship
     <small>PHONES ARE THE CONTROLLERS · THE TV IS THE BOARD</small>
   </div>
@@ -405,7 +431,7 @@
   <div class="phone-wrap">
 
     <!-- join -->
-    <div id="pJoin" style="display:flex;flex-direction:column;align-items:center;gap:16px;width:100%">
+    <div id="pJoin" class="panel" style="display:flex;flex-direction:column;align-items:center;gap:16px">
       <div class="title">📱 Join the game<small>TYPE THE CODE SHOWN ON THE TV</small></div>
       <input class="code-input" id="codeInput" maxlength="4" autocomplete="off"
              autocorrect="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD" />
