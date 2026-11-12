@@ -108,6 +108,13 @@
 
     .panel { width: 100%; container-type: inline-size; background: var(--card); border: 2px solid var(--border); border-radius: 20px; padding: 18px; }
     .panel h3 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 14px; }
+    .h3row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .dense-btn {
+      border: 2px solid var(--border); background: var(--bg); color: var(--ink2); cursor: pointer;
+      font-family: inherit; font-weight: 800; font-size: 0.68rem; letter-spacing: 0.5px;
+      text-transform: uppercase; padding: 5px 11px; border-radius: 14px; flex: none;
+    }
+    .dense-btn:hover { border-color: var(--green); color: var(--green); }
 
     .stock-row {
       display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center;
@@ -138,6 +145,19 @@
     .mini.sell:hover:not(:disabled) { border-color: var(--red); color: var(--red); }
     .mini:disabled { opacity: 0.35; cursor: not-allowed; }
     .s-have { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+    /* Compact: one line a stock, company names and empty holdings dropped. */
+    #panelMarket.compact .stock-row { padding: 6px 0; gap: 8px; }
+    #panelMarket.compact .s-emoji { font-size: 1.2rem; }
+    #panelMarket.compact .s-name { display: none; }
+    #panelMarket.compact .s-have.none { display: none; }
+    #panelMarket.compact .s-id > div:last-child { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+    #panelMarket.compact .s-sym { font-size: 0.95rem; }
+    #panelMarket.compact .s-have { margin-top: 0; }
+    #panelMarket.compact .s-px .p { font-size: 1rem; }
+    #panelMarket.compact .s-px .d { font-size: 0.7rem; }
+    #panelMarket.compact .s-act input { width: 46px; padding: 5px; font-size: 0.85rem; }
+    #panelMarket.compact .mini { padding: 5px 9px; font-size: 0.8rem; }
 
     @container (max-width: 430px) {
       .stock-row { grid-template-columns: minmax(0, 1fr) auto; }
@@ -326,7 +346,9 @@
   <div class="cols">
   <div class="col">
   <div class="panel" id="panelMarket">
-    <h3>The market — buy and sell with the Bank</h3>
+    <h3 class="h3row">The market — buy and sell with the Bank
+      <button class="dense-btn" id="densityBtn" type="button">Compact</button>
+    </h3>
     <div id="marketRows"></div>
   </div>
 
@@ -513,6 +535,18 @@ function newGame(names, fund) {
   };
 }
 
+// How tight the market list is drawn: a per-browser preference, kept out of the
+// saved game so it does not travel with it.
+const DENSITY_KEY = 'stocks-density';
+let compactMarket = (() => {
+  try { return localStorage.getItem(DENSITY_KEY) !== 'roomy'; } catch { return true; }
+})();
+function applyDensity() {
+  $('panelMarket').classList.toggle('compact', compactMarket);
+  $('densityBtn').textContent = compactMarket ? 'Roomy' : 'Compact';
+  $('densityBtn').title = compactMarket ? 'Show company names and more space' : 'Fit more stocks on screen';
+}
+
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} };
 function load() {
   try {
@@ -692,7 +726,8 @@ function renderTrade() {
         <div>
           <div class="s-sym">${st.sym}</div>
           <div class="s-name">${st.name}</div>
-          <div class="s-have">${have ? `you hold ${have}${lock ? ` (${lock} locked)` : ''}` : 'you hold none'}</div>
+          <div class="s-have${have ? '' : ' none'}">${
+            have ? `you hold ${have}${lock ? ` (${lock} locked)` : ''}` : 'you hold none'}</div>
         </div>
       </div>
       <div class="s-px">
@@ -714,6 +749,7 @@ function renderTrade() {
     $('marketRows').appendChild(row);
   }
 
+  applyDensity();
   renderEveryone();
   renderChart('chartBox', 'chartLegend');
   renderWorthChart('worthBox', 'worthLegend', true);
@@ -1132,6 +1168,11 @@ $('sellOptBtn').addEventListener('click', () => {
     ? sellPut(p, sel.sym, sel.strike, sel.qty)
     : sellCall(p, sel.sym, sel.strike, sel.qty);
   act(err, `Sold ${sel.qty} ${sel.sym} ${money(sel.strike)} ${sel.kind === 'put' ? 'put' : 'call'}.`);
+});
+$('densityBtn').addEventListener('click', () => {
+  compactMarket = !compactMarket;
+  try { localStorage.setItem(DENSITY_KEY, compactMarket ? 'compact' : 'roomy'); } catch {}
+  applyDensity();
 });
 $('runMarketBtn').addEventListener('click', () => { $('tradeMsg').textContent = ' '; runRound(); });
 $('nextRoundBtn').addEventListener('click', nextRound);
