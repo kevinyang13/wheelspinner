@@ -15,20 +15,21 @@
       font-family: 'Nunito', system-ui, sans-serif;
       background: var(--bg); color: var(--ink); min-height: 100vh;
       display: flex; flex-direction: column; align-items: center;
-      padding: 12px 16px 48px;
+      padding: 12px clamp(16px, 2.5vw, 40px) 48px;
     }
 
     nav {
-      width: 100%; max-width: 900px;
+      width: 100%;
       display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
     }
     nav a { color: var(--green); text-decoration: none; font-size: 0.9rem; opacity: 0.8; }
     nav a:hover { opacity: 1; }
     nav span { font-size: 1rem; font-weight: bold; }
 
-    .screen { display: none; width: 100%; max-width: 900px; flex-direction: column; align-items: center; gap: 22px; }
+    .screen { display: none; width: 100%; flex-direction: column; align-items: center; gap: 22px; }
     .screen.on { display: flex; }
 
+    #setupScreen, #overScreen { max-width: 720px; margin: 0 auto; }
     .title { font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 900; text-align: center; line-height: 1.1; }
     .title span { display: block; font-size: 0.9rem; color: var(--muted); font-weight: 400; margin-top: 6px; letter-spacing: 1px; }
     .sub { color: var(--muted); font-size: 0.88rem; text-align: center; max-width: 620px; line-height: 1.6; }
@@ -85,6 +86,11 @@
     .chip.good .v { color: var(--green); }
     .chip.warn .v { color: var(--orange); }
 
+    /* Market on the left, your money on the right — both always on screen. */
+    .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(330px, 460px); gap: 16px; width: 100%; align-items: start; }
+    .col { display: flex; flex-direction: column; gap: 16px; min-width: 0; container-type: inline-size; }
+    @media (max-width: 880px) { .cols { grid-template-columns: 1fr; } }
+
     .panel { width: 100%; background: var(--card); border: 2px solid var(--border); border-radius: 20px; padding: 18px; }
     .panel h3 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 14px; }
 
@@ -105,18 +111,45 @@
     .flat { color: var(--muted); font-weight: 600; }
     .s-act { display: flex; gap: 6px; align-items: center; }
     .s-act input {
-      width: 62px; padding: 8px; border-radius: 10px; border: 2px solid var(--border);
+      width: 54px; padding: 8px; border-radius: 10px; border: 2px solid var(--border);
       background: var(--bg); color: var(--ink); font-family: inherit; font-weight: 700; text-align: center; font-size: 0.95rem;
     }
     .s-act input:focus { outline: none; border-color: var(--green); }
     .mini {
-      padding: 8px 12px; border-radius: 10px; border: 2px solid var(--border); background: var(--bg);
+      padding: 7px 10px; border-radius: 10px; border: 2px solid var(--border); background: var(--bg);
       color: var(--ink2); font-family: inherit; font-weight: 800; font-size: 0.85rem; cursor: pointer;
     }
     .mini.buy:hover:not(:disabled)  { border-color: var(--green); color: var(--green); }
     .mini.sell:hover:not(:disabled) { border-color: var(--red); color: var(--red); }
     .mini:disabled { opacity: 0.35; cursor: not-allowed; }
     .s-have { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+    @container (max-width: 430px) {
+      .stock-row { grid-template-columns: minmax(0, 1fr) auto; }
+      .stock-row .s-act { grid-column: 1 / -1; justify-content: flex-end; }
+    }
+
+    /* Price chart */
+    .chart svg { width: 100%; height: auto; display: block; }
+    .legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(126px, 1fr)); gap: 7px 12px; margin-top: 14px; }
+    .leg { display: flex; align-items: center; gap: 7px; font-size: 0.78rem; min-width: 0; }
+    .leg .sw { width: 11px; height: 11px; border-radius: 3px; flex: none; }
+    .leg .ls { font-weight: 900; }
+    .leg .lp { margin-left: auto; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+    /* Portfolio */
+    .hold-row {
+      display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center;
+      padding: 9px 0; border-bottom: 1px solid var(--border);
+    }
+    .hold-row:last-child { border-bottom: none; }
+    .hold-row .h-sym { font-weight: 900; }
+    .hold-row .h-sub { font-size: 0.72rem; color: var(--muted); }
+    .hold-row .h-val { text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .hold-total {
+      display: flex; justify-content: space-between; gap: 10px; margin-top: 12px; padding-top: 12px;
+      border-top: 2px solid var(--border); font-weight: 900; font-variant-numeric: tabular-nums;
+    }
 
     .pos-line {
       display: flex; justify-content: space-between; gap: 12px; padding: 9px 0;
@@ -258,9 +291,24 @@
     <div class="chip good"><div class="k">Net worth</div><div class="v" id="chipWorth">—</div></div>
   </div>
 
+  <div class="cols">
+  <div class="col">
   <div class="panel">
     <h3>The market — buy and sell with the Bank</h3>
     <div id="marketRows"></div>
+  </div>
+
+  <div class="panel">
+    <h3>Every stock since the opening bell — % up or down</h3>
+    <div class="chart" id="chartBox"></div>
+    <div class="legend" id="chartLegend"></div>
+  </div>
+  </div>
+
+  <div class="col">
+  <div class="panel">
+    <h3>Your portfolio</h3>
+    <div id="holdings"></div>
   </div>
 
   <div class="panel">
@@ -297,6 +345,8 @@
     <h3>Your open options</h3>
     <div id="openPositions"></div>
   </div>
+  </div>
+  </div>
 
   <div class="msg" id="tradeMsg">&nbsp;</div>
 </div>
@@ -305,6 +355,12 @@
 <div class="screen" id="resultScreen">
   <div class="title" id="resultTitle">Round 1 results<span>THE MARKET MOVED</span></div>
   <div class="move-grid" id="moveGrid"></div>
+
+  <div class="panel">
+    <h3>Every stock since the opening bell — % up or down</h3>
+    <div class="chart" id="chartBox2"></div>
+    <div class="legend" id="chartLegend2"></div>
+  </div>
 
   <div class="panel">
     <h3>Net worth</h3>
@@ -345,10 +401,16 @@ const BUST_AT    = 0.10;    // wiped out below 10% of the starting stake
 const BANK_START = 1000000;
 
 const STOCKS = [
-  { sym: 'PIZZA',  name: 'Pizza Palace', emoji: '🍕', start: 40 },
-  { sym: 'ROBOT',  name: 'Robot Works',  emoji: '🤖', start: 65 },
-  { sym: 'CANDY',  name: 'Candy Co.',    emoji: '🍬', start: 25 },
-  { sym: 'ROCKET', name: 'Rocket Labs',  emoji: '🚀', start: 90 },
+  { sym: 'PIKA',   name: 'Pokemon Cards',  emoji: '🃏', start:  18 },
+  { sym: 'APPLE',  name: 'Apple',          emoji: '🍎', start: 120 },
+  { sym: 'AI',     name: 'A.I. Brains',    emoji: '🧠', start:  75 },
+  { sym: 'PRINT',  name: '3D Printing Co', emoji: '🖨️', start: 32 },
+  { sym: 'ROCKET', name: 'Rocket Labs',    emoji: '🚀', start:  90 },
+  { sym: 'ROBOT',  name: 'Robot Works',    emoji: '🤖', start:  65 },
+  { sym: 'GAME',   name: 'Game Studio',    emoji: '🎮', start:  48 },
+  { sym: 'SOLAR',  name: 'Solar Power',    emoji: '☀️', start:  55 },
+  { sym: 'PIZZA',  name: 'Pizza Palace',   emoji: '🍕', start:  40 },
+  { sym: 'CANDY',  name: 'Candy Co.',      emoji: '🍬', start:  25 },
 ];
 const PUT_STRIKES  = [0.55, 0.70, 0.85, 1.00];
 const CALL_STRIKES = [1.00, 1.15, 1.30, 1.45];
@@ -388,13 +450,14 @@ let sel  = { sym: 'PIZZA', kind: 'put', strike: null, qty: 1 };
 
 function newGame(names, fund) {
   return {
-    v: 1,
+    v: 3,
     startFund: fund,
     round: 1,
     phase: 'trade',
     turn: 0,
     prices: Object.fromEntries(STOCKS.map(s => [s.sym, s.start])),
     prevPrices: Object.fromEntries(STOCKS.map(s => [s.sym, s.start])),
+    history: Object.fromEntries(STOCKS.map(s => [s.sym, [s.start]])),
     moves: [],
     bank: { cash: BANK_START, shares: {} },
     players: names.map(name => ({
@@ -411,7 +474,7 @@ function load() {
     const raw = localStorage.getItem(KEY);
     if (!raw) return null;
     const g = JSON.parse(raw);
-    return g && g.v === 1 && Array.isArray(g.players) && g.players.length ? g : null;
+    return g && g.v === 3 && Array.isArray(g.players) && g.players.length ? g : null;
   } catch { return null; }
 }
 const clearSave = () => { try { localStorage.removeItem(KEY); } catch {} };
@@ -493,6 +556,7 @@ function runMarket() {
     const mag  = MOVE_MIN + Math.random() * (MOVE_MAX - MOVE_MIN);
     const to   = Math.max(0.01, round2(from * (1 + dir * mag)));
     S.prices[st.sym] = to;
+    S.history[st.sym].push(to);
     return { sym: st.sym, from, to, pct: (to / from - 1) * 100 };
   });
 
@@ -595,8 +659,92 @@ function renderTrade() {
     $('marketRows').appendChild(row);
   }
 
+  renderChart('chartBox', 'chartLegend');
+  renderHoldings(p);
   renderOptionDesk(p);
   renderOpenPositions(p);
+}
+
+// Each stock is drawn as a percentage of its own opening price, so a $18 stock and
+// a $120 one share one scale. The axis is logarithmic: a halving and a doubling then
+// take up the same room, which is what you want when everything moves 30-50% a round.
+const LINE_COLORS = ['#e0706f', '#f0a65c', '#dfa72e', '#5fb87c', '#3aa9a3',
+                     '#5ab9dc', '#5a9fe0', '#8e82d6', '#b56fd0', '#e786a7'];
+const colorFor = sym => LINE_COLORS[STOCKS.findIndex(s => s.sym === sym) % LINE_COLORS.length];
+
+function renderChart(boxId, legendId) {
+  const box = $(boxId), leg = $(legendId);
+  if (!box) return;
+  const series = STOCKS.map(st => ({ st, pts: (S.history[st.sym] || [st.start]).map(v => v / st.start * 100) }));
+  const n = series[0].pts.length;
+
+  const W = 620, H = 240, L = 46, R = 14, T = 16, B = 26;
+  let lo = Infinity, hi = -Infinity;
+  for (const s of series) for (const v of s.pts) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
+  if (hi / lo < 1.3) { hi *= 1.15; lo /= 1.15; }          // round 1: nothing has moved yet
+  const lnLo = Math.log(lo), lnHi = Math.log(hi);
+  const y = v => T + (H - T - B) * (lnHi - Math.log(v)) / (lnHi - lnLo);
+  const x = i => n === 1 ? L : L + (W - L - R) * i / (n - 1);
+  const label = v => (v >= 100 ? '+' : '\u2212') + Math.abs(Math.round(v - 100)) + '%';
+
+  const grid = [hi, ...(lo < 100 && hi > 100 ? [100] : []), lo].map(v => `
+    <line x1="${L}" x2="${W - R}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"
+          stroke="var(--border)" stroke-width="1" ${v === 100 ? 'stroke-dasharray="4 4"' : ''}/>
+    <text x="${L - 8}" y="${(y(v) + 4).toFixed(1)}" text-anchor="end"
+          font-size="11" font-weight="700" fill="var(--muted)">${label(v)}</text>`).join('');
+
+  const lines = series.map(({ st, pts }) => {
+    const c = colorFor(st.sym);
+    const d = pts.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+    const last = pts[pts.length - 1];
+    return `<path d="${d}" fill="none" stroke="${c}" stroke-width="2.5"
+                  stroke-linejoin="round" stroke-linecap="round"/>
+            <circle cx="${x(n - 1).toFixed(1)}" cy="${y(last).toFixed(1)}" r="3.5" fill="${c}"/>`;
+  }).join('');
+
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img"
+      aria-label="Every stock as a percentage of its opening price">
+    ${grid}${lines}
+    <text x="${L}" y="${H - 6}" font-size="11" font-weight="700" fill="var(--muted)">open</text>
+    <text x="${W - R}" y="${H - 6}" text-anchor="end" font-size="11" font-weight="700"
+          fill="var(--muted)">round ${n - 1}</text>
+  </svg>`;
+
+  leg.innerHTML = series.map(({ st, pts }) => {
+    const change = pts[pts.length - 1] - 100;
+    return `<div class="leg">
+      <span class="sw" style="background:${colorFor(st.sym)}"></span>
+      <span class="ls">${st.sym}</span>
+      <span class="lp ${change >= 0 ? 'up' : 'down'}">${label(pts[pts.length - 1])}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderHoldings(p) {
+  const box = $('holdings');
+  const held = STOCKS.filter(st => sharesOf(p, st.sym) > 0);
+  if (!held.length) {
+    box.innerHTML = '<div class="empty">No shares yet — all of your money is cash.</div>';
+  } else {
+    box.innerHTML = '';
+    for (const st of held) {
+      const n = sharesOf(p, st.sym), lock = p.locked[st.sym] || 0;
+      const row = document.createElement('div');
+      row.className = 'hold-row';
+      row.innerHTML = `
+        <div>
+          <div class="h-sym">${st.emoji} ${st.sym}</div>
+          <div class="h-sub">${n} share${n === 1 ? '' : 's'}${lock ? ` · ${lock} locked` : ''}
+            at ${money(S.prices[st.sym])}</div>
+        </div>
+        <div class="h-val">${money(round2(n * S.prices[st.sym]))}</div>`;
+      box.appendChild(row);
+    }
+  }
+  box.insertAdjacentHTML('beforeend', `
+    <div class="hold-total"><span>Shares</span><span>${money(stockValue(p))}</span></div>
+    <div class="hold-total" style="border:none; margin-top:4px; padding-top:0;">
+      <span>Cash</span><span>${money(p.cash)}</span></div>`);
 }
 
 function renderOptionDesk(p) {
@@ -695,6 +843,8 @@ function renderResult() {
   html += `<tr class="bank"><td class="who">🏦 The Bank</td><td>—</td><td>—</td>
     <td class="${bw >= 0 ? 'up' : 'down'}">${signed(bw)}</td></tr>`;
   $('boardTable').innerHTML = html;
+
+  renderChart('chartBox2', 'chartLegend2');
 
   $('eventList').innerHTML = '';
   for (const p of S.players) {
