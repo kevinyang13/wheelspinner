@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <title>Stock Market – Kyle &amp; Lindsey</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito', system-ui, sans-serif;
+      background: var(--bg); color: var(--ink); min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 12px 16px 48px;
+    }
+
+    nav {
+      width: 100%; max-width: 900px;
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+    }
+    nav a { color: var(--green); text-decoration: none; font-size: 0.9rem; opacity: 0.8; }
+    nav a:hover { opacity: 1; }
+    nav span { font-size: 1rem; font-weight: bold; }
+
+    .screen { display: none; width: 100%; max-width: 900px; flex-direction: column; align-items: center; gap: 22px; }
+    .screen.on { display: flex; }
+
+    .title { font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 900; text-align: center; line-height: 1.1; }
+    .title span { display: block; font-size: 0.9rem; color: var(--muted); font-weight: 400; margin-top: 6px; letter-spacing: 1px; }
+    .sub { color: var(--muted); font-size: 0.88rem; text-align: center; max-width: 620px; line-height: 1.6; }
+
+    .option-group { width: 100%; }
+    .option-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 10px; text-align: center; }
+    .option-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+    .opt-btn {
+      padding: 13px 24px; border-radius: 14px; border: 2px solid var(--border); background: var(--card);
+      color: var(--ink2); font-size: 1rem; cursor: pointer; text-align: center; font-family: inherit;
+      transition: border-color 0.2s, color 0.2s, background 0.2s; min-width: 120px;
+    }
+    .opt-btn small { display: block; font-size: 0.72rem; color: var(--muted2); margin-top: 3px; }
+    .opt-btn:hover:not(:disabled) { border-color: var(--green); color: var(--green); }
+    .opt-btn.sel { border-color: var(--green); color: var(--green); background: color-mix(in srgb, var(--green) 10%, transparent); }
+    .opt-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .name-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .name-row input {
+      width: 150px; padding: 12px 14px; border-radius: 14px; border: 2px solid var(--border);
+      background: var(--card); color: var(--ink); font-family: inherit; font-size: 1rem; font-weight: 700; text-align: center;
+    }
+    .name-row input:focus { outline: none; border-color: var(--green); }
+
+    .big-start {
+      padding: 15px 56px; font-size: 1.15rem; font-weight: 800; font-family: inherit;
+      border: none; border-radius: 32px; background: linear-gradient(135deg, var(--green), var(--mint));
+      color: #06281a; cursor: pointer; box-shadow: 0 4px 20px color-mix(in srgb, var(--green) 35%, transparent);
+    }
+    .big-start:hover { filter: brightness(1.06); }
+    .big-start.alt { background: linear-gradient(135deg, var(--sky), var(--lavender)); color: #071a2e; box-shadow: none; }
+    .ghost-btn {
+      padding: 11px 26px; border-radius: 24px; border: 2px solid var(--border); background: var(--card);
+      color: var(--ink2); font-family: inherit; font-size: 0.95rem; font-weight: 700; cursor: pointer;
+    }
+    .ghost-btn:hover { border-color: var(--green); color: var(--green); }
+
+    /* ── Trading ── */
+    .turn-bar {
+      width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+      background: var(--card); border: 2px solid var(--border); border-radius: 18px; padding: 14px 20px;
+    }
+    .turn-who { font-size: 1.35rem; font-weight: 900; }
+    .turn-round { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); }
+
+    .chips { display: flex; gap: 10px; flex-wrap: wrap; width: 100%; }
+    .chip {
+      flex: 1 1 140px; background: var(--card); border: 2px solid var(--border); border-radius: 16px;
+      padding: 12px 14px; text-align: center;
+    }
+    .chip .k { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+    .chip .v { font-size: 1.25rem; font-weight: 900; margin-top: 2px; font-variant-numeric: tabular-nums; }
+    .chip.good .v { color: var(--green); }
+    .chip.warn .v { color: var(--orange); }
+
+    .panel { width: 100%; background: var(--card); border: 2px solid var(--border); border-radius: 20px; padding: 18px; }
+    .panel h3 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 14px; }
+
+    .stock-row {
+      display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center;
+      padding: 12px 0; border-bottom: 1px solid var(--border);
+    }
+    .stock-row:last-child { border-bottom: none; }
+    .s-id { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .s-emoji { font-size: 1.6rem; }
+    .s-sym { font-weight: 900; font-size: 1.05rem; }
+    .s-name { font-size: 0.75rem; color: var(--muted); }
+    .s-px { text-align: right; font-variant-numeric: tabular-nums; }
+    .s-px .p { font-size: 1.15rem; font-weight: 900; }
+    .s-px .d { font-size: 0.78rem; font-weight: 800; }
+    .up { color: var(--green); }
+    .down { color: var(--red); }
+    .flat { color: var(--muted); font-weight: 600; }
+    .s-act { display: flex; gap: 6px; align-items: center; }
+    .s-act input {
+      width: 62px; padding: 8px; border-radius: 10px; border: 2px solid var(--border);
+      background: var(--bg); color: var(--ink); font-family: inherit; font-weight: 700; text-align: center; font-size: 0.95rem;
+    }
+    .s-act input:focus { outline: none; border-color: var(--green); }
+    .mini {
+      padding: 8px 12px; border-radius: 10px; border: 2px solid var(--border); background: var(--bg);
+      color: var(--ink2); font-family: inherit; font-weight: 800; font-size: 0.85rem; cursor: pointer;
+    }
+    .mini.buy:hover:not(:disabled)  { border-color: var(--green); color: var(--green); }
+    .mini.sell:hover:not(:disabled) { border-color: var(--red); color: var(--red); }
+    .mini:disabled { opacity: 0.35; cursor: not-allowed; }
+    .s-have { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+    .pos-line {
+      display: flex; justify-content: space-between; gap: 12px; padding: 9px 0;
+      border-bottom: 1px dashed var(--border); font-size: 0.9rem;
+    }
+    .pos-line:last-child { border-bottom: none; }
+    .pos-line .tag { font-weight: 900; }
+    .tag.put  { color: var(--sky); }
+    .tag.call { color: var(--purple); }
+    .empty { color: var(--muted); font-size: 0.88rem; text-align: center; padding: 8px 0; }
+
+    .msg { min-height: 20px; font-size: 0.88rem; font-weight: 700; text-align: center; }
+    .msg.err { color: var(--red); }
+    .msg.ok  { color: var(--green); }
+
+    /* ── Results ── */
+    table.board { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+    table.board th {
+      font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted);
+      text-align: right; padding: 0 8px 10px; font-weight: 800;
+    }
+    table.board th:first-child, table.board td:first-child { text-align: left; }
+    table.board td { padding: 11px 8px; border-top: 1px solid var(--border); font-weight: 700; text-align: right; }
+    table.board td.who { font-weight: 900; font-size: 1.02rem; }
+    table.board tr.bank td { color: var(--muted); font-style: italic; }
+    table.board tr.bust td:first-child::after { content: ' 💀'; }
+
+    .move-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; width: 100%; }
+    .move-card { background: var(--card); border: 2px solid var(--border); border-radius: 16px; padding: 14px; text-align: center; }
+    .move-card .m-sym { font-weight: 900; }
+    .move-card .m-px { font-size: 1.3rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+    .move-card .m-d  { font-size: 0.85rem; font-weight: 800; }
+
+    .events { width: 100%; display: flex; flex-direction: column; gap: 12px; }
+    .ev-player { background: var(--card); border: 2px solid var(--border); border-radius: 16px; padding: 14px 18px; }
+    .ev-player h4 { font-size: 0.95rem; font-weight: 900; margin-bottom: 6px; }
+    .ev-player li { margin-left: 18px; font-size: 0.86rem; color: var(--ink2); line-height: 1.6; }
+
+    .done-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+    .done-btn {
+      padding: 10px 18px; border-radius: 22px; border: 2px solid var(--border); background: var(--card);
+      color: var(--muted); font-family: inherit; font-weight: 800; font-size: 0.9rem; cursor: pointer;
+    }
+    .done-btn.on { border-color: var(--red); color: var(--red); background: color-mix(in srgb, var(--red) 10%, transparent); }
+
+    .podium { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+    .pod {
+      display: flex; justify-content: space-between; align-items: center; gap: 12px;
+      background: var(--card); border: 2px solid var(--border); border-radius: 18px; padding: 16px 20px;
+    }
+    .pod.first { border-color: var(--gold); background: color-mix(in srgb, var(--gold) 10%, var(--card)); }
+    .pod .rank { font-size: 1.5rem; font-weight: 900; }
+    .pod .pname { font-size: 1.15rem; font-weight: 900; flex: 1; }
+    .pod .pval { text-align: right; font-variant-numeric: tabular-nums; }
+    .pod .pval .big { font-size: 1.2rem; font-weight: 900; }
+
+    details.rules { width: 100%; background: var(--card); border: 2px solid var(--border); border-radius: 16px; padding: 12px 18px; }
+    details.rules summary { cursor: pointer; font-weight: 800; font-size: 0.9rem; color: var(--ink2); }
+    details.rules p, details.rules li { font-size: 0.85rem; color: var(--muted); line-height: 1.65; margin-top: 8px; }
+    details.rules li { margin-left: 18px; }
+
+    @media (max-width: 620px) {
+      .stock-row { grid-template-columns: 1fr auto; }
+      .s-act { grid-column: 1 / -1; justify-content: flex-end; }
+      .turn-who { font-size: 1.15rem; }
+      .big-start { padding: 15px 36px; width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html">← Home</a>
+  <span>📈 Stock Market</span>
+</nav>
+
+<!-- ══════════ SETUP ══════════ -->
+<div class="screen on" id="setupScreen">
+  <div class="title">📈 Stock Market<span>TRADE, WRITE OPTIONS, BEAT THE OTHERS</span></div>
+
+  <div id="resumeBox" style="display:none; width:100%; text-align:center;">
+    <button class="big-start alt" id="resumeBtn">↩️ Resume saved game</button>
+    <div class="sub" style="margin-top:8px;" id="resumeNote"></div>
+  </div>
+
+  <div class="option-group">
+    <div class="option-label">Players</div>
+    <div class="option-row" id="countRow">
+      <button class="opt-btn" data-count="2">2</button>
+      <button class="opt-btn sel" data-count="3">3</button>
+      <button class="opt-btn" data-count="4">4</button>
+    </div>
+  </div>
+
+  <div class="option-group">
+    <div class="option-label">Names</div>
+    <div class="name-row" id="nameRow"></div>
+  </div>
+
+  <div class="option-group">
+    <div class="option-label">Starting money (each)</div>
+    <div class="option-row" id="fundRow">
+      <button class="opt-btn" data-fund="1000">$1,000<small>Tight</small></button>
+      <button class="opt-btn sel" data-fund="5000">$5,000<small>Standard</small></button>
+      <button class="opt-btn" data-fund="10000">$10,000<small>Big money</small></button>
+    </div>
+  </div>
+
+  <button class="big-start" id="startBtn">Open the market 🔔</button>
+
+  <details class="rules">
+    <summary>📖 How to play</summary>
+    <p>Everyone starts with the same money. Each round you take turns trading with the Bank, then the
+       market moves and everyone's net worth is counted up.</p>
+    <li><b>Buy / sell shares</b> at the price on the board.</li>
+    <li><b>Sell a put</b> — you promise to buy 10 shares at the strike price. You get paid a premium now,
+        and that much cash is held aside. If the price ends up <i>below</i> the strike, you must buy at the strike.</li>
+    <li><b>Sell a covered call</b> — you own 10 shares and promise to sell them at the strike. You get paid
+        a premium now and the shares are locked. If the price ends up <i>above</i> the strike, they are sold at the strike.</li>
+    <li>Options last one round. Every round each stock jumps <b>30%–50% up or down</b>, so nothing is safe.</li>
+    <li>The game ends when everybody says they're done, or when someone is wiped out.</li>
+  </details>
+</div>
+
+<!-- ══════════ TRADING ══════════ -->
+<div class="screen" id="tradeScreen">
+  <div class="turn-bar">
+    <div>
+      <div class="turn-round" id="roundLabel">Round 1</div>
+      <div class="turn-who" id="whoLabel">—</div>
+    </div>
+    <button class="big-start" id="doneTurnBtn">Done trading →</button>
+  </div>
+
+  <div class="chips">
+    <div class="chip"><div class="k">Free cash</div><div class="v" id="chipFree">—</div></div>
+    <div class="chip"><div class="k">Held for puts</div><div class="v" id="chipHeld">—</div></div>
+    <div class="chip"><div class="k">Stock value</div><div class="v" id="chipStock">—</div></div>
+    <div class="chip good"><div class="k">Net worth</div><div class="v" id="chipWorth">—</div></div>
+  </div>
+
+  <div class="panel">
+    <h3>The market — buy and sell with the Bank</h3>
+    <div id="marketRows"></div>
+  </div>
+
+  <div class="panel">
+    <h3>Option desk — sell to the Bank, expires at the end of this round</h3>
+    <div class="option-group" style="margin-bottom:14px;">
+      <div class="option-label">Stock</div>
+      <div class="option-row" id="optSymRow"></div>
+    </div>
+    <div class="option-group" style="margin-bottom:14px;">
+      <div class="option-label">Contract</div>
+      <div class="option-row" id="optKindRow">
+        <button class="opt-btn sel" data-kind="put">Sell a put<small>Promise to buy at the strike</small></button>
+        <button class="opt-btn" data-kind="call">Sell a covered call<small>Promise to sell your shares</small></button>
+      </div>
+    </div>
+    <div class="option-group" style="margin-bottom:14px;">
+      <div class="option-label">Strike (premium per contract of 10 shares)</div>
+      <div class="option-row" id="optStrikeRow"></div>
+    </div>
+    <div class="option-group" style="margin-bottom:12px;">
+      <div class="option-label">Contracts</div>
+      <div class="option-row" id="optQtyRow">
+        <button class="opt-btn sel" data-qty="1">1</button>
+        <button class="opt-btn" data-qty="2">2</button>
+        <button class="opt-btn" data-qty="3">3</button>
+        <button class="opt-btn" data-qty="5">5</button>
+      </div>
+    </div>
+    <div class="sub" id="optSummary" style="margin-bottom:12px;"></div>
+    <div style="text-align:center;"><button class="big-start alt" id="sellOptBtn">Sell it 💰</button></div>
+  </div>
+
+  <div class="panel">
+    <h3>Your open options</h3>
+    <div id="openPositions"></div>
+  </div>
+
+  <div class="msg" id="tradeMsg">&nbsp;</div>
+</div>
+
+<!-- ══════════ ROUND RESULT ══════════ -->
+<div class="screen" id="resultScreen">
+  <div class="title" id="resultTitle">Round 1 results<span>THE MARKET MOVED</span></div>
+  <div class="move-grid" id="moveGrid"></div>
+
+  <div class="panel">
+    <h3>Net worth</h3>
+    <table class="board" id="boardTable"></table>
+  </div>
+
+  <div class="events" id="eventList"></div>
+
+  <div class="option-group">
+    <div class="option-label">Finished? Tap your name — the game ends when everyone has</div>
+    <div class="done-row" id="doneRow"></div>
+  </div>
+
+  <button class="big-start" id="nextRoundBtn">Next round →</button>
+</div>
+
+<!-- ══════════ GAME OVER ══════════ -->
+<div class="screen" id="overScreen">
+  <div class="title" id="overTitle">🏆 Final standings<span></span></div>
+  <div class="podium" id="podium"></div>
+  <div class="panel">
+    <h3>The Bank</h3>
+    <div class="sub" id="bankLine"></div>
+  </div>
+  <button class="big-start" id="playAgainBtn">Play again 🔔</button>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+// ═══════════ Rules of this market ═══════════
+const KEY        = 'stocks-state';
+const CONTRACT   = 10;      // shares in one option contract
+const MOVE_MIN   = 0.30;    // every stock moves at least this much, every round
+const MOVE_MAX   = 0.50;
+const BANK_EDGE  = 0.90;    // the Bank pays 90% of fair value for an option it buys
+const BUST_AT    = 0.10;    // wiped out below 10% of the starting stake
+const BANK_START = 1000000;
+
+const STOCKS = [
+  { sym: 'PIZZA',  name: 'Pizza Palace', emoji: '🍕', start: 40 },
+  { sym: 'ROBOT',  name: 'Robot Works',  emoji: '🤖', start: 65 },
+  { sym: 'CANDY',  name: 'Candy Co.',    emoji: '🍬', start: 25 },
+  { sym: 'ROCKET', name: 'Rocket Labs',  emoji: '🚀', start: 90 },
+];
+const PUT_STRIKES  = [0.55, 0.70, 0.85, 1.00];
+const CALL_STRIKES = [1.00, 1.15, 1.30, 1.45];
+
+const DEFAULT_NAMES = ['Kyle', 'Lindsey', 'Mom', 'Dad'];
+
+const round2 = n => Math.round(n * 100) / 100;
+const money  = n => (n < 0 ? '-$' : '$') +
+  Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const signed = n => (n >= 0 ? '+' : '−') + money(Math.abs(n)).replace('-', '');
+const pct    = n => (n >= 0 ? '+' : '−') + Math.abs(n).toFixed(1) + '%';
+const stockOf = sym => STOCKS.find(s => s.sym === sym);
+
+// ═══════════ Option pricing ═══════════
+// The payoff is averaged over exactly the move this game rolls at the end of the
+// round: equal chance of up or down, size spread evenly over 30%–50%. So a premium
+// is the true expected cost to the writer, less the Bank's cut.
+function fairValue(kind, spot, strike) {
+  const N = 600;
+  let sum = 0;
+  for (let i = 0; i < N; i++) {
+    const u = MOVE_MIN + (MOVE_MAX - MOVE_MIN) * ((i + 0.5) / N);
+    for (const dir of [1, -1]) {
+      const end = spot * (1 + dir * u);
+      sum += kind === 'put' ? Math.max(strike - end, 0) : Math.max(end - strike, 0);
+    }
+  }
+  return sum / (2 * N);
+}
+const premiumPerShare = (kind, spot, strike) => round2(fairValue(kind, spot, strike) * BANK_EDGE);
+const strikesFor = (kind, spot) =>
+  (kind === 'put' ? PUT_STRIKES : CALL_STRIKES).map(f => Math.max(1, Math.round(spot * f)));
+
+// ═══════════ State ═══════════
+let S    = null;   // the whole game, saved as one blob
+let sel  = { sym: 'PIZZA', kind: 'put', strike: null, qty: 1 };
+
+function newGame(names, fund) {
+  return {
+    v: 1,
+    startFund: fund,
+    round: 1,
+    phase: 'trade',
+    turn: 0,
+    prices: Object.fromEntries(STOCKS.map(s => [s.sym, s.start])),
+    prevPrices: Object.fromEntries(STOCKS.map(s => [s.sym, s.start])),
+    moves: [],
+    bank: { cash: BANK_START, shares: {} },
+    players: names.map(name => ({
+      name, cash: fund, reserved: 0,
+      shares: {}, locked: {}, options: [],
+      worth: [fund], events: [], done: false, bust: false,
+    })),
+  };
+}
+
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} };
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return null;
+    const g = JSON.parse(raw);
+    return g && g.v === 1 && Array.isArray(g.players) && g.players.length ? g : null;
+  } catch { return null; }
+}
+const clearSave = () => { try { localStorage.removeItem(KEY); } catch {} };
+
+// ═══════════ Money helpers ═══════════
+const freeCash   = p        => round2(p.cash - p.reserved);
+const sharesOf   = (p, sym) => p.shares[sym] || 0;
+const freeShares = (p, sym) => sharesOf(p, sym) - (p.locked[sym] || 0);
+const stockValue = p => round2(STOCKS.reduce((t, s) => t + sharesOf(p, s.sym) * S.prices[s.sym], 0));
+// Open options are marked at fair value, so net worth never flatters a writer.
+const optionMark = p => round2(p.options.reduce(
+  (t, o) => t + fairValue(o.kind, S.prices[o.sym], o.strike) * o.shares, 0));
+const netWorth   = p => round2(p.cash + stockValue(p) - optionMark(p));
+
+function bankTrade(sym, dShares, dCash) {
+  S.bank.shares[sym] = (S.bank.shares[sym] || 0) + dShares;
+  S.bank.cash = round2(S.bank.cash + dCash);
+}
+const bankWorth = () => round2(S.bank.cash +
+  STOCKS.reduce((t, s) => t + (S.bank.shares[s.sym] || 0) * S.prices[s.sym], 0));
+
+// ═══════════ Trades (each returns an error string, or null on success) ═══════════
+function buyShares(p, sym, qty) {
+  if (!Number.isInteger(qty) || qty <= 0) return 'Pick how many shares first.';
+  const cost = round2(qty * S.prices[sym]);
+  if (cost > freeCash(p)) return `That costs ${money(cost)} — you only have ${money(freeCash(p))} free.`;
+  p.cash = round2(p.cash - cost);
+  p.shares[sym] = sharesOf(p, sym) + qty;
+  bankTrade(sym, -qty, cost);
+  return null;
+}
+
+function sellShares(p, sym, qty) {
+  if (!Number.isInteger(qty) || qty <= 0) return 'Pick how many shares first.';
+  if (qty > freeShares(p, sym)) {
+    const locked = p.locked[sym] || 0;
+    return locked
+      ? `You only have ${freeShares(p, sym)} free ${sym} — ${locked} are locked under a call.`
+      : `You only have ${sharesOf(p, sym)} ${sym}.`;
+  }
+  const proceeds = round2(qty * S.prices[sym]);
+  p.cash = round2(p.cash + proceeds);
+  p.shares[sym] -= qty;
+  bankTrade(sym, qty, -proceeds);
+  return null;
+}
+
+function sellPut(p, sym, strike, contracts) {
+  const shares  = contracts * CONTRACT;
+  const secured = round2(strike * shares);
+  if (secured > freeCash(p))
+    return `A put like that holds ${money(secured)} aside — you have ${money(freeCash(p))} free.`;
+  const premium = round2(premiumPerShare('put', S.prices[sym], strike) * shares);
+  p.cash     = round2(p.cash + premium);
+  p.reserved = round2(p.reserved + secured);
+  p.options.push({ kind: 'put', sym, strike, shares, premium, secured });
+  bankTrade(sym, 0, -premium);
+  return null;
+}
+
+function sellCall(p, sym, strike, contracts) {
+  const shares = contracts * CONTRACT;
+  if (shares > freeShares(p, sym))
+    return `A covered call needs ${shares} free ${sym} — you have ${freeShares(p, sym)}.`;
+  const premium = round2(premiumPerShare('call', S.prices[sym], strike) * shares);
+  p.cash = round2(p.cash + premium);
+  p.locked[sym] = (p.locked[sym] || 0) + shares;
+  p.options.push({ kind: 'call', sym, strike, shares, premium });
+  bankTrade(sym, 0, -premium);
+  return null;
+}
+
+// ═══════════ End of round ═══════════
+function runMarket() {
+  S.prevPrices = { ...S.prices };
+  S.moves = STOCKS.map(st => {
+    const from = S.prices[st.sym];
+    const dir  = Math.random() < 0.5 ? -1 : 1;
+    const mag  = MOVE_MIN + Math.random() * (MOVE_MAX - MOVE_MIN);
+    const to   = Math.max(0.01, round2(from * (1 + dir * mag)));
+    S.prices[st.sym] = to;
+    return { sym: st.sym, from, to, pct: (to / from - 1) * 100 };
+  });
+
+  for (const p of S.players) {
+    p.events = [];
+    for (const o of p.options) {
+      const px = S.prices[o.sym];
+      if (o.kind === 'put') {
+        p.reserved = round2(p.reserved - o.secured);
+        if (px < o.strike) {
+          const cost = round2(o.strike * o.shares);
+          p.cash = round2(p.cash - cost);
+          p.shares[o.sym] = sharesOf(p, o.sym) + o.shares;
+          bankTrade(o.sym, -o.shares, cost);
+          p.events.push(`Assigned on the ${o.sym} ${money(o.strike)} put — bought ${o.shares} shares at ` +
+                        `${money(o.strike)}, now worth ${money(px)} each.`);
+        } else {
+          p.events.push(`${o.sym} ${money(o.strike)} put expired worthless — kept the ${money(o.premium)} premium.`);
+        }
+      } else {
+        p.locked[o.sym] = (p.locked[o.sym] || 0) - o.shares;
+        if (px > o.strike) {
+          const proceeds = round2(o.strike * o.shares);
+          p.shares[o.sym] = sharesOf(p, o.sym) - o.shares;
+          p.cash = round2(p.cash + proceeds);
+          bankTrade(o.sym, o.shares, -proceeds);
+          p.events.push(`Called away on the ${o.sym} ${money(o.strike)} call — sold ${o.shares} shares at ` +
+                        `${money(o.strike)} while they trade at ${money(px)}.`);
+        } else {
+          p.events.push(`${o.sym} ${money(o.strike)} call expired worthless — kept the ${money(o.premium)} premium ` +
+                        `and the shares.`);
+        }
+      }
+    }
+    p.options = [];
+    const w = netWorth(p);
+    p.worth.push(w);
+    if (w < S.startFund * BUST_AT) p.bust = true;
+  }
+}
+
+// ═══════════ Screens ═══════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id));
+  window.scrollTo(0, 0);
+}
+
+function render() {
+  if (S.phase === 'trade')  { renderTrade();  showScreen('tradeScreen');  }
+  if (S.phase === 'result') { renderResult(); showScreen('resultScreen'); }
+  if (S.phase === 'over')   { renderOver();   showScreen('overScreen');   }
+}
+
+// ── Trading screen ──
+function renderTrade() {
+  const p = S.players[S.turn];
+  $('roundLabel').textContent = `Round ${S.round} · player ${S.turn + 1} of ${S.players.length}`;
+  $('whoLabel').textContent   = `${p.name}'s turn`;
+
+  $('chipFree').textContent  = money(freeCash(p));
+  $('chipHeld').textContent  = money(p.reserved);
+  $('chipStock').textContent = money(stockValue(p));
+  $('chipWorth').textContent = money(netWorth(p));
+
+  // Market
+  $('marketRows').innerHTML = '';
+  for (const st of STOCKS) {
+    const px   = S.prices[st.sym];
+    const prev = S.prevPrices[st.sym];
+    const dPct = prev ? (px / prev - 1) * 100 : 0;
+    const have = sharesOf(p, st.sym), lock = p.locked[st.sym] || 0;
+
+    const row = document.createElement('div');
+    row.className = 'stock-row';
+    row.innerHTML = `
+      <div class="s-id">
+        <div class="s-emoji">${st.emoji}</div>
+        <div>
+          <div class="s-sym">${st.sym}</div>
+          <div class="s-name">${st.name}</div>
+          <div class="s-have">${have ? `you hold ${have}${lock ? ` (${lock} locked)` : ''}` : 'you hold none'}</div>
+        </div>
+      </div>
+      <div class="s-px">
+        <div class="p">${money(px)}</div>
+        <div class="d ${S.round === 1 ? 'flat' : dPct >= 0 ? 'up' : 'down'}">${S.round > 1 ? pct(dPct) : 'opening price'}</div>
+      </div>
+      <div class="s-act">
+        <input type="number" min="1" step="1" value="10" aria-label="${st.sym} share count">
+        <button class="mini buy">Buy</button>
+        <button class="mini sell">Sell</button>
+      </div>`;
+
+    const qtyInput = row.querySelector('input');
+    const qty = () => parseInt(qtyInput.value, 10);
+    row.querySelector('.buy').addEventListener('click',
+      () => act(buyShares(p, st.sym, qty()), `Bought ${qty()} ${st.sym}.`));
+    row.querySelector('.sell').addEventListener('click',
+      () => act(sellShares(p, st.sym, qty()), `Sold ${qty()} ${st.sym}.`));
+    $('marketRows').appendChild(row);
+  }
+
+  renderOptionDesk(p);
+  renderOpenPositions(p);
+}
+
+function renderOptionDesk(p) {
+  $('optSymRow').innerHTML = '';
+  for (const st of STOCKS) {
+    const b = document.createElement('button');
+    b.className = 'opt-btn' + (sel.sym === st.sym ? ' sel' : '');
+    b.innerHTML = `${st.emoji} ${st.sym}<small>${money(S.prices[st.sym])}</small>`;
+    b.addEventListener('click', () => { sel.sym = st.sym; sel.strike = null; renderTrade(); });
+    $('optSymRow').appendChild(b);
+  }
+  document.querySelectorAll('#optKindRow .opt-btn')
+    .forEach(b => b.classList.toggle('sel', b.dataset.kind === sel.kind));
+  document.querySelectorAll('#optQtyRow .opt-btn')
+    .forEach(b => b.classList.toggle('sel', Number(b.dataset.qty) === sel.qty));
+
+  const spot    = S.prices[sel.sym];
+  const strikes = strikesFor(sel.kind, spot);
+  if (!strikes.includes(sel.strike)) sel.strike = strikes[0];
+
+  $('optStrikeRow').innerHTML = '';
+  for (const k of strikes) {
+    const prem = premiumPerShare(sel.kind, spot, k) * CONTRACT;
+    const b = document.createElement('button');
+    b.className = 'opt-btn' + (sel.strike === k ? ' sel' : '');
+    b.innerHTML = `${money(k)}<small>get ${money(round2(prem))}</small>`;
+    b.addEventListener('click', () => { sel.strike = k; renderTrade(); });
+    $('optStrikeRow').appendChild(b);
+  }
+
+  const shares  = sel.qty * CONTRACT;
+  const premium = round2(premiumPerShare(sel.kind, spot, sel.strike) * shares);
+  $('optSummary').innerHTML = sel.kind === 'put'
+    ? `You get <b>${money(premium)}</b> now. <b>${money(round2(sel.strike * shares))}</b> of your cash is held ` +
+      `aside, and if ${sel.sym} ends below ${money(sel.strike)} you buy ${shares} shares at ${money(sel.strike)}.`
+    : `You get <b>${money(premium)}</b> now. <b>${shares} ${sel.sym} shares</b> get locked, and if ${sel.sym} ends ` +
+      `above ${money(sel.strike)} they are sold at ${money(sel.strike)}.`;
+}
+
+function renderOpenPositions(p) {
+  const box = $('openPositions');
+  if (!p.options.length) { box.innerHTML = '<div class="empty">Nothing open — your options all settle at the end of the round.</div>'; return; }
+  box.innerHTML = '';
+  for (const o of p.options) {
+    const line = document.createElement('div');
+    line.className = 'pos-line';
+    line.innerHTML = `
+      <span><span class="tag ${o.kind}">${o.kind === 'put' ? 'SHORT PUT' : 'COVERED CALL'}</span>
+        ${o.sym} @ ${money(o.strike)} · ${o.shares} shares</span>
+      <span>got ${money(o.premium)}</span>`;
+    box.appendChild(line);
+  }
+}
+
+function act(err, okMsg) {
+  const m = $('tradeMsg');
+  if (err) { m.textContent = err; m.className = 'msg err'; return; }
+  m.textContent = okMsg; m.className = 'msg ok';
+  save();
+  const keep = m.textContent;
+  renderTrade();
+  m.textContent = keep; m.className = 'msg ok';
+}
+
+// ── Result screen ──
+function renderResult() {
+  $('resultTitle').innerHTML = `Round ${S.round} results<span>THE MARKET MOVED</span>`;
+
+  $('moveGrid').innerHTML = '';
+  for (const mv of S.moves) {
+    const st = stockOf(mv.sym);
+    const c = document.createElement('div');
+    c.className = 'move-card';
+    c.innerHTML = `
+      <div class="m-sym">${st.emoji} ${mv.sym}</div>
+      <div class="m-px">${money(mv.to)}</div>
+      <div class="m-d ${mv.pct >= 0 ? 'up' : 'down'}">${pct(mv.pct)} from ${money(mv.from)}</div>`;
+    $('moveGrid').appendChild(c);
+  }
+
+  const rows = S.players.map(p => {
+    const w = p.worth[p.worth.length - 1];
+    const d = round2(w - p.worth[p.worth.length - 2]);
+    return { p, w, d, total: round2(w - S.startFund) };
+  }).sort((a, b) => b.w - a.w);
+
+  let html = `<tr><th>Player</th><th>Net worth</th><th>This round</th><th>Total</th></tr>`;
+  for (const r of rows) {
+    html += `<tr class="${r.p.bust ? 'bust' : ''}">
+      <td class="who">${r.p.name}</td>
+      <td>${money(r.w)}</td>
+      <td class="${r.d >= 0 ? 'up' : 'down'}">${signed(r.d)}</td>
+      <td class="${r.total >= 0 ? 'up' : 'down'}">${signed(r.total)}</td></tr>`;
+  }
+  const bw = round2(bankWorth() - BANK_START);
+  html += `<tr class="bank"><td class="who">🏦 The Bank</td><td>—</td><td>—</td>
+    <td class="${bw >= 0 ? 'up' : 'down'}">${signed(bw)}</td></tr>`;
+  $('boardTable').innerHTML = html;
+
+  $('eventList').innerHTML = '';
+  for (const p of S.players) {
+    if (!p.events.length) continue;
+    const box = document.createElement('div');
+    box.className = 'ev-player';
+    box.innerHTML = `<h4>${p.name}</h4><ul>${p.events.map(e => `<li>${e}</li>`).join('')}</ul>`;
+    $('eventList').appendChild(box);
+  }
+
+  $('doneRow').innerHTML = '';
+  for (const p of S.players) {
+    const b = document.createElement('button');
+    b.className = 'done-btn' + (p.done ? ' on' : '');
+    b.textContent = p.done ? `🏁 ${p.name} is done` : `${p.name}: keep going`;
+    b.addEventListener('click', () => { p.done = !p.done; save(); renderResult(); });
+    $('doneRow').appendChild(b);
+  }
+
+  const allDone = S.players.every(p => p.done);
+  $('nextRoundBtn').textContent = allDone ? '🏆 Final standings' : 'Next round →';
+}
+
+// ── Game over ──
+function renderOver() {
+  const busted = S.players.filter(p => p.bust);
+  $('overTitle').innerHTML = busted.length
+    ? `💀 Wiped out<span>${busted.map(p => p.name.toUpperCase()).join(' & ')} RAN OUT OF MONEY — ${S.round} ROUNDS PLAYED</span>`
+    : `🏆 Final standings<span>${S.round} ROUNDS PLAYED</span>`;
+
+  const rows = S.players.map(p => ({ p, w: p.worth[p.worth.length - 1] })).sort((a, b) => b.w - a.w);
+  const medal = ['🥇', '🥈', '🥉', '4️⃣'];
+  $('podium').innerHTML = '';
+  rows.forEach((r, i) => {
+    const gain = round2(r.w - S.startFund);
+    const el = document.createElement('div');
+    el.className = 'pod' + (i === 0 ? ' first' : '');
+    el.innerHTML = `
+      <div class="rank">${medal[i]}</div>
+      <div class="pname">${r.p.name}${r.p.bust ? ' 💀' : ''}</div>
+      <div class="pval">
+        <div class="big">${money(r.w)}</div>
+        <div class="${gain >= 0 ? 'up' : 'down'}">${signed(gain)} · ${pct((r.w / S.startFund - 1) * 100)}</div>
+      </div>`;
+    $('podium').appendChild(el);
+  });
+
+  const bw = round2(bankWorth() - BANK_START);
+  $('bankLine').innerHTML = bw >= 0
+    ? `The Bank came out <b class="up">${signed(bw)}</b> ahead. It takes a cut of every option it buys — ` +
+      `that is how the house usually wins.`
+    : `The Bank finished <b class="down">${signed(bw)}</b> down. You beat the house!`;
+}
+
+// ═══════════ Flow ═══════════
+function endTurn() {
+  if (S.turn < S.players.length - 1) { S.turn++; save(); render(); return; }
+  runMarket();
+  S.phase = S.players.some(p => p.bust) ? 'over' : 'result';
+  save();
+  render();
+}
+
+function nextRound() {
+  if (S.players.every(p => p.done)) { S.phase = 'over'; save(); render(); return; }
+  S.round++;
+  S.turn = 0;
+  S.phase = 'trade';
+  S.players.forEach(p => { p.events = []; });
+  save();
+  render();
+}
+
+// ═══════════ Setup wiring ═══════════
+let setupCount = 3, setupFund = 5000;
+
+function renderNames() {
+  const row = $('nameRow');
+  const kept = [...row.querySelectorAll('input')].map(i => i.value);
+  row.innerHTML = '';
+  for (let i = 0; i < setupCount; i++) {
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.maxLength = 12;
+    inp.value = kept[i] || DEFAULT_NAMES[i];
+    inp.setAttribute('aria-label', `Player ${i + 1} name`);
+    row.appendChild(inp);
+  }
+}
+
+$('countRow').addEventListener('click', e => {
+  const b = e.target.closest('.opt-btn'); if (!b) return;
+  setupCount = Number(b.dataset.count);
+  document.querySelectorAll('#countRow .opt-btn').forEach(x => x.classList.toggle('sel', x === b));
+  renderNames();
+});
+$('fundRow').addEventListener('click', e => {
+  const b = e.target.closest('.opt-btn'); if (!b) return;
+  setupFund = Number(b.dataset.fund);
+  document.querySelectorAll('#fundRow .opt-btn').forEach(x => x.classList.toggle('sel', x === b));
+});
+
+$('startBtn').addEventListener('click', () => {
+  const names = [...$('nameRow').querySelectorAll('input')]
+    .map((inp, i) => (inp.value.trim() || DEFAULT_NAMES[i]).slice(0, 12));
+  S = newGame(names, setupFund);
+  sel = { sym: STOCKS[0].sym, kind: 'put', strike: null, qty: 1 };
+  save();
+  render();
+});
+
+$('resumeBtn').addEventListener('click', () => {
+  S = load();
+  if (!S) { $('resumeBox').style.display = 'none'; return; }
+  sel = { sym: STOCKS[0].sym, kind: 'put', strike: null, qty: 1 };
+  render();
+});
+
+// ═══════════ Trading wiring ═══════════
+$('optKindRow').addEventListener('click', e => {
+  const b = e.target.closest('.opt-btn'); if (!b) return;
+  sel.kind = b.dataset.kind; sel.strike = null; renderTrade();
+});
+$('optQtyRow').addEventListener('click', e => {
+  const b = e.target.closest('.opt-btn'); if (!b) return;
+  sel.qty = Number(b.dataset.qty); renderTrade();
+});
+$('sellOptBtn').addEventListener('click', () => {
+  const p = S.players[S.turn];
+  const err = sel.kind === 'put'
+    ? sellPut(p, sel.sym, sel.strike, sel.qty)
+    : sellCall(p, sel.sym, sel.strike, sel.qty);
+  act(err, `Sold ${sel.qty} ${sel.sym} ${money(sel.strike)} ${sel.kind === 'put' ? 'put' : 'call'}.`);
+});
+$('doneTurnBtn').addEventListener('click', () => { $('tradeMsg').textContent = ' '; endTurn(); });
+$('nextRoundBtn').addEventListener('click', nextRound);
+$('playAgainBtn').addEventListener('click', () => { clearSave(); S = null; showScreen('setupScreen'); $('resumeBox').style.display = 'none'; });
+
+// ═══════════ Boot ═══════════
+renderNames();
+const saved = load();
+if (saved && saved.phase !== 'over') {
+  $('resumeBox').style.display = '';
+  $('resumeNote').textContent =
+    `${saved.players.map(p => p.name).join(', ')} — round ${saved.round}`;
+}
+</script>
+</body>
+</html>

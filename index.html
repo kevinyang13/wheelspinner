@@ -99,6 +99,7 @@
     .card-spelling { --card-accent: var(--yellow); --card-shadow: rgba(249,194,46,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(249,194,46,0.07), transparent 70%); }
     .card-chinese  { --card-accent: var(--red); --card-shadow: rgba(229,57,53,0.2);   --card-glow: radial-gradient(ellipse at top left, rgba(229,57,53,0.07), transparent 70%); }
     .card-math     { --card-accent: var(--sky); --card-shadow: rgba(61,158,255,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(61,158,255,0.07), transparent 70%); }
+    .card-stocks { --card-accent: var(--green); --card-shadow: rgba(95,184,124,0.2); --card-glow: radial-gradient(ellipse at top left, rgba(95,184,124,0.07), transparent 70%); }
     .card-hotpotato { --card-accent: var(--orange); --card-shadow: rgba(255,107,53,0.2); --card-glow: radial-gradient(ellipse at top left, rgba(255,107,53,0.07), transparent 70%); }
     .card-balloon   { --card-accent: var(--lavender); --card-shadow: rgba(167,139,250,0.2); --card-glow: radial-gradient(ellipse at top left, rgba(167,139,250,0.07), transparent 70%); }
     .card-simon     { --card-accent: var(--cyan); --card-shadow: rgba(34,211,238,0.2);  --card-glow: radial-gradient(ellipse at top left, rgba(34,211,238,0.07), transparent 70%); }
@@ -471,6 +472,18 @@
       <div class="card-arrow">→</div>
     </a>
 
+    <a href="stocks.html" class="game-card card-stocks" data-category="playing">
+      <div class="card-icon">📈</div>
+      <div class="card-title">Stock Market</div>
+      <div class="card-desc">Up to 4 traders against the Bank. Buy shares, sell puts and covered calls, then watch the market swing 30–50% every round.</div>
+      <div class="card-tags">
+        <span class="tag">2–4 Players</span>
+        <span class="tag">Strategy</span>
+        <span class="tag">Money</span>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
   </div>
 
   <footer>Kyle &amp; Lindsey · 2025</footer>
@@ -533,12 +546,13 @@
     const cOk = chinesePct  >= THRESHOLD;
     const sOk = spellingPct >= THRESHOLD;
 
+    const playingCount = document.querySelectorAll('[data-category="playing"]').length;
     const teaser = document.createElement('div');
     teaser.className = 'game-card card-lock-teaser';
     teaser.style.marginTop = '36px';
     teaser.innerHTML = `
       <div class="card-icon">🔒</div>
-      <div class="card-title" style="color:var(--muted)">10 Playing Games Locked</div>
+      <div class="card-title" style="color:var(--muted)">${playingCount} Playing Games Locked</div>
       <div class="card-desc">Score 80%+ on <strong style="color:var(--red)">Chinese Reading</strong> and <strong style="color:var(--yellow)">Spelling Bee</strong> to unlock all playing games!</div>
       <div class="card-tags">
         <span class="tag">${cOk ? '✅' : '❌'} Chinese: ${chinesePct}%</span>
