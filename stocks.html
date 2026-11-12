@@ -73,7 +73,16 @@
       width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
       background: var(--card); border: 2px solid var(--border); border-radius: 18px; padding: 14px 20px;
     }
-    .turn-who { font-size: 1.35rem; font-weight: 900; }
+    .turn-who { font-size: 0.95rem; font-weight: 800; color: var(--ink2); }
+    .traders { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    .trader {
+      padding: 9px 16px; border-radius: 22px; border: 2px solid var(--border); background: var(--bg);
+      color: var(--ink2); font-family: inherit; font-weight: 800; font-size: 0.92rem; cursor: pointer;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+    .trader:hover { border-color: var(--green); color: var(--green); }
+    .trader.on { border-color: var(--green); color: var(--green); background: color-mix(in srgb, var(--green) 12%, transparent); }
+    .ev-row:not(.now) { cursor: pointer; }
     .turn-round { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); }
 
     .chips { display: flex; gap: 10px; flex-wrap: wrap; width: 100%; }
@@ -282,8 +291,9 @@
 
   <details class="rules">
     <summary>📖 How to play</summary>
-    <p>Everyone starts with the same money. Each round you take turns trading with the Bank, then the
-       market moves and everyone's net worth is counted up.</p>
+    <p>Everyone starts with the same money and trades on the one screen — tap a name to take the
+       controls, buy and sell in any order, as often as you like. Prices only move when somebody runs
+       the market, which ends the round and counts up everyone's net worth.</p>
     <li><b>Buy / sell shares</b> at the price on the board.</li>
     <li><b>Sell a put</b> — you promise to buy 10 shares at the strike price. You get paid a premium now,
         and that much cash is held aside. If the price ends up <i>below</i> the strike, you must buy at the strike.</li>
@@ -299,9 +309,10 @@
   <div class="turn-bar">
     <div>
       <div class="turn-round" id="roundLabel">Round 1</div>
-      <div class="turn-who" id="whoLabel">—</div>
+      <div class="turn-who">Everyone trades — tap a name to take the controls</div>
+      <div class="traders" id="traderRow"></div>
     </div>
-    <button class="big-start" id="doneTurnBtn">Done trading →</button>
+    <button class="big-start" id="runMarketBtn">Run the market 🔔</button>
   </div>
 
   <div class="chips">
@@ -332,7 +343,7 @@
   </div>
 
   <div class="panel" id="panelPortfolio">
-    <h3>Your portfolio</h3>
+    <h3 id="portfolioTitle">Portfolio</h3>
     <div id="holdings"></div>
   </div>
 
@@ -367,7 +378,7 @@
   </div>
 
   <div class="panel" id="panelOpen">
-    <h3>Your open options</h3>
+    <h3 id="openTitle">Open options</h3>
     <div id="openPositions"></div>
   </div>
   </div>
@@ -475,11 +486,11 @@ let sel  = { sym: 'PIZZA', kind: 'put', strike: null, qty: 1 };
 
 function newGame(names, fund) {
   return {
-    v: 3,
+    v: 4,
     startFund: fund,
     round: 1,
     phase: 'trade',
-    turn: 0,
+    active: 0,   // whose controls are on screen; anyone may trade, in any order
     prices: Object.fromEntries(STOCKS.map(s => [s.sym, s.start])),
     prevPrices: Object.fromEntries(STOCKS.map(s => [s.sym, s.start])),
     history: Object.fromEntries(STOCKS.map(s => [s.sym, [s.start]])),
@@ -499,7 +510,7 @@ function load() {
     const raw = localStorage.getItem(KEY);
     if (!raw) return null;
     const g = JSON.parse(raw);
-    return g && g.v === 3 && Array.isArray(g.players) && g.players.length ? g : null;
+    return g && g.v === 4 && Array.isArray(g.players) && g.players.length ? g : null;
   } catch { return null; }
 }
 const clearSave = () => { try { localStorage.removeItem(KEY); } catch {} };
@@ -637,9 +648,19 @@ function render() {
 
 // ── Trading screen ──
 function renderTrade() {
-  const p = S.players[S.turn];
-  $('roundLabel').textContent = `Round ${S.round} · player ${S.turn + 1} of ${S.players.length}`;
-  $('whoLabel').textContent   = `${p.name}'s turn`;
+  const p = S.players[S.active];
+  $('roundLabel').textContent = `Round ${S.round}`;
+
+  $('traderRow').innerHTML = '';
+  S.players.forEach((q, i) => {
+    const b = document.createElement('button');
+    b.className = 'trader' + (i === S.active ? ' on' : '');
+    b.textContent = q.name;
+    b.addEventListener('click', () => setTrader(i));
+    $('traderRow').appendChild(b);
+  });
+  $('portfolioTitle').textContent = `${p.name}'s portfolio`;
+  $('openTitle').textContent      = `${p.name}'s open options`;
 
   $('chipFree').textContent  = money(freeCash(p));
   $('chipHeld').textContent  = money(p.reserved);
@@ -756,10 +777,11 @@ function renderEveryone() {
       .map(st => `${st.emoji} ${st.sym} ${sharesOf(p, st.sym)}`).join(' \u00b7 ');
     const mark = optionMark(p);
     const row = document.createElement('div');
-    row.className = 'ev-row' + (i === S.turn ? ' now' : '');
+    row.className = 'ev-row' + (i === S.active ? ' now' : '');
+    if (i !== S.active) row.addEventListener('click', () => setTrader(i));
     row.innerHTML = `
       <div class="e-top">
-        <div class="e-name">${i === S.turn ? '\u25b6 ' : ''}${p.name}</div>
+        <div class="e-name">${i === S.active ? '\u25b6 ' : ''}${p.name}</div>
         <div class="e-worth"><small>net worth</small>${money(netWorth(p))}</div>
       </div>
       <div class="e-held">${held || 'no shares \u2014 all cash'}${
@@ -954,8 +976,18 @@ function renderOver() {
 }
 
 // ═══════════ Flow ═══════════
-function endTurn() {
-  if (S.turn < S.players.length - 1) { S.turn++; save(); render(); return; }
+// Everyone trades on the one screen for as long as they like; the round ends
+// when somebody runs the market. Prices do not move until then, so the order
+// people trade in cannot matter.
+function setTrader(i) {
+  S.active = i;
+  $('tradeMsg').textContent = ' ';
+  $('tradeMsg').className = 'msg';
+  save();
+  renderTrade();
+}
+
+function runRound() {
   runMarket();
   S.phase = S.players.some(p => p.bust) ? 'over' : 'result';
   save();
@@ -965,7 +997,7 @@ function endTurn() {
 function nextRound() {
   if (S.players.every(p => p.done)) { S.phase = 'over'; save(); render(); return; }
   S.round++;
-  S.turn = 0;
+  S.active = 0;
   S.phase = 'trade';
   S.players.forEach(p => { p.events = []; });
   save();
@@ -1027,13 +1059,13 @@ $('optQtyRow').addEventListener('click', e => {
   sel.qty = Number(b.dataset.qty); renderTrade();
 });
 $('sellOptBtn').addEventListener('click', () => {
-  const p = S.players[S.turn];
+  const p = S.players[S.active];
   const err = sel.kind === 'put'
     ? sellPut(p, sel.sym, sel.strike, sel.qty)
     : sellCall(p, sel.sym, sel.strike, sel.qty);
   act(err, `Sold ${sel.qty} ${sel.sym} ${money(sel.strike)} ${sel.kind === 'put' ? 'put' : 'call'}.`);
 });
-$('doneTurnBtn').addEventListener('click', () => { $('tradeMsg').textContent = ' '; endTurn(); });
+$('runMarketBtn').addEventListener('click', () => { $('tradeMsg').textContent = ' '; runRound(); });
 $('nextRoundBtn').addEventListener('click', nextRound);
 $('playAgainBtn').addEventListener('click', () => { clearSave(); S = null; showScreen('setupScreen'); $('resumeBox').style.display = 'none'; });
 
