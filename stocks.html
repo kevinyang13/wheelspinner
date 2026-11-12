@@ -307,7 +307,7 @@
         and that much cash is held aside. If the price ends up <i>below</i> the strike, you must buy at the strike.</li>
     <li><b>Sell a covered call</b> — you own 10 shares and promise to sell them at the strike. You get paid
         a premium now and the shares are locked. If the price ends up <i>above</i> the strike, they are sold at the strike.</li>
-    <li>Options last one round. Every round each stock moves <b>anywhere from 0% to 50%, up or down</b>, so nothing is safe — but nothing is certain either.</li>
+    <li>Options last one round. Every round each stock moves <b>anywhere from 0% to 20%, up or down</b>, so nothing is safe — but nothing is certain either.</li>
     <li>A stock that has crashed is <b>likelier to bounce back</b>, and one that has rocketed is likelier to cool off. Option premiums already know this, so there is no free money in it.</li>
     <li>The game ends when everybody says they're done, or when someone is wiped out.</li>
   </details>
@@ -436,7 +436,7 @@ const $ = id => document.getElementById(id);
 const KEY        = 'stocks-state';
 const CONTRACT   = 10;      // shares in one option contract
 const MOVE_MIN   = 0.00;    // a stock can also barely budge
-const MOVE_MAX   = 0.50;
+const MOVE_MAX   = 0.20;
 const REVERT     = 0.25;    // how hard a stock is pulled back toward its opening price
 const BANK_EDGE  = 0.90;    // the Bank pays 90% of fair value for an option it buys
 const BUST_AT    = 0.10;    // wiped out below 10% of the starting stake
@@ -454,8 +454,8 @@ const STOCKS = [
   { sym: 'PIZZA',  name: 'Pizza Palace',   emoji: '🍕', start:  40 },
   { sym: 'CANDY',  name: 'Candy Co.',      emoji: '🍬', start:  25 },
 ];
-const PUT_STRIKES  = [0.55, 0.70, 0.85, 1.00];
-const CALL_STRIKES = [1.00, 1.15, 1.30, 1.45];
+const STRIKE_STEP  = 0.05;  // spacing between strikes, as a share of the price
+const STRIKE_COUNT = 4;
 
 const DEFAULT_NAMES = ['Kyle', 'Lindsey', 'Mom', 'Dad'];
 
@@ -492,7 +492,7 @@ function upProb(sym) {
 
 // ═══════════ Option pricing ═══════════
 // The payoff is averaged over exactly the move this game will roll for this
-// stock -- its own up-probability, size spread evenly over 0%–50%. So a premium
+// stock -- its own up-probability, size spread evenly over 0%–20%. So a premium
 // is the true expected cost to the writer, less the Bank's cut, and a beaten-down
 // stock's puts are priced for the bounce rather than for a coin flip.
 function fairValue(kind, spot, strike, pUp) {
@@ -509,8 +509,19 @@ function fairValue(kind, spot, strike, pUp) {
 }
 const markPerShare    = (kind, sym, strike) => fairValue(kind, S.prices[sym], strike, upProb(sym));
 const premiumPerShare = (kind, sym, strike) => round2(markPerShare(kind, sym, strike) * BANK_EDGE);
-const strikesFor = (kind, spot) =>
-  (kind === 'put' ? PUT_STRIKES : CALL_STRIKES).map(f => Math.max(1, Math.round(spot * f)));
+// Strikes ladder away from the money in whole dollars, far enough apart to stay
+// distinct on a cheap stock and close enough that the furthest one is still
+// reachable in a single round.
+function strikesFor(kind, spot) {
+  const base = Math.max(1, Math.round(spot));
+  const step = Math.max(1, Math.round(spot * STRIKE_STEP));
+  const out = [];
+  for (let i = STRIKE_COUNT - 1; i >= 0; i--) {
+    const k = kind === 'put' ? base - i * step : base + i * step;
+    if (k >= 1) out.push(k);
+  }
+  return kind === 'put' ? out : out.reverse();
+}
 
 // ═══════════ State ═══════════
 let S    = null;   // the whole game, saved as one blob
