@@ -102,7 +102,8 @@
       .cols { display: flex; flex-direction: column; }
       .col  { display: contents; }
       #panelEveryone { order: 1; } #panelMarket  { order: 2; } #panelPortfolio { order: 3; }
-      #panelOptions  { order: 4; } #panelOpen    { order: 5; } #panelChart     { order: 6; }
+      #panelOptions  { order: 4; } #panelOpen    { order: 5; } #panelWorth     { order: 6; }
+      #panelChart    { order: 7; }
     }
 
     .panel { width: 100%; container-type: inline-size; background: var(--card); border: 2px solid var(--border); border-radius: 20px; padding: 18px; }
@@ -334,6 +335,12 @@
     <div class="chart" id="chartBox"></div>
     <div class="legend" id="chartLegend"></div>
   </div>
+
+  <div class="panel" id="panelWorth">
+    <h3>Net worth — every player, every round</h3>
+    <div class="chart" id="worthBox"></div>
+    <div class="legend" id="worthLegend"></div>
+  </div>
   </div>
 
   <div class="col">
@@ -401,6 +408,8 @@
   <div class="panel">
     <h3>Net worth</h3>
     <table class="board" id="boardTable"></table>
+    <div class="chart" id="worthBox2" style="margin-top:18px;"></div>
+    <div class="legend" id="worthLegend2"></div>
   </div>
 
   <div class="events" id="eventList"></div>
@@ -707,6 +716,7 @@ function renderTrade() {
 
   renderEveryone();
   renderChart('chartBox', 'chartLegend');
+  renderWorthChart('worthBox', 'worthLegend', true);
   renderHoldings(p);
   renderOptionDesk(p);
   renderOpenPositions(p);
@@ -769,6 +779,63 @@ function renderChart(boxId, legendId) {
 
 // Trading is public, so every player's cash, stock and net worth is on screen
 // on every turn -- not just whoever is holding the device.
+// Net worth is in plain dollars on a linear scale: everyone starts on the same
+// number, so the gaps between the lines are the story. On the trading screen the
+// last point is live, marked up to the minute as people buy and sell.
+const PLAYER_COLORS = ['var(--gold)', 'var(--teal)', 'var(--lavender)', 'var(--orange)'];
+const money0 = n => '$' + Math.round(n).toLocaleString('en-US');
+
+function renderWorthChart(boxId, legendId, live) {
+  const box = $(boxId), leg = $(legendId);
+  if (!box) return;
+  const series = S.players.map((p, i) => ({
+    p, color: PLAYER_COLORS[i % PLAYER_COLORS.length],
+    pts: live ? [...p.worth, netWorth(p)] : [...p.worth],
+  }));
+  const n = series[0].pts.length;
+
+  const W = 620, H = 240, L = 58, R = 14, T = 16, B = 26;
+  let lo = Infinity, hi = -Infinity;
+  for (const s of series) for (const v of s.pts) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
+  if (hi - lo < 1) { hi += S.startFund * 0.1; lo -= S.startFund * 0.1; }
+  const pad = (hi - lo) * 0.08;
+  hi += pad; lo = Math.max(0, lo - pad);
+  const y = v => T + (H - T - B) * (hi - v) / (hi - lo);
+  const x = i => n === 1 ? L : L + (W - L - R) * i / (n - 1);
+
+  const marks = [hi, ...(lo < S.startFund && hi > S.startFund ? [S.startFund] : []), lo];
+  const grid = marks.map(v => `
+    <line x1="${L}" x2="${W - R}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"
+          stroke="var(--border)" stroke-width="1"
+          ${v === S.startFund ? 'stroke-dasharray="4 4"' : ''}/>
+    <text x="${L - 8}" y="${(y(v) + 4).toFixed(1)}" text-anchor="end"
+          font-size="11" font-weight="700" fill="var(--muted)">${money0(v)}</text>`).join('');
+
+  const lines = series.map(({ color, pts }) => {
+    const d = pts.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+    return `<path d="${d}" fill="none" stroke="${color}" stroke-width="2.5"
+                  stroke-linejoin="round" stroke-linecap="round"/>
+            <circle cx="${x(n - 1).toFixed(1)}" cy="${y(pts[n - 1]).toFixed(1)}" r="3.5" fill="${color}"/>`;
+  }).join('');
+
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img"
+      aria-label="Every player's net worth, round by round">
+    ${grid}${lines}
+    <text x="${L}" y="${H - 6}" font-size="11" font-weight="700" fill="var(--muted)">start</text>
+    <text x="${W - R}" y="${H - 6}" text-anchor="end" font-size="11" font-weight="700"
+          fill="var(--muted)">${live ? 'now' : `round ${n - 1}`}</text>
+  </svg>`;
+
+  leg.innerHTML = series.map(({ p, color, pts }) => {
+    const gain = round2(pts[pts.length - 1] - S.startFund);
+    return `<div class="leg">
+      <span class="sw" style="background:${color}"></span>
+      <span class="ls">${p.name}</span>
+      <span class="lp ${gain >= 0 ? 'up' : 'down'}">${signed(gain)}</span>
+    </div>`;
+  }).join('');
+}
+
 function renderEveryone() {
   const box = $('everyone');
   box.innerHTML = '';
@@ -921,6 +988,7 @@ function renderResult() {
   $('boardTable').innerHTML = html;
 
   renderChart('chartBox2', 'chartLegend2');
+  renderWorthChart('worthBox2', 'worthLegend2', false);
 
   $('eventList').innerHTML = '';
   for (const p of S.players) {
