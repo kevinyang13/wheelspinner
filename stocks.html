@@ -75,6 +75,10 @@
     }
     .turn-who { font-size: 0.95rem; font-weight: 800; color: var(--ink2); }
     .traders { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    .run-group { display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
+    #panelRecap .move-grid { margin-bottom: 14px; }
+    #panelRecap .events:empty { display: none; }
+    .e-worth em { display: block; font-style: normal; font-size: 0.7rem; font-weight: 800; margin-top: 2px; }
     .trader {
       padding: 9px 16px; border-radius: 22px; border: 2px solid var(--border); background: var(--bg);
       color: var(--ink2); font-family: inherit; font-weight: 800; font-size: 0.92rem; cursor: pointer;
@@ -208,17 +212,7 @@
     .msg.err { color: var(--red); }
     .msg.ok  { color: var(--green); }
 
-    /* ── Results ── */
-    table.board { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-    table.board th {
-      font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted);
-      text-align: right; padding: 0 8px 10px; font-weight: 800;
-    }
-    table.board th:first-child, table.board td:first-child { text-align: left; }
-    table.board td { padding: 11px 8px; border-top: 1px solid var(--border); font-weight: 700; text-align: right; }
-    table.board td.who { font-weight: 900; font-size: 1.02rem; }
-    table.board tr.bank td { color: var(--muted); font-style: italic; }
-    table.board tr.bust td:first-child::after { content: ' 💀'; }
+    /* Round recap */
 
     .move-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; width: 100%; }
     .move-card { background: var(--card); border: 2px solid var(--border); border-radius: 16px; padding: 14px; text-align: center; }
@@ -326,7 +320,30 @@
       <div class="turn-who">Everyone trades — tap a name to take the controls</div>
       <div class="traders" id="traderRow"></div>
     </div>
-    <button class="big-start" id="runMarketBtn">Run the market 🔔</button>
+    <div class="run-group">
+      <button class="big-start" id="runMarketBtn">Run the market 🔔</button>
+      <button class="ghost-btn" id="run10Btn">Run × 10 ⏩</button>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div class="panel">
+      <h3>Every stock since the opening bell — % up or down</h3>
+      <div class="chart" id="chartBox"></div>
+      <div class="legend" id="chartLegend"></div>
+    </div>
+
+    <div class="panel">
+      <h3>Net worth — every player, every round</h3>
+      <div class="chart" id="worthBox"></div>
+      <div class="legend" id="worthLegend"></div>
+    </div>
+  </div>
+
+  <div class="panel" id="panelRecap">
+    <h3 id="recapTitle">Last round</h3>
+    <div class="move-grid" id="moveGrid"></div>
+    <div class="events" id="eventList"></div>
   </div>
 
   <div class="chips">
@@ -336,108 +353,68 @@
     <div class="chip good"><div class="k">Net worth</div><div class="v" id="chipWorth">—</div></div>
   </div>
 
-  <div class="panel wide" id="panelEveryone">
+  <div class="panel" id="panelEveryone">
     <h3>Everyone right now</h3>
     <div id="everyone"></div>
   </div>
 
   <div class="cols">
     <div class="panel" id="panelMarket">
-    <h3 class="h3row">The market — buy and sell with the Bank
-      <button class="dense-btn" id="densityBtn" type="button">Compact</button>
-    </h3>
-    <div id="marketRows"></div>
-    </div>
+        <h3 class="h3row">The market — buy and sell with the Bank
+          <button class="dense-btn" id="densityBtn" type="button">Compact</button>
+        </h3>
+        <div id="marketRows"></div>
+        </div>
+
     <div class="panel" id="panelOptions">
-    <h3>Option desk — sell to the Bank, expires at the end of this round</h3>
-    <div class="option-group" style="margin-bottom:14px;">
-      <div class="option-label">Stock</div>
-      <div class="option-row" id="optSymRow"></div>
-    </div>
-    <div class="option-group" style="margin-bottom:14px;">
-      <div class="option-label">Contract</div>
-      <div class="option-row" id="optKindRow">
-        <button class="opt-btn sel" data-kind="put">Sell a put<small>Promise to buy at the strike</small></button>
-        <button class="opt-btn" data-kind="call">Sell a covered call<small>Promise to sell your shares</small></button>
-      </div>
-    </div>
-    <div class="option-group" style="margin-bottom:14px;">
-      <div class="option-label">Strike (premium per contract of 10 shares)</div>
-      <div class="option-row" id="optStrikeRow"></div>
-    </div>
-    <div class="option-group" style="margin-bottom:12px;">
-      <div class="option-label">Contracts</div>
-      <div class="option-row" id="optQtyRow">
-        <button class="opt-btn sel" data-qty="1">1</button>
-        <button class="opt-btn" data-qty="2">2</button>
-        <button class="opt-btn" data-qty="3">3</button>
-        <button class="opt-btn" data-qty="5">5</button>
-      </div>
-    </div>
-    <div class="sub" id="optSummary" style="margin-bottom:12px;"></div>
-    <div style="text-align:center;"><button class="big-start alt" id="sellOptBtn">Sell it 💰</button></div>
-    </div>
+        <h3>Option desk — sell to the Bank, expires at the end of this round</h3>
+        <div class="option-group" style="margin-bottom:14px;">
+          <div class="option-label">Stock</div>
+          <div class="option-row" id="optSymRow"></div>
+        </div>
+        <div class="option-group" style="margin-bottom:14px;">
+          <div class="option-label">Contract</div>
+          <div class="option-row" id="optKindRow">
+            <button class="opt-btn sel" data-kind="put">Sell a put<small>Promise to buy at the strike</small></button>
+            <button class="opt-btn" data-kind="call">Sell a covered call<small>Promise to sell your shares</small></button>
+          </div>
+        </div>
+        <div class="option-group" style="margin-bottom:14px;">
+          <div class="option-label">Strike (premium per contract of 10 shares)</div>
+          <div class="option-row" id="optStrikeRow"></div>
+        </div>
+        <div class="option-group" style="margin-bottom:12px;">
+          <div class="option-label">Contracts</div>
+          <div class="option-row" id="optQtyRow">
+            <button class="opt-btn sel" data-qty="1">1</button>
+            <button class="opt-btn" data-qty="2">2</button>
+            <button class="opt-btn" data-qty="3">3</button>
+            <button class="opt-btn" data-qty="5">5</button>
+          </div>
+        </div>
+        <div class="sub" id="optSummary" style="margin-bottom:12px;"></div>
+        <div style="text-align:center;"><button class="big-start alt" id="sellOptBtn">Sell it 💰</button></div>
+        </div>
   </div>
 
   <div class="cols">
     <div class="panel" id="panelPortfolio">
-    <h3 id="portfolioTitle">Portfolio</h3>
-    <div id="holdings"></div>
-    </div>
+        <h3 id="portfolioTitle">Portfolio</h3>
+        <div id="holdings"></div>
+        </div>
+
     <div class="panel" id="panelOpen">
-    <h3 id="openTitle">Open options</h3>
-    <div id="openPositions"></div>
-    </div>
+        <h3 id="openTitle">Open options</h3>
+        <div id="openPositions"></div>
+        </div>
   </div>
 
-  <div class="cols">
-    <div class="panel" id="panelChart">
-    <h3>Every stock since the opening bell — % up or down</h3>
-    <div class="chart" id="chartBox"></div>
-    <div class="legend" id="chartLegend"></div>
-    </div>
-    <div class="panel" id="panelWorth">
-    <h3>Net worth — every player, every round</h3>
-    <div class="chart" id="worthBox"></div>
-    <div class="legend" id="worthLegend"></div>
-    </div>
-  </div>
-
-  <div class="msg" id="tradeMsg">&nbsp;</div>
-</div>
-
-<!-- ══════════ ROUND RESULT ══════════ -->
-<div class="screen" id="resultScreen">
-  <div class="title" id="resultTitle">Round 1 results<span>THE MARKET MOVED</span></div>
-  <div class="move-grid" id="moveGrid"></div>
-
-  <div class="panel">
-    <h3>Net worth</h3>
-    <table class="board" id="boardTable"></table>
-  </div>
-
-  <div class="cols">
-    <div class="panel">
-      <h3>Every stock since the opening bell — % up or down</h3>
-      <div class="chart" id="chartBox2"></div>
-      <div class="legend" id="chartLegend2"></div>
-    </div>
-
-    <div class="panel">
-      <h3>Net worth — every player, every round</h3>
-      <div class="chart" id="worthBox2"></div>
-      <div class="legend" id="worthLegend2"></div>
-    </div>
-  </div>
-
-  <div class="events" id="eventList"></div>
-
-  <div class="option-group">
-    <div class="option-label">Finished? Tap your name — the game ends when everyone has</div>
+  <div class="panel" id="panelFinish">
+    <h3>Finished? Tap your name — the game ends when everyone has</h3>
     <div class="done-row" id="doneRow"></div>
   </div>
 
-  <button class="big-start" id="nextRoundBtn">Next round →</button>
+  <div class="msg" id="tradeMsg">&nbsp;</div>
 </div>
 
 <!-- ══════════ GAME OVER ══════════ -->
@@ -513,7 +490,7 @@ let sel  = { sym: 'PIZZA', kind: 'put', strike: null, qty: 1 };
 
 function newGame(names, fund) {
   return {
-    v: 4,
+    v: 5,
     startFund: fund,
     round: 1,
     phase: 'trade',
@@ -549,7 +526,7 @@ function load() {
     const raw = localStorage.getItem(KEY);
     if (!raw) return null;
     const g = JSON.parse(raw);
-    return g && g.v === 4 && Array.isArray(g.players) && g.players.length ? g : null;
+    return g && g.v === 5 && Array.isArray(g.players) && g.players.length ? g : null;
   } catch { return null; }
 }
 const clearSave = () => { try { localStorage.removeItem(KEY); } catch {} };
@@ -680,9 +657,8 @@ function showScreen(id) {
 }
 
 function render() {
-  if (S.phase === 'trade')  { renderTrade();  showScreen('tradeScreen');  }
-  if (S.phase === 'result') { renderResult(); showScreen('resultScreen'); }
-  if (S.phase === 'over')   { renderOver();   showScreen('overScreen');   }
+  if (S.phase === 'over') { renderOver();  showScreen('overScreen');  }
+  else                    { renderTrade(); showScreen('tradeScreen'); }
 }
 
 // ── Trading screen ──
@@ -746,6 +722,8 @@ function renderTrade() {
   }
 
   applyDensity();
+  renderRecap();
+  renderFinish();
   renderEveryone();
   renderChart('chartBox', 'chartLegend');
   renderWorthChart('worthBox', 'worthLegend', true);
@@ -881,7 +859,11 @@ function renderEveryone() {
     row.innerHTML = `
       <div class="e-top">
         <div class="e-name">${i === S.active ? '\u25b6 ' : ''}${p.name}</div>
-        <div class="e-worth"><small>net worth</small>${money(netWorth(p))}</div>
+        <div class="e-worth"><small>net worth</small>${money(netWorth(p))}${
+          p.worth.length >= 2
+            ? `<em class="${p.worth.at(-1) - p.worth.at(-2) >= 0 ? 'up' : 'down'}">${
+                signed(round2(p.worth.at(-1) - p.worth.at(-2)))} last round</em>`
+            : ''}</div>
       </div>
       <div class="e-held">${held || 'no shares \u2014 all cash'}${
         p.reserved ? ` \u00b7 ${money(p.reserved)} of that cash is held for puts` : ''}</div>
@@ -984,9 +966,13 @@ function act(err, okMsg) {
   m.textContent = keep; m.className = 'msg ok';
 }
 
-// ── Result screen ──
-function renderResult() {
-  $('resultTitle').innerHTML = `Round ${S.round} results<span>THE MARKET MOVED</span>`;
+// What the last run of the market did, shown in place rather than on a screen
+// of its own. Hidden until a round has actually been run.
+function renderRecap() {
+  const panel = $('panelRecap');
+  if (!S.moves.length) { panel.style.display = 'none'; return; }
+  panel.style.display = '';
+  $('recapTitle').textContent = `Round ${S.round - 1} results — the market moved`;
 
   $('moveGrid').innerHTML = '';
   for (const mv of S.moves) {
@@ -1000,28 +986,6 @@ function renderResult() {
     $('moveGrid').appendChild(c);
   }
 
-  const rows = S.players.map(p => {
-    const w = p.worth[p.worth.length - 1];
-    const d = round2(w - p.worth[p.worth.length - 2]);
-    return { p, w, d, total: round2(w - S.startFund) };
-  }).sort((a, b) => b.w - a.w);
-
-  let html = `<tr><th>Player</th><th>Net worth</th><th>This round</th><th>Total</th></tr>`;
-  for (const r of rows) {
-    html += `<tr class="${r.p.bust ? 'bust' : ''}">
-      <td class="who">${r.p.name}</td>
-      <td>${money(r.w)}</td>
-      <td class="${r.d >= 0 ? 'up' : 'down'}">${signed(r.d)}</td>
-      <td class="${r.total >= 0 ? 'up' : 'down'}">${signed(r.total)}</td></tr>`;
-  }
-  const bw = round2(bankWorth() - BANK_START);
-  html += `<tr class="bank"><td class="who">🏦 The Bank</td><td>—</td><td>—</td>
-    <td class="${bw >= 0 ? 'up' : 'down'}">${signed(bw)}</td></tr>`;
-  $('boardTable').innerHTML = html;
-
-  renderChart('chartBox2', 'chartLegend2');
-  renderWorthChart('worthBox2', 'worthLegend2', false);
-
   $('eventList').innerHTML = '';
   for (const p of S.players) {
     if (!p.events.length) continue;
@@ -1030,18 +994,22 @@ function renderResult() {
     box.innerHTML = `<h4>${p.name}</h4><ul>${p.events.map(e => `<li>${e}</li>`).join('')}</ul>`;
     $('eventList').appendChild(box);
   }
+}
 
+function renderFinish() {
   $('doneRow').innerHTML = '';
   for (const p of S.players) {
     const b = document.createElement('button');
     b.className = 'done-btn' + (p.done ? ' on' : '');
     b.textContent = p.done ? `🏁 ${p.name} is done` : `${p.name}: keep going`;
-    b.addEventListener('click', () => { p.done = !p.done; save(); renderResult(); });
+    b.addEventListener('click', () => {
+      p.done = !p.done;
+      if (S.players.every(q => q.done)) S.phase = 'over';
+      save();
+      render();
+    });
     $('doneRow').appendChild(b);
   }
-
-  const allDone = S.players.every(p => p.done);
-  $('nextRoundBtn').textContent = allDone ? '🏆 Final standings' : 'Next round →';
 }
 
 // ── Game over ──
@@ -1087,19 +1055,13 @@ function setTrader(i) {
   renderTrade();
 }
 
-function runRound() {
-  runMarket();
-  S.phase = S.players.some(p => p.bust) ? 'over' : 'result';
-  save();
-  render();
-}
-
-function nextRound() {
-  if (S.players.every(p => p.done)) { S.phase = 'over'; save(); render(); return; }
-  S.round++;
-  S.active = 0;
-  S.phase = 'trade';
-  S.players.forEach(p => { p.events = []; });
+function runRound(times) {
+  for (let i = 0; i < (times || 1); i++) {
+    runMarket();
+    if (S.players.some(p => p.bust)) { S.phase = 'over'; break; }
+    S.round++;
+    S.players.forEach(p => { p.done = false; });
+  }
   save();
   render();
 }
@@ -1170,8 +1132,8 @@ $('densityBtn').addEventListener('click', () => {
   try { localStorage.setItem(DENSITY_KEY, compactMarket ? 'compact' : 'roomy'); } catch {}
   applyDensity();
 });
-$('runMarketBtn').addEventListener('click', () => { $('tradeMsg').textContent = ' '; runRound(); });
-$('nextRoundBtn').addEventListener('click', nextRound);
+$('runMarketBtn').addEventListener('click', () => { $('tradeMsg').textContent = ' '; runRound(1); });
+$('run10Btn').addEventListener('click', () => { $('tradeMsg').textContent = ' '; runRound(10); });
 $('playAgainBtn').addEventListener('click', () => { clearSave(); S = null; showScreen('setupScreen'); $('resumeBox').style.display = 'none'; });
 
 // ═══════════ Boot ═══════════
