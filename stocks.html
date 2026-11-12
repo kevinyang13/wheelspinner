@@ -308,6 +308,7 @@
     <li><b>Sell a covered call</b> — you own 10 shares and promise to sell them at the strike. You get paid
         a premium now and the shares are locked. If the price ends up <i>above</i> the strike, they are sold at the strike.</li>
     <li>Options last one round. Every round each stock moves <b>anywhere from 0% to 50%, up or down</b>, so nothing is safe — but nothing is certain either.</li>
+    <li>A stock that has crashed is <b>likelier to bounce back</b>, and one that has rocketed is likelier to cool off. Option premiums already know this, so there is no free money in it.</li>
     <li>The game ends when everybody says they're done, or when someone is wiped out.</li>
   </details>
 </div>
@@ -436,6 +437,7 @@ const KEY        = 'stocks-state';
 const CONTRACT   = 10;      // shares in one option contract
 const MOVE_MIN   = 0.00;    // a stock can also barely budge
 const MOVE_MAX   = 0.50;
+const REVERT     = 0.25;    // how hard a stock is pulled back toward its opening price
 const BANK_EDGE  = 0.90;    // the Bank pays 90% of fair value for an option it buys
 const BUST_AT    = 0.10;    // wiped out below 10% of the starting stake
 const BANK_START = 1000000;
@@ -464,23 +466,49 @@ const signed = n => (n >= 0 ? '+' : '−') + money(Math.abs(n)).replace('-', '')
 const pct    = n => (n >= 0 ? '+' : '−') + Math.abs(n).toFixed(1) + '%';
 const stockOf = sym => STOCKS.find(s => s.sym === sym);
 
+// ═══════════ Which way a stock goes ═══════════
+// A fair coin would be a slow death sentence: prices multiply, so a +u round and
+// a -u round leave you at 1 - u^2, and every stock grinds down to the floor given
+// enough rounds. NEUTRAL_UP is the up-probability at which that bleed is exactly
+// cancelled -- derived from the move sizes, so it stays right if they change.
+const avgLog = sign => {
+  const N = 600;
+  let sum = 0;
+  for (let i = 0; i < N; i++) {
+    sum += Math.log(1 + sign * (MOVE_MIN + (MOVE_MAX - MOVE_MIN) * ((i + 0.5) / N)));
+  }
+  return sum / N;
+};
+const LOG_UP = avgLog(1), LOG_DOWN = avgLog(-1);
+const NEUTRAL_UP = -LOG_DOWN / (LOG_UP - LOG_DOWN);
+
+// On top of that, a stock is pulled back toward the price it opened at: the
+// further it has fallen, the likelier it is to bounce, and a stock that has run
+// a long way up is likelier to cool off. Never a certainty either way.
+function upProb(sym) {
+  const away = Math.log(S.prices[sym] / stockOf(sym).start);
+  return Math.min(0.88, Math.max(0.12, NEUTRAL_UP - REVERT * away));
+}
+
 // ═══════════ Option pricing ═══════════
-// The payoff is averaged over exactly the move this game rolls at the end of the
-// round: equal chance of up or down, size spread evenly over 0%–50%. So a premium
-// is the true expected cost to the writer, less the Bank's cut.
-function fairValue(kind, spot, strike) {
+// The payoff is averaged over exactly the move this game will roll for this
+// stock -- its own up-probability, size spread evenly over 0%–50%. So a premium
+// is the true expected cost to the writer, less the Bank's cut, and a beaten-down
+// stock's puts are priced for the bounce rather than for a coin flip.
+function fairValue(kind, spot, strike, pUp) {
   const N = 600;
   let sum = 0;
   for (let i = 0; i < N; i++) {
     const u = MOVE_MIN + (MOVE_MAX - MOVE_MIN) * ((i + 0.5) / N);
-    for (const dir of [1, -1]) {
-      const end = spot * (1 + dir * u);
-      sum += kind === 'put' ? Math.max(strike - end, 0) : Math.max(end - strike, 0);
-    }
+    const up = spot * (1 + u), down = spot * (1 - u);
+    sum += kind === 'put'
+      ? pUp * Math.max(strike - up, 0) + (1 - pUp) * Math.max(strike - down, 0)
+      : pUp * Math.max(up - strike, 0) + (1 - pUp) * Math.max(down - strike, 0);
   }
-  return sum / (2 * N);
+  return sum / N;
 }
-const premiumPerShare = (kind, spot, strike) => round2(fairValue(kind, spot, strike) * BANK_EDGE);
+const markPerShare    = (kind, sym, strike) => fairValue(kind, S.prices[sym], strike, upProb(sym));
+const premiumPerShare = (kind, sym, strike) => round2(markPerShare(kind, sym, strike) * BANK_EDGE);
 const strikesFor = (kind, spot) =>
   (kind === 'put' ? PUT_STRIKES : CALL_STRIKES).map(f => Math.max(1, Math.round(spot * f)));
 
@@ -538,7 +566,7 @@ const freeShares = (p, sym) => sharesOf(p, sym) - (p.locked[sym] || 0);
 const stockValue = p => round2(STOCKS.reduce((t, s) => t + sharesOf(p, s.sym) * S.prices[s.sym], 0));
 // Open options are marked at fair value, so net worth never flatters a writer.
 const optionMark = p => round2(p.options.reduce(
-  (t, o) => t + fairValue(o.kind, S.prices[o.sym], o.strike) * o.shares, 0));
+  (t, o) => t + markPerShare(o.kind, o.sym, o.strike) * o.shares, 0));
 const netWorth   = p => round2(p.cash + stockValue(p) - optionMark(p));
 
 function bankTrade(sym, dShares, dCash) {
@@ -579,7 +607,7 @@ function sellPut(p, sym, strike, contracts) {
   const secured = round2(strike * shares);
   if (secured > freeCash(p))
     return `A put like that holds ${money(secured)} aside — you have ${money(freeCash(p))} free.`;
-  const premium = round2(premiumPerShare('put', S.prices[sym], strike) * shares);
+  const premium = round2(premiumPerShare('put', sym, strike) * shares);
   p.cash     = round2(p.cash + premium);
   p.reserved = round2(p.reserved + secured);
   p.options.push({ kind: 'put', sym, strike, shares, premium, secured });
@@ -591,7 +619,7 @@ function sellCall(p, sym, strike, contracts) {
   const shares = contracts * CONTRACT;
   if (shares > freeShares(p, sym))
     return `A covered call needs ${shares} free ${sym} — you have ${freeShares(p, sym)}.`;
-  const premium = round2(premiumPerShare('call', S.prices[sym], strike) * shares);
+  const premium = round2(premiumPerShare('call', sym, strike) * shares);
   p.cash = round2(p.cash + premium);
   p.locked[sym] = (p.locked[sym] || 0) + shares;
   p.options.push({ kind: 'call', sym, strike, shares, premium });
@@ -604,7 +632,7 @@ function runMarket() {
   S.prevPrices = { ...S.prices };
   S.moves = STOCKS.map(st => {
     const from = S.prices[st.sym];
-    const dir  = Math.random() < 0.5 ? -1 : 1;
+    const dir  = Math.random() < upProb(st.sym) ? 1 : -1;
     const mag  = MOVE_MIN + Math.random() * (MOVE_MAX - MOVE_MIN);
     const to   = Math.max(0.01, round2(from * (1 + dir * mag)));
     S.prices[st.sym] = to;
@@ -924,7 +952,7 @@ function renderOptionDesk(p) {
 
   $('optStrikeRow').innerHTML = '';
   for (const k of strikes) {
-    const prem = premiumPerShare(sel.kind, spot, k) * CONTRACT;
+    const prem = premiumPerShare(sel.kind, sel.sym, k) * CONTRACT;
     const b = document.createElement('button');
     b.className = 'opt-btn' + (sel.strike === k ? ' sel' : '');
     b.innerHTML = `${money(k)}<small>get ${money(round2(prem))}</small>`;
@@ -933,7 +961,7 @@ function renderOptionDesk(p) {
   }
 
   const shares  = sel.qty * CONTRACT;
-  const premium = round2(premiumPerShare(sel.kind, spot, sel.strike) * shares);
+  const premium = round2(premiumPerShare(sel.kind, sel.sym, sel.strike) * shares);
   $('optSummary').innerHTML = sel.kind === 'put'
     ? `You get <b>${money(premium)}</b> now. <b>${money(round2(sel.strike * shares))}</b> of your cash is held ` +
       `aside, and if ${sel.sym} ends below ${money(sel.strike)} you buy ${shares} shares at ${money(sel.strike)}.`
