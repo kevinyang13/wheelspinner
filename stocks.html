@@ -88,10 +88,15 @@
 
     /* Market on the left, your money on the right — both always on screen. */
     .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(330px, 460px); gap: 16px; width: 100%; align-items: start; }
-    .col { display: flex; flex-direction: column; gap: 16px; min-width: 0; container-type: inline-size; }
-    @media (max-width: 880px) { .cols { grid-template-columns: 1fr; } }
+    .col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+    @media (max-width: 880px) {
+      .cols { display: flex; flex-direction: column; }
+      .col  { display: contents; }
+      #panelEveryone { order: 1; } #panelMarket  { order: 2; } #panelPortfolio { order: 3; }
+      #panelOptions  { order: 4; } #panelOpen    { order: 5; } #panelChart     { order: 6; }
+    }
 
-    .panel { width: 100%; background: var(--card); border: 2px solid var(--border); border-radius: 20px; padding: 18px; }
+    .panel { width: 100%; container-type: inline-size; background: var(--card); border: 2px solid var(--border); border-radius: 20px; padding: 18px; }
     .panel h3 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 14px; }
 
     .stock-row {
@@ -136,6 +141,21 @@
     .leg .sw { width: 11px; height: 11px; border-radius: 3px; flex: none; }
     .leg .ls { font-weight: 900; }
     .leg .lp { margin-left: auto; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+    /* Everyone, on every turn */
+    .ev-row { padding: 11px 9px; border-bottom: 1px solid var(--border); border-radius: 12px; }
+    .ev-row:last-child { border-bottom: none; }
+    .ev-row.now { background: color-mix(in srgb, var(--green) 9%, transparent); border-bottom-color: transparent; }
+    .e-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+    .e-name { font-weight: 900; font-size: 1rem; min-width: 0; }
+    .e-worth { font-weight: 900; font-variant-numeric: tabular-nums; }
+    .e-worth small { display: block; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.8px;
+                     color: var(--muted); font-weight: 800; text-align: right; }
+    .e-held { font-size: 0.74rem; color: var(--muted); margin-top: 3px; line-height: 1.5; }
+    .e-nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 7px; }
+    .e-num { font-size: 0.82rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .e-num small { display: block; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.8px;
+                   color: var(--muted); font-weight: 800; }
 
     /* Portfolio */
     .hold-row {
@@ -293,12 +313,12 @@
 
   <div class="cols">
   <div class="col">
-  <div class="panel">
+  <div class="panel" id="panelMarket">
     <h3>The market — buy and sell with the Bank</h3>
     <div id="marketRows"></div>
   </div>
 
-  <div class="panel">
+  <div class="panel" id="panelChart">
     <h3>Every stock since the opening bell — % up or down</h3>
     <div class="chart" id="chartBox"></div>
     <div class="legend" id="chartLegend"></div>
@@ -306,12 +326,17 @@
   </div>
 
   <div class="col">
-  <div class="panel">
+  <div class="panel" id="panelEveryone">
+    <h3>Everyone right now</h3>
+    <div id="everyone"></div>
+  </div>
+
+  <div class="panel" id="panelPortfolio">
     <h3>Your portfolio</h3>
     <div id="holdings"></div>
   </div>
 
-  <div class="panel">
+  <div class="panel" id="panelOptions">
     <h3>Option desk — sell to the Bank, expires at the end of this round</h3>
     <div class="option-group" style="margin-bottom:14px;">
       <div class="option-label">Stock</div>
@@ -341,7 +366,7 @@
     <div style="text-align:center;"><button class="big-start alt" id="sellOptBtn">Sell it 💰</button></div>
   </div>
 
-  <div class="panel">
+  <div class="panel" id="panelOpen">
     <h3>Your open options</h3>
     <div id="openPositions"></div>
   </div>
@@ -659,6 +684,7 @@ function renderTrade() {
     $('marketRows').appendChild(row);
   }
 
+  renderEveryone();
   renderChart('chartBox', 'chartLegend');
   renderHoldings(p);
   renderOptionDesk(p);
@@ -718,6 +744,34 @@ function renderChart(boxId, legendId) {
       <span class="lp ${change >= 0 ? 'up' : 'down'}">${label(pts[pts.length - 1])}</span>
     </div>`;
   }).join('');
+}
+
+// Trading is public, so every player's cash, stock and net worth is on screen
+// on every turn -- not just whoever is holding the device.
+function renderEveryone() {
+  const box = $('everyone');
+  box.innerHTML = '';
+  S.players.forEach((p, i) => {
+    const held = STOCKS.filter(st => sharesOf(p, st.sym) > 0)
+      .map(st => `${st.emoji} ${st.sym} ${sharesOf(p, st.sym)}`).join(' \u00b7 ');
+    const mark = optionMark(p);
+    const row = document.createElement('div');
+    row.className = 'ev-row' + (i === S.turn ? ' now' : '');
+    row.innerHTML = `
+      <div class="e-top">
+        <div class="e-name">${i === S.turn ? '\u25b6 ' : ''}${p.name}</div>
+        <div class="e-worth"><small>net worth</small>${money(netWorth(p))}</div>
+      </div>
+      <div class="e-held">${held || 'no shares \u2014 all cash'}${
+        p.reserved ? ` \u00b7 ${money(p.reserved)} of that cash is held for puts` : ''}</div>
+      <div class="e-nums">
+        <div class="e-num"><small>cash</small>${money(p.cash)}</div>
+        <div class="e-num"><small>stocks</small>${money(stockValue(p))}</div>
+        <div class="e-num"><small>options</small>${
+          p.options.length ? `${p.options.length} \u00b7 ${signed(-mark)}` : '\u2014'}</div>
+      </div>`;
+    box.appendChild(row);
+  });
 }
 
 function renderHoldings(p) {
