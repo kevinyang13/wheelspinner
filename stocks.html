@@ -300,7 +300,7 @@
         and that much cash is held aside. If the price ends up <i>below</i> the strike, you must buy at the strike.</li>
     <li><b>Sell a covered call</b> — you own 10 shares and promise to sell them at the strike. You get paid
         a premium now and the shares are locked. If the price ends up <i>above</i> the strike, they are sold at the strike.</li>
-    <li>Options last one round. Every round each stock jumps <b>30%–50% up or down</b>, so nothing is safe.</li>
+    <li>Options last one round. Every round each stock moves <b>anywhere from 0% to 50%, up or down</b>, so nothing is safe — but nothing is certain either.</li>
     <li>The game ends when everybody says they're done, or when someone is wiped out.</li>
   </details>
 </div>
@@ -439,7 +439,7 @@ const $ = id => document.getElementById(id);
 // ═══════════ Rules of this market ═══════════
 const KEY        = 'stocks-state';
 const CONTRACT   = 10;      // shares in one option contract
-const MOVE_MIN   = 0.30;    // every stock moves at least this much, every round
+const MOVE_MIN   = 0.00;    // a stock can also barely budge
 const MOVE_MAX   = 0.50;
 const BANK_EDGE  = 0.90;    // the Bank pays 90% of fair value for an option it buys
 const BUST_AT    = 0.10;    // wiped out below 10% of the starting stake
@@ -471,7 +471,7 @@ const stockOf = sym => STOCKS.find(s => s.sym === sym);
 
 // ═══════════ Option pricing ═══════════
 // The payoff is averaged over exactly the move this game rolls at the end of the
-// round: equal chance of up or down, size spread evenly over 30%–50%. So a premium
+// round: equal chance of up or down, size spread evenly over 0%–50%. So a premium
 // is the true expected cost to the writer, less the Bank's cut.
 function fairValue(kind, spot, strike) {
   const N = 600;
@@ -724,7 +724,7 @@ function renderTrade() {
 
 // Each stock is drawn as a percentage of its own opening price, so a $18 stock and
 // a $120 one share one scale. The axis is logarithmic: a halving and a doubling then
-// take up the same room, which is what you want when everything moves 30-50% a round.
+// take up the same room, which is what you want when a stock can move up to 50% a round.
 const LINE_COLORS = ['#e0706f', '#f0a65c', '#dfa72e', '#5fb87c', '#3aa9a3',
                      '#5ab9dc', '#5a9fe0', '#8e82d6', '#b56fd0', '#e786a7'];
 const colorFor = sym => LINE_COLORS[STOCKS.findIndex(s => s.sym === sym) % LINE_COLORS.length];
