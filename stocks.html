@@ -324,6 +324,7 @@
     <div class="run-group">
       <button class="big-start" id="runMarketBtn">Run the market 🔔</button>
       <button class="ghost-btn" id="run10Btn">Run × 10 ⏩</button>
+      <button class="ghost-btn" id="randomBuyBtn" title="Every player spends all their free cash on random shares">🎲 Everyone buys at random</button>
     </div>
   </div>
 
@@ -1094,6 +1095,32 @@ function setTrader(i) {
   renderTrade();
 }
 
+// Spend every player's free cash on random shares. Each buy takes a slice rather
+// than the lot, so the money spreads over several stocks, and the loop runs until
+// nobody can afford another share. Cash held aside for a put is left alone.
+function randomBuyAll() {
+  let spent = 0, bought = 0;
+  for (const p of S.players) {
+    for (let guard = 0; guard < 500; guard++) {
+      const affordable = STOCKS.filter(st => S.prices[st.sym] <= freeCash(p));
+      if (!affordable.length) break;
+      const st  = affordable[Math.floor(Math.random() * affordable.length)];
+      const max = Math.floor(freeCash(p) / S.prices[st.sym]);
+      const qty = Math.min(max, Math.max(1, Math.ceil(Math.random() * Math.ceil(max / 3))));
+      const cost = round2(qty * S.prices[st.sym]);
+      if (buyShares(p, st.sym, qty)) break;        // refused: nothing more to do here
+      spent += cost; bought += qty;
+    }
+  }
+  save();
+  renderTrade();
+  const m = $('tradeMsg');
+  m.className = 'msg ok';
+  m.textContent = bought
+    ? `🎲 Everyone bought at random — ${bought} shares for ${money(round2(spent))}.`
+    : 'Nobody had enough free cash to buy a share.';
+}
+
 function runRound(times) {
   for (let i = 0; i < (times || 1); i++) {
     runMarket();
@@ -1173,6 +1200,7 @@ $('densityBtn').addEventListener('click', () => {
 });
 $('runMarketBtn').addEventListener('click', () => { $('tradeMsg').textContent = ' '; runRound(1); });
 $('run10Btn').addEventListener('click', () => { $('tradeMsg').textContent = ' '; runRound(10); });
+$('randomBuyBtn').addEventListener('click', randomBuyAll);
 $('playAgainBtn').addEventListener('click', () => { clearSave(); S = null; showScreen('setupScreen'); $('resumeBox').style.display = 'none'; });
 
 // ═══════════ Boot ═══════════
