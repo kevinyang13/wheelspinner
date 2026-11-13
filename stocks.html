@@ -324,7 +324,7 @@
     <div class="run-group">
       <button class="big-start" id="runMarketBtn">Run the market 🔔</button>
       <button class="ghost-btn" id="run10Btn">Run × 10 ⏩</button>
-      <button class="ghost-btn" id="randomBuyBtn" title="Every player spends all their free cash on random shares">🎲 Everyone buys at random</button>
+      <button class="ghost-btn" id="randomBuyBtn" title="Everyone sells what they can and spends all their free cash on a fresh random spread">🎲 Reshuffle everyone's stocks</button>
     </div>
   </div>
 
@@ -1095,12 +1095,21 @@ function setTrader(i) {
   renderTrade();
 }
 
-// Spend every player's free cash on random shares. Each buy takes a slice rather
-// than the lot, so the money spreads over several stocks, and the loop runs until
-// nobody can afford another share. Cash held aside for a put is left alone.
+// Reshuffle: every player sells every share they are free to sell, then spends all
+// their free cash on a fresh random spread. Each buy takes a slice rather than the
+// lot, so the money lands on several stocks. Shares locked under a covered call and
+// cash held aside behind a put are left alone.
 function randomBuyAll() {
-  let spent = 0, bought = 0;
+  let sold = 0, proceeds = 0, spent = 0, bought = 0;
+
   for (const p of S.players) {
+    for (const st of STOCKS) {
+      const free = freeShares(p, st.sym);
+      if (free <= 0) continue;
+      const take = round2(free * S.prices[st.sym]);
+      if (sellShares(p, st.sym, free)) continue;   // refused: leave it be
+      sold += free; proceeds += take;
+    }
     for (let guard = 0; guard < 500; guard++) {
       const affordable = STOCKS.filter(st => S.prices[st.sym] <= freeCash(p));
       if (!affordable.length) break;
@@ -1112,13 +1121,19 @@ function randomBuyAll() {
       spent += cost; bought += qty;
     }
   }
+
   save();
   renderTrade();
   const m = $('tradeMsg');
   m.className = 'msg ok';
-  m.textContent = bought
-    ? `🎲 Everyone bought at random — ${bought} shares for ${money(round2(spent))}.`
-    : 'Nobody had enough free cash to buy a share.';
+  if (!bought && !sold) {
+    m.textContent = 'Nobody had shares to sell or cash to spend.';
+  } else if (sold) {
+    m.textContent = `\u{1F3B2} Reshuffled \u2014 sold ${sold} shares for ${money(round2(proceeds))}, ` +
+                    `bought ${bought} new ones for ${money(round2(spent))}.`;
+  } else {
+    m.textContent = `\u{1F3B2} Everyone bought at random \u2014 ${bought} shares for ${money(round2(spent))}.`;
+  }
 }
 
 function runRound(times) {
