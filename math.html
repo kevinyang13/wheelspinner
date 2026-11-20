@@ -299,6 +299,27 @@
       background: rgba(61,158,255,0.12); color: var(--sky); border: 1px solid rgba(61,158,255,0.2);
     }
 
+    /* ── Voice answers ── */
+    .voice-bar {
+      display: none; width: 100%; align-items: center; gap: 10px;
+      padding: 8px 14px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;
+      background: var(--card); border: 1px solid var(--line); color: var(--ink2);
+    }
+    .voice-bar.show { display: flex; }
+    .voice-bar.off  { opacity: 0.65; }
+    .mic-dot {
+      width: 12px; height: 12px; border-radius: 50%; flex: none;
+      background: var(--muted); box-shadow: 0 0 0 0 rgba(61,158,255,0.5);
+    }
+    .voice-bar.listening .mic-dot { background: var(--red); animation: micPulse 1.4s ease-out infinite; }
+    @keyframes micPulse {
+      0%   { box-shadow: 0 0 0 0 rgba(255,90,90,0.55); }
+      100% { box-shadow: 0 0 0 11px rgba(255,90,90,0); }
+    }
+    .voice-heard { margin-left: auto; font-weight: 800; color: var(--sky); font-variant-numeric: tabular-nums; }
+    .voice-bar.miss .voice-heard { color: var(--yellow); }
+    .voice-note { font-size: 0.72rem; color: var(--muted); font-weight: 500; margin-top: -4px; }
+
     /* ── Choices ── */
     .choices-wrap { position: relative; width: 100%; }
     .paused-overlay {
@@ -434,7 +455,7 @@
     </div>
 
     <div class="option-group sub-group" id="tableFocusGroup" style="width:100%; display:none">
-      <div class="option-label">Which table? — 2–9 facts only, any grade</div>
+      <div class="option-label">Which tables? — pick as many as you like, 2–9 facts only</div>
       <div class="option-row" id="tableFocusRow">
         <button class="opt-btn selected" data-group="tfocus" data-val="all">🔀 All</button>
       </div>
@@ -476,6 +497,15 @@
         <button class="opt-btn selected" data-group="timer" data-val="15">15 sec</button>
         <button class="opt-btn" data-group="timer" data-val="30">30 sec</button>
       </div>
+    </div>
+
+    <div class="option-group" id="answerModeGroup" style="width:100%; display:none">
+      <div class="option-label">How to answer</div>
+      <div class="option-row">
+        <button class="opt-btn selected" data-group="answers" data-val="tap">👆 Tap</button>
+        <button class="opt-btn" data-group="answers" data-val="voice">🎤 Say it out loud</button>
+      </div>
+      <div class="voice-note" id="voiceNote">Say the answer and it gets picked for you — tapping still works. Needs microphone permission.</div>
     </div>
 
     <button class="start-btn" id="startBtn">Start Game 🚀</button>
@@ -578,6 +608,12 @@
       <button class="pause-btn" id="pauseBtn" title="Pause">⏸</button>
     </div>
 
+    <div class="voice-bar" id="voiceBar">
+      <span class="mic-dot"></span>
+      <span id="voiceStatus">Listening — say the answer</span>
+      <span class="voice-heard" id="voiceHeard"></span>
+    </div>
+
     <!-- Question card -->
     <div class="question-card" style="width:100%">
       <div class="question-label" id="questionLabel">What is the answer?</div>
@@ -620,7 +656,10 @@
 // ═══════════════════════════════════════════════════
 //  CONFIG & STATE
 // ═══════════════════════════════════════════════════
-let cfg = { grade: '3', op: 'all', mode: 'solo', count: 20, timer: 15, fkind: 'all', tfocus: 'all' };
+let cfg = { grade: '3', op: 'all', mode: 'solo', count: 20, timer: 15, fkind: 'all', tfocus: 'all', answers: 'tap' };
+
+// Which times tables the drill draws from. Empty = all of them.
+let chosenTables = new Set();
 
 let queue = [], qIdx = 0;
 let scores = { kyle: 0, lindsey: 0 }, streak = 0;
@@ -656,9 +695,23 @@ const TABLE_MAX = 10;
 const DRILL_MIN = 2;      // the 1s and the 10s are freebies, so the drill
 const DRILL_MAX = 9;      // runs 2-9 both ways
 
-// The "which table?" row: All, then one button per times table.
+// The "which tables?" row: All, then one button per times table. These toggle,
+// so 3s + 7s together is a round of nothing but threes and sevens. Turning the
+// last one off drops back to All.
+function paintTableButtons() {
+  document.querySelectorAll('.opt-btn[data-group="tfocus"]').forEach(b => {
+    b.classList.toggle('selected',
+      b.dataset.val === 'all' ? chosenTables.size === 0 : chosenTables.has(Number(b.dataset.val)));
+  });
+  cfg.tfocus = chosenTables.size ? [...chosenTables].sort((x, y) => x - y).join(',') : 'all';
+}
+
 (function buildFocusButtons() {
   const row = $('tableFocusRow');
+  row.querySelector('.opt-btn[data-val="all"]').addEventListener('click', () => {
+    chosenTables.clear();
+    paintTableButtons();
+  });
   for (let n = DRILL_MIN; n <= DRILL_MAX; n++) {
     const b = document.createElement('button');
     b.className = 'opt-btn';
@@ -666,12 +719,12 @@ const DRILL_MAX = 9;      // runs 2-9 both ways
     b.dataset.val   = String(n);
     b.textContent   = n + 's';
     b.addEventListener('click', () => {
-      document.querySelectorAll('.opt-btn[data-group="tfocus"]').forEach(o => o.classList.remove('selected'));
-      b.classList.add('selected');
-      cfg.tfocus = b.dataset.val;
+      if (chosenTables.has(n)) chosenTables.delete(n); else chosenTables.add(n);
+      paintTableButtons();
     });
     row.appendChild(b);
   }
+  paintTableButtons();
 })();
 
 function buildTimesTable() {
@@ -1069,8 +1122,9 @@ function generateFractionProblem(grade) {
 // that number is always one of the two factors.
 function generateTableProblem() {
   let a = rand(DRILL_MIN, DRILL_MAX), b = rand(DRILL_MIN, DRILL_MAX);
-  if (cfg.tfocus !== 'all') {
-    const f = Number(cfg.tfocus);
+  if (chosenTables.size) {
+    const picks = [...chosenTables];
+    const f = picks[rand(0, picks.length - 1)];
     if (Math.random() < 0.5) a = f; else b = f;
   }
   const answer = a * b;
@@ -1152,6 +1206,173 @@ function shuffle(arr) {
 }
 
 // ═══════════════════════════════════════════════════
+//  VOICE ANSWERS  (Web Speech API)
+// ═══════════════════════════════════════════════════
+// Chrome, Edge and Safari only, and only over https:// or localhost. The
+// recogniser listens for the whole game and clicks whichever choice matches
+// the number it heard; tapping keeps working the entire time.
+const SRClass = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+const voiceSupported = !!SRClass &&
+  (location.protocol === 'https:' || ['localhost', '127.0.0.1', '::1'].includes(location.hostname));
+
+let recog = null;        // the live SpeechRecognition, or null
+let voiceWant = false;   // should we be listening right now?
+let voiceDead = false;   // mic refused or broken - stop trying for this session
+
+if (voiceSupported) $('answerModeGroup').style.display = '';
+
+// ── Spoken number → integer ───────────────────────
+const ONES = { zero:0, oh:0, one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8, nine:9,
+  ten:10, eleven:11, twelve:12, thirteen:13, fourteen:14, fifteen:15, sixteen:16,
+  seventeen:17, eighteen:18, nineteen:19 };
+const TENS = { twenty:20, thirty:30, forty:40, fourty:40, fifty:50, sixty:60, seventy:70, eighty:80, ninety:90 };
+// What a young voice often turns into on the way through the recogniser.
+const HOMOPHONES = { to:2, too:2, for:4, fore:4, ate:8, won:1, free:3, tree:3, sir:6, sex:6, nein:9, fiver:5 };
+
+// Every number mentioned in a phrase, in the order they were said.
+function parseSpokenNumbers(text) {
+  const out = [];
+  const words = text.toLowerCase().replace(/[^a-z0-9\s-]/g, ' ').replace(/-/g, ' ').split(/\s+/).filter(Boolean);
+
+  let cur = null, curTotal = 0;   // cur = the number being built, curTotal = + hundreds/thousands
+  const flush = () => {
+    const v = curTotal + (cur || 0);
+    if (cur !== null || curTotal) out.push(v);
+    cur = null; curTotal = 0;
+  };
+
+  for (const w of words) {
+    if (/^\d+$/.test(w))            { flush(); out.push(Number(w)); continue; }
+    if (w in ONES) {
+      // "twenty" then "three" is 23, not two separate numbers.
+      if (cur !== null && cur >= 20 && cur % 10 === 0 && ONES[w] > 0 && ONES[w] < 10) { cur += ONES[w]; continue; }
+      if (cur !== null) flush();
+      cur = ONES[w]; continue;
+    }
+    if (w in TENS)                  { if (cur !== null) flush(); cur = TENS[w]; continue; }
+    if (w === 'hundred' || w === 'thousand') {
+      const mult = w === 'hundred' ? 100 : 1000;
+      curTotal += (cur || 1) * mult; cur = null; continue;
+    }
+    if (w in HOMOPHONES)            { if (cur !== null) flush(); cur = HOMOPHONES[w]; continue; }
+    if (w === 'and')                continue;      // "one hundred and five"
+    flush();
+  }
+  flush();
+
+  // "forty" then "two" said separately also reads as 42.
+  for (let i = 0; i + 1 < out.length; i++) {
+    if (out[i] >= 20 && out[i] < 100 && out[i] % 10 === 0 && out[i + 1] > 0 && out[i + 1] < 10) {
+      out.push(out[i] + out[i + 1]);
+    }
+  }
+  return out;
+}
+
+// ── Hooking a spoken number up to the buttons ─────
+const voiceAnswerable = p => p && p.op !== 'fraction';   // fractions are tap-only
+
+function choiceValues() {
+  return [...$('choicesGrid').querySelectorAll('.choice-btn')].map(btn => ({
+    btn, val: Number(btn.textContent.replace(/[^0-9-]/g, '')),
+  }));
+}
+
+function setVoiceStatus(text, cls) {
+  $('voiceStatus').textContent = text;
+  const bar = $('voiceBar');
+  bar.classList.toggle('listening', cls === 'listening');
+  bar.classList.toggle('off', cls === 'off');
+}
+
+// Heard something: click the matching choice, or just show what came through.
+function handleHeard(text, isFinal) {
+  const p = queue[qIdx];
+  if (answered || isPaused || !voiceAnswerable(p)) return;
+
+  const said = parseSpokenNumbers(text);
+  if (!said.length) return;
+
+  const choices = choiceValues();
+  // Last match wins, so "thirty... no, thirty five" lands on 35.
+  for (let i = said.length - 1; i >= 0; i--) {
+    const hit = choices.find(c => c.val === said[i]);
+    if (hit) {
+      $('voiceHeard').textContent = said[i].toLocaleString();
+      $('voiceBar').classList.remove('miss');
+      hit.btn.click();
+      return;
+    }
+  }
+  if (isFinal) {                                  // heard a number, but not one on screen
+    $('voiceHeard').textContent = said[said.length - 1].toLocaleString() + ' ?';
+    $('voiceBar').classList.add('miss');
+  }
+}
+
+// ── Starting and stopping ─────────────────────────
+function voiceStart() {
+  if (!voiceSupported || voiceDead) return;
+  voiceWant = true;
+  $('voiceBar').classList.add('show');
+  $('voiceHeard').textContent = '';
+  setVoiceStatus('Starting the microphone…', 'off');
+  spinUp();
+}
+
+function spinUp() {
+  if (!voiceWant || voiceDead || recog) return;
+  const r = new SRClass();
+  r.lang = 'en-US';
+  r.continuous = true;
+  r.interimResults = true;
+  r.maxAlternatives = 3;
+
+  r.onstart  = () => setVoiceStatus('Listening — say the answer', 'listening');
+  r.onresult = e => {
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const res = e.results[i];
+      for (let a = 0; a < res.length; a++) handleHeard(res[a].transcript, res.isFinal);
+    }
+  };
+  r.onerror = e => {
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+      voiceDead = true; voiceWant = false;
+      setVoiceStatus('Microphone blocked — tap your answer instead', 'off');
+      showToast('🎤 Mic blocked — tap instead', 'wrong');
+    } else if (e.error === 'audio-capture') {
+      voiceDead = true; voiceWant = false;
+      setVoiceStatus('No microphone found — tap your answer instead', 'off');
+    }
+    // no-speech, aborted and network all just fall through to onend's restart
+  };
+  r.onend = () => {
+    recog = null;
+    if (voiceWant && !voiceDead) setTimeout(spinUp, 250);   // Chrome stops on its own every so often
+    else if (!voiceDead) setVoiceStatus('Microphone off', 'off');
+  };
+
+  recog = r;
+  try { r.start(); } catch { recog = null; }
+}
+
+function voiceStop() {
+  voiceWant = false;
+  $('voiceBar').classList.remove('show', 'listening', 'miss');
+  if (recog) { try { recog.abort(); } catch {} recog = null; }
+}
+
+// Each question resets the readout and says whether voice applies here.
+function voiceOnQuestion(p) {
+  if (!voiceWant && !voiceDead) return;
+  $('voiceHeard').textContent = '';
+  $('voiceBar').classList.remove('miss');
+  if (voiceDead) return;
+  setVoiceStatus(voiceAnswerable(p) ? 'Listening — say the answer' : 'Fractions are tap-only',
+                 voiceAnswerable(p) ? 'listening' : 'off');
+}
+
+// ═══════════════════════════════════════════════════
 //  GAME START
 // ═══════════════════════════════════════════════════
 function startGame() {
@@ -1171,6 +1392,7 @@ function startGame() {
 
   TIMER_SECS = Number(cfg.timer);
   showScreen('gameScreen');
+  if (cfg.answers === 'voice' && voiceSupported) voiceStart(); else voiceStop();
   renderQuestion();
 }
 
@@ -1194,7 +1416,9 @@ function renderQuestion() {
     'factor': 'Factors 🧩', 'fraction': 'Fractions 🍕'
   }[p.op];
   const tag = p.table
-    ? `Times Table 📋${cfg.tfocus === 'all' ? '' : ' · ' + cfg.tfocus + 's'}`
+    ? `Times Table 📋${chosenTables.size
+        ? ' · ' + [...chosenTables].sort((x, y) => x - y).map(n => n + 's').join(', ')
+        : ''}`
     : opLabel;
   $('questionLabel').innerHTML = `<span class="op-tag">${tag}</span>`;
   $('questionContent').innerHTML =
@@ -1203,6 +1427,7 @@ function renderQuestion() {
                           `<div class="math-equation">${p.a} ${p.op} ${p.b} = ?</div>`;
 
   buildChoices(p);
+  voiceOnQuestion(p);
   startTimer(p);
 }
 
@@ -1402,6 +1627,7 @@ function showToast(msg, type) {
 // ═══════════════════════════════════════════════════
 function showResults() {
   stopTimer();
+  voiceStop();
   $('progressFill').style.width = '100%';
 
   const total   = queue.length;
