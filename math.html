@@ -406,7 +406,7 @@
     <div class="setup-title">
       <span class="big-icon">🔢</span>
       <h1>Math Challenge</h1>
-      <p>Addition · Subtraction · Multiplication · Factors · Fractions</p>
+      <p>Addition · Subtraction · Multiplication · Times table · Factors · Fractions</p>
     </div>
 
     <div class="option-group" style="width:100%">
@@ -426,9 +426,17 @@
         <button class="opt-btn" data-group="op" data-val="+">➕ Add</button>
         <button class="opt-btn" data-group="op" data-val="−">➖ Sub</button>
         <button class="opt-btn" data-group="op" data-val="×">✖️ Mult</button>
+        <button class="opt-btn" data-group="op" data-val="table">📋 Times Table</button>
         <button class="opt-btn" data-group="op" data-val="factor">🧩 Factors</button>
         <button class="opt-btn" data-group="op" data-val="fraction">🍕 Fractions</button>
         <button class="opt-btn selected" data-group="op" data-val="all">🔀 All</button>
+      </div>
+    </div>
+
+    <div class="option-group sub-group" id="tableFocusGroup" style="width:100%; display:none">
+      <div class="option-label">Which table? — 1–10 facts only, any grade</div>
+      <div class="option-row" id="tableFocusRow">
+        <button class="opt-btn selected" data-group="tfocus" data-val="all">🔀 All</button>
       </div>
     </div>
 
@@ -612,7 +620,7 @@
 // ═══════════════════════════════════════════════════
 //  CONFIG & STATE
 // ═══════════════════════════════════════════════════
-let cfg = { grade: '3', op: 'all', mode: 'solo', count: 20, timer: 15, fkind: 'all' };
+let cfg = { grade: '3', op: 'all', mode: 'solo', count: 20, timer: 15, fkind: 'all', tfocus: 'all' };
 
 let queue = [], qIdx = 0;
 let scores = { kyle: 0, lindsey: 0 }, streak = 0;
@@ -631,7 +639,10 @@ document.querySelectorAll('.opt-btn').forEach(btn => {
     document.querySelectorAll(`.opt-btn[data-group="${g}"]`).forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
     cfg[g] = btn.dataset.val;
-    if (g === 'op') $('fractionKindGroup').style.display = cfg.op === 'fraction' ? '' : 'none';
+    if (g === 'op') {
+      $('fractionKindGroup').style.display = cfg.op === 'fraction' ? '' : 'none';
+      $('tableFocusGroup').style.display   = cfg.op === 'table'    ? '' : 'none';
+    }
   });
 });
 
@@ -642,6 +653,24 @@ $('playAgainBtn').addEventListener('click', () => showScreen('setupScreen'));
 //  MULTIPLICATION TABLE MODAL
 // ═══════════════════════════════════════════════════
 const TABLE_MAX = 10;
+
+// The "which table?" row: All, then one button per times table.
+(function buildFocusButtons() {
+  const row = $('tableFocusRow');
+  for (let n = 2; n <= TABLE_MAX; n++) {
+    const b = document.createElement('button');
+    b.className = 'opt-btn';
+    b.dataset.group = 'tfocus';
+    b.dataset.val   = String(n);
+    b.textContent   = n + 's';
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.opt-btn[data-group="tfocus"]').forEach(o => o.classList.remove('selected'));
+      b.classList.add('selected');
+      cfg.tfocus = b.dataset.val;
+    });
+    row.appendChild(b);
+  }
+})();
 
 function buildTimesTable() {
   const t = $('timesTable');
@@ -1033,11 +1062,37 @@ function generateFractionProblem(grade) {
   return { op: 'fraction', kind, html, text, answerText: valueText(answer), answer, grade, choices };
 }
 
+// Times-table drill: nothing but the 1–10 facts, so the grade setting is
+// ignored. With a table chosen, that number is always one of the two factors.
+function generateTableProblem() {
+  let a = rand(1, TABLE_MAX), b = rand(1, TABLE_MAX);
+  if (cfg.tfocus !== 'all') {
+    const f = Number(cfg.tfocus);
+    if (Math.random() < 0.5) a = f; else b = f;
+  }
+  const answer = a * b;
+
+  // Wrong answers kids actually reach for: a neighbouring row or column,
+  // and the two numbers added instead of multiplied.
+  const near = [a * (b + 1), a * (b - 1), (a + 1) * b, (a - 1) * b, answer + a, answer - a, a + b];
+  const pool = [...new Set(near)].filter(v => v > 0 && v !== answer);
+  const wrongs = shuffle(pool).slice(0, 3);
+  for (let i = 1; wrongs.length < 3; i++) {
+    for (const cand of [answer + i, answer - i]) {
+      if (cand > 0 && cand !== answer && !wrongs.includes(cand) && wrongs.length < 3) wrongs.push(cand);
+    }
+  }
+
+  return { a, b, op: '×', table: true, answer, grade: pickGrade(),
+           choices: shuffle([answer, ...wrongs]) };
+}
+
 function generateProblem() {
   const grade = pickGrade();
   const op    = pickOp();
   let a, b;
 
+  if (op === 'table')    return generateTableProblem();
   if (op === 'factor')   return generateFactorProblem(grade);
   if (op === 'fraction') return generateFractionProblem(grade);
 
@@ -1135,7 +1190,10 @@ function renderQuestion() {
     '+': 'Addition ➕', '−': 'Subtraction ➖', '×': 'Multiplication ✖️',
     'factor': 'Factors 🧩', 'fraction': 'Fractions 🍕'
   }[p.op];
-  $('questionLabel').innerHTML = `<span class="op-tag">${opLabel}</span>`;
+  const tag = p.table
+    ? `Times Table 📋${cfg.tfocus === 'all' ? '' : ' · ' + cfg.tfocus + 's'}`
+    : opLabel;
+  $('questionLabel').innerHTML = `<span class="op-tag">${tag}</span>`;
   $('questionContent').innerHTML =
     p.op === 'factor'   ? `<div class="factor-question">Which of these is a factor of <b>${p.a}</b>?</div>` :
     p.op === 'fraction' ? `<div class="frac-question">${p.html}${p.kind === 'of' ? '' : '<span class="dot">=</span>?'}</div>` :
