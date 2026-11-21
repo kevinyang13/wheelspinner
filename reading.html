@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <title>Story Detective</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito', system-ui, sans-serif;
+      background: var(--bg); color: var(--ink);
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 12px 16px 48px;
+    }
+
+    nav {
+      width: 100%; max-width: 760px;
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 12px;
+    }
+    nav a { color: var(--purple); text-decoration: none; font-size: 0.9rem; opacity: 0.85; }
+    nav a:hover { opacity: 1; }
+    nav span { font-size: 1rem; font-weight: 800; }
+
+    .screen { display: none; width: 100%; max-width: 760px; flex-direction: column; align-items: center; gap: 20px; }
+    .screen.active { display: flex; }
+
+    /* ── Setup ── */
+    .setup-title { text-align: center; }
+    .setup-title .big-icon { font-size: 2.6rem; display: block; }
+    .setup-title h1 { font-size: 2rem; font-weight: 900; margin-top: 4px; }
+    .setup-title p { color: var(--muted); font-size: 0.88rem; margin-top: 6px; }
+
+    .option-group { width: 100%; }
+    .option-label {
+      font-size: 0.74rem; text-transform: uppercase; letter-spacing: 1px;
+      color: var(--muted); margin-bottom: 8px; font-weight: 700;
+    }
+    .option-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .opt-btn {
+      flex: 1 1 auto; min-width: 110px; padding: 11px 10px; border-radius: 14px;
+      border: 2px solid var(--border); background: var(--card); color: var(--ink2);
+      font-family: inherit; font-size: 0.92rem; font-weight: 700; cursor: pointer;
+      transition: border-color .18s, color .18s, background .18s;
+    }
+    .opt-btn:hover { border-color: var(--purple); color: var(--ink); }
+    .opt-btn.selected { border-color: var(--purple); background: rgba(181,111,208,0.14); color: var(--purple); }
+
+    .story-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); gap: 12px; width: 100%; }
+    .story-card {
+      position: relative; text-align: left; cursor: pointer;
+      padding: 14px 16px; border-radius: 16px;
+      border: 2px solid var(--border); background: var(--card);
+      font-family: inherit; color: var(--ink);
+      transition: transform .15s, border-color .18s, box-shadow .18s;
+    }
+    .story-card:hover { transform: translateY(-2px); border-color: var(--purple); box-shadow: 0 8px 22px rgba(0,0,0,0.10); }
+    .story-card .sc-emoji { font-size: 1.7rem; }
+    .story-card .sc-title { font-weight: 900; font-size: 1.02rem; margin-top: 4px; line-height: 1.2; }
+    .story-card .sc-meta { color: var(--muted); font-size: 0.76rem; margin-top: 6px; font-weight: 600; }
+    .story-card .sc-best {
+      position: absolute; top: 10px; right: 12px;
+      font-size: 0.72rem; font-weight: 800; color: var(--green);
+    }
+
+    .big-start {
+      padding: 14px 42px; border: none; border-radius: 30px;
+      font-family: inherit; font-size: 1.1rem; font-weight: 900; cursor: pointer;
+      background: linear-gradient(135deg, var(--purple), var(--sky));
+      color: #fff; box-shadow: 0 6px 22px rgba(181,111,208,0.35);
+    }
+    .big-start:hover { filter: brightness(1.06); }
+    .ghost-btn {
+      padding: 11px 22px; border-radius: 26px; cursor: pointer; font-family: inherit;
+      border: 2px solid var(--border); background: var(--card);
+      color: var(--ink2); font-size: 0.92rem; font-weight: 700;
+    }
+    .ghost-btn:hover { border-color: var(--purple); color: var(--purple); }
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+
+    /* ── Story ── */
+    .story-head { text-align: center; }
+    .story-head .sh-emoji { font-size: 2.4rem; }
+    .story-head h2 { font-size: 1.6rem; font-weight: 900; margin-top: 2px; }
+    .story-head .sh-sub { color: var(--muted); font-size: 0.8rem; margin-top: 4px; font-weight: 600; }
+
+    .passage {
+      width: 100%; background: var(--card); border: 1px solid var(--border);
+      border-radius: 18px; padding: 22px 24px;
+      font-size: 1.08rem; line-height: 1.75; color: var(--ink);
+    }
+    .passage p + p { margin-top: 14px; }
+    .passage.compact { font-size: 0.95rem; line-height: 1.6; padding: 16px 18px; }
+
+    /* ── Question ── */
+    .q-progress { width: 100%; }
+    .q-progress-info {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 0.78rem; color: var(--muted); font-weight: 700; margin-bottom: 6px;
+    }
+    .q-bar { width: 100%; height: 8px; border-radius: 6px; background: var(--border); overflow: hidden; }
+    .q-fill { height: 100%; width: 0%; border-radius: 6px; background: linear-gradient(90deg, var(--purple), var(--sky)); transition: width .35s ease; }
+
+    .q-card {
+      width: 100%; background: var(--card); border: 1px solid var(--border);
+      border-radius: 18px; padding: 26px 24px; text-align: center;
+    }
+    .skill-tag {
+      display: inline-block; font-size: 0.68rem; font-weight: 800;
+      letter-spacing: 1px; text-transform: uppercase;
+      padding: 3px 11px; border-radius: 20px; margin-bottom: 12px;
+      background: rgba(181,111,208,0.14); color: var(--purple); border: 1px solid rgba(181,111,208,0.25);
+    }
+    .q-text { font-size: clamp(1.12rem, 3.2vw, 1.4rem); font-weight: 800; line-height: 1.45; }
+
+    .answer-card {
+      display: none; width: 100%; margin-top: 14px;
+      background: rgba(95,184,124,0.12); border: 1px solid rgba(95,184,124,0.4);
+      border-radius: 16px; padding: 18px 20px; text-align: left;
+    }
+    .answer-card.show { display: block; }
+    .answer-card .ac-label {
+      font-size: 0.7rem; font-weight: 800; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--green-deep); margin-bottom: 6px;
+    }
+    .answer-card .ac-text { font-size: 1rem; line-height: 1.6; color: var(--ink); }
+
+    .score-btns { display: none; gap: 10px; flex-wrap: wrap; justify-content: center; }
+    .score-btns.show { display: flex; }
+    .score-btn {
+      padding: 13px 28px; border-radius: 26px; cursor: pointer; font-family: inherit;
+      font-size: 1rem; font-weight: 800; border: 2px solid transparent;
+    }
+    .score-btn.got  { background: rgba(95,184,124,0.16); border-color: var(--green); color: var(--green-deep); }
+    .score-btn.miss { background: rgba(240,167,46,0.14); border-color: var(--gold); color: var(--gold); }
+    .score-btn:hover { filter: brightness(1.08); }
+
+    .peek-wrap { width: 100%; }
+    .peek-body { display: none; margin-top: 10px; }
+    .peek-body.show { display: block; }
+
+    .turn-pill {
+      display: none; align-items: center; gap: 8px; padding: 6px 16px;
+      border-radius: 20px; font-weight: 800; font-size: 0.9rem;
+      border: 2px solid var(--border); background: var(--card); color: var(--ink2);
+    }
+    .turn-pill.show { display: inline-flex; }
+    .turn-pill.kyle    { border-color: var(--sky);    color: var(--sky); }
+    .turn-pill.lindsey { border-color: var(--purple); color: var(--purple); }
+
+    /* ── Results ── */
+    .result-head { text-align: center; }
+    .result-head .big-icon { font-size: 3rem; display: block; }
+    .result-head h2 { font-size: 1.7rem; font-weight: 900; margin-top: 4px; }
+    .result-head p { color: var(--muted); font-size: 0.88rem; margin-top: 6px; }
+
+    .score-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; width: 100%; }
+    .score-tile {
+      flex: 1 1 150px; background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 16px; text-align: center;
+    }
+    .score-tile .st-name { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); font-weight: 800; }
+    .score-tile .st-val  { font-size: 2rem; font-weight: 900; margin-top: 4px; color: var(--purple); }
+
+    .recap { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 8px 18px 14px; }
+    .recap-row { padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .recap-row:last-child { border-bottom: none; }
+    .recap-q { font-weight: 800; font-size: 0.95rem; display: flex; gap: 8px; align-items: flex-start; }
+    .recap-a { color: var(--ink2); font-size: 0.88rem; line-height: 1.55; margin-top: 5px; padding-left: 26px; }
+
+    @media (max-width: 520px) {
+      .passage { padding: 18px 16px; font-size: 1rem; }
+      .q-card  { padding: 20px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html">← Home</a>
+  <span>🕵️ Story Detective</span>
+</nav>
+
+<!-- ══════════════ SETUP ══════════════ -->
+<div id="setupScreen" class="screen active">
+  <div class="setup-title">
+    <span class="big-icon">🕵️</span>
+    <h1>Story Detective</h1>
+    <p>Read a story, then answer questions about what really happened — even the parts the story never says out loud.</p>
+  </div>
+
+  <div class="option-group">
+    <div class="option-label">Who's answering</div>
+    <div class="option-row">
+      <button class="opt-btn selected" data-group="mode" data-val="solo">👤 Solo</button>
+      <button class="opt-btn" data-group="mode" data-val="versus">👧👦 Kyle &amp; Lindsey</button>
+    </div>
+  </div>
+
+  <div class="option-group">
+    <div class="option-label">Pick a story</div>
+    <div class="story-grid" id="storyGrid"></div>
+  </div>
+
+  <button class="ghost-btn" id="randomBtn">🔀 Surprise me</button>
+</div>
+
+<!-- ══════════════ STORY ══════════════ -->
+<div id="storyScreen" class="screen">
+  <div class="story-head">
+    <span class="sh-emoji" id="storyEmoji">📖</span>
+    <h2 id="storyTitle">Story</h2>
+    <div class="sh-sub" id="storySub"></div>
+  </div>
+
+  <div class="passage" id="passage"></div>
+
+  <div class="btn-row">
+    <button class="big-start" id="askMeBtn">I'm ready — ask me! →</button>
+    <button class="ghost-btn" id="readAloudBtn">🔊 Read it to me</button>
+    <button class="ghost-btn" id="backBtn">← Another story</button>
+  </div>
+</div>
+
+<!-- ══════════════ QUESTIONS ══════════════ -->
+<div id="quizScreen" class="screen">
+  <div class="q-progress">
+    <div class="q-progress-info">
+      <span id="qLabel">Question 1 of 4</span>
+      <span id="qScore">0 so far</span>
+    </div>
+    <div class="q-bar"><div class="q-fill" id="qFill"></div></div>
+  </div>
+
+  <div class="turn-pill" id="turnPill"><span id="turnWho">Kyle</span>'s turn</div>
+
+  <div class="q-card">
+    <div class="skill-tag" id="skillTag" style="display:none"></div>
+    <div class="q-text" id="qText"></div>
+    <div class="answer-card" id="answerCard">
+      <div class="ac-label">What to listen for</div>
+      <div class="ac-text" id="aText"></div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="big-start" id="revealBtn">Show the answer 👀</button>
+  </div>
+
+  <div class="score-btns" id="scoreBtns">
+    <button class="score-btn got"  id="gotBtn">👍 Got it</button>
+    <button class="score-btn miss" id="missBtn">🤔 Not yet</button>
+  </div>
+
+  <div class="peek-wrap">
+    <button class="ghost-btn" id="peekBtn" style="width:100%">📖 Peek at the story</button>
+    <div class="peek-body" id="peekBody"><div class="passage compact" id="peekPassage"></div></div>
+  </div>
+</div>
+
+<!-- ══════════════ RESULTS ══════════════ -->
+<div id="resultScreen" class="screen">
+  <div class="result-head">
+    <span class="big-icon" id="resultIcon">🎉</span>
+    <h2 id="resultTitle">Nice detective work!</h2>
+    <p id="resultSub"></p>
+  </div>
+
+  <div class="score-row" id="scoreRow"></div>
+  <div class="recap" id="recap"></div>
+
+  <div class="btn-row">
+    <button class="big-start" id="anotherBtn">📚 Another story</button>
+    <button class="ghost-btn" id="reReadBtn">🔁 Read this one again</button>
+  </div>
+</div>
+
+<script src="stories.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+
+const KEY = 'reading-best';
+let cfg      = { mode: 'solo' };
+let story    = null;     // the story being read
+let qIdx     = 0;
+let log      = [];       // { q, got, player }
+let player   = 'kyle';   // whose turn, in two-player mode
+
+// ── Saved scores: best run per story, so the cards can show a ✓ ──
+function loadBest() {
+  try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; }
+}
+function saveBest(id, got, total) {
+  try {
+    const all = loadBest();
+    const prev = all[id];
+    if (!prev || got / total > prev.got / prev.total) all[id] = { got, total };
+    localStorage.setItem(KEY, JSON.stringify(all));
+  } catch {}
+}
+
+// ── Setup ──
+document.querySelectorAll('.opt-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const g = btn.dataset.group;
+    document.querySelectorAll(`.opt-btn[data-group="${g}"]`).forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    cfg[g] = btn.dataset.val;
+  });
+});
+
+function renderStoryGrid() {
+  const best = loadBest();
+  const grid = $('storyGrid');
+  grid.innerHTML = '';
+  STORIES.forEach(s => {
+    const card = document.createElement('button');
+    card.className = 'story-card';
+    const b = best[s.id];
+    card.innerHTML =
+      `<div class="sc-emoji">${s.emoji}</div>` +
+      `<div class="sc-title">${s.title}</div>` +
+      `<div class="sc-meta">${s.questions.length} questions · about ${s.minutes} min</div>` +
+      (b ? `<div class="sc-best">${b.got === b.total ? '⭐' : '✓'} ${b.got}/${b.total}</div>` : '');
+    card.addEventListener('click', () => openStory(s));
+    grid.appendChild(card);
+  });
+}
+
+$('randomBtn').addEventListener('click', () => openStory(STORIES[Math.floor(Math.random() * STORIES.length)]));
+
+// ── Reading the story ──
+function openStory(s) {
+  story = s;
+  qIdx = 0;
+  log = [];
+  player = 'kyle';
+  $('storyEmoji').textContent = s.emoji;
+  $('storyTitle').textContent = s.title;
+  $('storySub').textContent = `Read it together · ${s.questions.length} questions after`;
+  const html = s.text.map(p => `<p>${escapeHtml(p)}</p>`).join('');
+  $('passage').innerHTML = html;
+  $('peekPassage').innerHTML = html;
+  showScreen('storyScreen');
+}
+
+function escapeHtml(t) {
+  return t.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+}
+
+$('backBtn').addEventListener('click', () => { stopReading(); showScreen('setupScreen'); });
+$('askMeBtn').addEventListener('click', () => { stopReading(); startQuiz(); });
+
+// ── Read aloud (optional, browsers that have speech synthesis) ──
+const canSpeak = 'speechSynthesis' in window;
+if (!canSpeak) $('readAloudBtn').style.display = 'none';
+let speaking = false;
+
+function stopReading() {
+  if (!canSpeak) return;
+  speechSynthesis.cancel();
+  speaking = false;
+  $('readAloudBtn').textContent = '🔊 Read it to me';
+}
+
+$('readAloudBtn').addEventListener('click', () => {
+  if (!canSpeak || !story) return;
+  if (speaking) { stopReading(); return; }
+  const u = new SpeechSynthesisUtterance(story.text.join('\n\n'));
+  u.rate = 0.9;                       // a touch slower than default, for following along
+  u.onend = stopReading;
+  u.onerror = stopReading;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+  speaking = true;
+  $('readAloudBtn').textContent = '⏹ Stop reading';
+});
+
+// ── Questions ──
+function startQuiz() {
+  qIdx = 0;
+  log = [];
+  player = 'kyle';
+  $('peekBody').classList.remove('show');
+  $('peekBtn').textContent = '📖 Peek at the story';
+  renderQuestion();
+  showScreen('quizScreen');
+}
+
+function renderQuestion() {
+  const q = story.questions[qIdx];
+  const total = story.questions.length;
+
+  $('qLabel').textContent = `Question ${qIdx + 1} of ${total}`;
+  $('qScore').textContent = `${log.filter(l => l.got).length} so far`;
+  $('qFill').style.width = `${(qIdx / total) * 100}%`;
+
+  const tag = $('skillTag');
+  if (q.skill) { tag.textContent = q.skill; tag.style.display = ''; }
+  else tag.style.display = 'none';
+
+  $('qText').textContent = q.q;
+  $('aText').textContent = q.a;
+  $('answerCard').classList.remove('show');
+  $('scoreBtns').classList.remove('show');
+  $('revealBtn').style.display = '';
+
+  const pill = $('turnPill');
+  if (cfg.mode === 'versus') {
+    pill.classList.add('show');
+    pill.classList.toggle('kyle', player === 'kyle');
+    pill.classList.toggle('lindsey', player === 'lindsey');
+    $('turnWho').textContent = player === 'kyle' ? 'Kyle' : 'Lindsey';
+  } else {
+    pill.classList.remove('show');
+  }
+}
+
+$('revealBtn').addEventListener('click', () => {
+  $('answerCard').classList.add('show');
+  $('scoreBtns').classList.add('show');
+  $('revealBtn').style.display = 'none';
+});
+
+$('gotBtn').addEventListener('click',  () => mark(true));
+$('missBtn').addEventListener('click', () => mark(false));
+
+function mark(got) {
+  log.push({ q: story.questions[qIdx], got, player });
+  if (cfg.mode === 'versus') player = player === 'kyle' ? 'lindsey' : 'kyle';
+  qIdx++;
+  if (qIdx >= story.questions.length) showResults();
+  else renderQuestion();
+}
+
+$('peekBtn').addEventListener('click', () => {
+  const open = $('peekBody').classList.toggle('show');
+  $('peekBtn').textContent = open ? '🙈 Hide the story' : '📖 Peek at the story';
+});
+
+// ── Results ──
+function showResults() {
+  $('qFill').style.width = '100%';
+  const total = log.length;
+  const got   = log.filter(l => l.got).length;
+  const pct   = Math.round((got / total) * 100);
+
+  const icons  = ['📚', '👍', '⭐', '🏆'];
+  const titles = ['Good try — read it again!', 'Nice work!', 'Great detective work!', 'Every single one!'];
+  const tier   = pct === 100 ? 3 : pct >= 75 ? 2 : pct >= 50 ? 1 : 0;
+  $('resultIcon').textContent  = icons[tier];
+  $('resultTitle').textContent = titles[tier];
+  $('resultSub').textContent   = `${story.emoji} ${story.title}`;
+
+  const row = $('scoreRow');
+  row.innerHTML = '';
+  if (cfg.mode === 'versus') {
+    ['kyle', 'lindsey'].forEach(p => {
+      const mine = log.filter(l => l.player === p);
+      row.innerHTML += tile(p === 'kyle' ? 'Kyle' : 'Lindsey',
+        `${mine.filter(l => l.got).length}/${mine.length}`);
+    });
+  } else {
+    row.innerHTML = tile('Questions', `${got}/${total}`);
+  }
+
+  $('recap').innerHTML = log.map(l =>
+    `<div class="recap-row">` +
+      `<div class="recap-q"><span>${l.got ? '✅' : '🔁'}</span><span>${escapeHtml(l.q.q)}</span></div>` +
+      `<div class="recap-a">${escapeHtml(l.q.a)}</div>` +
+    `</div>`).join('');
+
+  saveBest(story.id, got, total);
+  showScreen('resultScreen');
+}
+
+const tile = (name, val) =>
+  `<div class="score-tile"><div class="st-name">${name}</div><div class="st-val">${val}</div></div>`;
+
+$('anotherBtn').addEventListener('click', () => { renderStoryGrid(); showScreen('setupScreen'); });
+$('reReadBtn').addEventListener('click',  () => openStory(story));
+
+// ── Screens ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $(id).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+renderStoryGrid();
+</script>
+</body>
+</html>
