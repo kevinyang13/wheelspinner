@@ -342,6 +342,26 @@
     .choice-btn.wrong   { border-color: var(--red) !important; background: rgba(231,76,60,0.15)  !important; color: var(--red)  !important; }
     .choice-btn.reveal  { border-color: var(--green) !important; background: rgba(46,204,113,0.08) !important; }
 
+    /* ── Spoken answer slot (shown instead of the choices) ── */
+    .voice-answer {
+      display: none; flex-direction: column; align-items: center; gap: 10px;
+      padding: 28px 18px; border-radius: 16px; text-align: center;
+      border: 2px dashed var(--border); background: var(--card);
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .voice-answer.show { display: flex; }
+    .va-heard {
+      font-size: clamp(2.2rem, 9vw, 3.2rem); font-weight: 900; line-height: 1;
+      color: var(--muted); font-variant-numeric: tabular-nums;
+    }
+    .va-heard.live { color: var(--sky); }
+    .voice-answer.correct { border-style: solid; border-color: var(--green); background: rgba(46,204,113,0.12); }
+    .voice-answer.correct .va-heard { color: var(--green); }
+    .voice-answer.wrong   { border-style: solid; border-color: var(--red);   background: rgba(231,76,60,0.12); }
+    .voice-answer.wrong .va-heard { color: var(--red); }
+    .va-hint  { font-size: 0.82rem; font-weight: 600; color: var(--muted); }
+    .va-truth { font-size: 1rem; font-weight: 800; color: var(--green); }
+
     /* ── Streak / Solo score ── */
     .streak-display { font-size: 0.9rem; color: var(--yellow); font-weight: 700; min-height: 24px; }
 
@@ -505,7 +525,7 @@
         <button class="opt-btn selected" data-group="answers" data-val="tap">👆 Tap</button>
         <button class="opt-btn" data-group="answers" data-val="voice">🎤 Say it out loud</button>
       </div>
-      <div class="voice-note" id="voiceNote">Say the answer and it gets picked for you — tapping still works. Needs microphone permission.</div>
+      <div class="voice-note" id="voiceNote">No multiple choice — the buttons are hidden and you just say the answer. Fractions stay tap-only. Needs microphone permission.</div>
     </div>
 
     <button class="start-btn" id="startBtn">Start Game 🚀</button>
@@ -624,10 +644,14 @@
     <div class="choices-wrap">
       <div class="paused-overlay" id="pausedOverlay">
         <span>⏸</span>
-        <span style="font-size:0.95rem;color:var(--ink2);font-weight:600">Paused — choices hidden</span>
+        <span id="pausedNote" style="font-size:0.95rem;color:var(--ink2);font-weight:600">Paused — choices hidden</span>
         <span style="font-size:0.72rem;color:var(--muted);font-weight:400">Tap ▶ to resume</span>
       </div>
       <div class="choices-grid" id="choicesGrid"></div>
+      <div class="voice-answer" id="voiceAnswer">
+        <div class="va-heard" id="vaHeard">…</div>
+        <div class="va-hint" id="vaHint">Say the answer out loud</div>
+      </div>
     </div>
 
   </div>
@@ -1218,6 +1242,12 @@ const voiceSupported = !!SRClass &&
 let recog = null;        // the live SpeechRecognition, or null
 let voiceWant = false;   // should we be listening right now?
 let voiceDead = false;   // mic refused or broken - stop trying for this session
+let voiceOnly = false;   // this run hides the choices and takes the answer by voice
+let heardBuf  = '';      // everything said for the current question
+let settleTimer = null;  // grace window before a non-matching number counts as the answer
+
+const spokenOnly  = () => voiceOnly && !voiceDead;
+const clearSettle = () => { if (settleTimer) { clearTimeout(settleTimer); settleTimer = null; } };
 
 if (voiceSupported) $('answerModeGroup').style.display = '';
 
@@ -1285,10 +1315,13 @@ function setVoiceStatus(text, cls) {
   bar.classList.toggle('off', cls === 'off');
 }
 
-// Heard something: click the matching choice, or just show what came through.
+// Heard something. With the choices hidden the spoken number IS the answer;
+// otherwise it clicks whichever choice matches.
 function handleHeard(text, isFinal) {
   const p = queue[qIdx];
   if (answered || isPaused || !voiceAnswerable(p)) return;
+
+  if (spokenOnly()) { handleSpokenAnswer(text, isFinal, p); return; }
 
   const said = parseSpokenNumbers(text);
   if (!said.length) return;
@@ -1308,6 +1341,68 @@ function handleHeard(text, isFinal) {
     $('voiceHeard').textContent = said[said.length - 1].toLocaleString() + ' ?';
     $('voiceBar').classList.add('miss');
   }
+}
+
+// No buttons to match against, so the number spoken is the answer given.
+// Finals arrive in pieces - "forty" can land before "two" - so each one is
+// added to a buffer and the whole phrase is re-parsed. The right answer counts
+// the moment it is heard; a wrong one waits out a short grace in case the rest
+// of the number is still coming.
+function handleSpokenAnswer(text, isFinal, p) {
+  const phrase = (heardBuf + ' ' + text).trim();
+  if (isFinal) heardBuf = phrase;
+
+  const said = parseSpokenNumbers(phrase);
+  if (!said.length) return;
+
+  if (said.includes(p.answer)) { clearSettle(); submitSpoken(p.answer, p); return; }
+
+  const guess = said[said.length - 1];
+  showHeardNumber(guess);
+  if (!isFinal) return;
+
+  clearSettle();
+  settleTimer = setTimeout(() => {
+    settleTimer = null;
+    if (!answered && !isPaused) submitSpoken(guess, p);
+  }, 1600);
+}
+
+function showHeardNumber(n) {
+  $('voiceHeard').textContent = n.toLocaleString();
+  $('voiceBar').classList.remove('miss');
+  const slot = $('vaHeard');
+  slot.textContent = n.toLocaleString();
+  slot.classList.add('live');
+}
+
+function submitSpoken(val, p) {
+  if (answered) return;
+  answered = true;
+  clearSettle();
+  stopTimer();
+  const correct = val === p.answer;
+  paintSpoken(val, correct, p);
+  scoreAnswer(correct, p, correct ? '✓ Correct!' : '✗ Wrong!');
+}
+
+// val null = the timer ran out before a number came through.
+function paintSpoken(val, correct, p) {
+  const box = $('voiceAnswer');
+  if (!box.classList.contains('show')) return;
+  box.classList.add(correct ? 'correct' : 'wrong');
+  $('vaHeard').textContent = val === null ? '—' : val.toLocaleString();
+  $('vaHint').innerHTML = correct
+    ? 'Nice — that is right!'
+    : `<span class="va-truth">Answer: ${p.answer.toLocaleString()}</span>`;
+}
+
+// Mic refused mid-game: put the buttons back for this question onwards.
+function fallbackToTap() {
+  clearSettle();
+  voiceOnly = false;
+  const p = queue[qIdx];
+  if (p) layoutAnswers(p);
 }
 
 // ── Starting and stopping ─────────────────────────
@@ -1340,9 +1435,11 @@ function spinUp() {
       voiceDead = true; voiceWant = false;
       setVoiceStatus('Microphone blocked — tap your answer instead', 'off');
       showToast('🎤 Mic blocked — tap instead', 'wrong');
+      fallbackToTap();
     } else if (e.error === 'audio-capture') {
       voiceDead = true; voiceWant = false;
       setVoiceStatus('No microphone found — tap your answer instead', 'off');
+      fallbackToTap();
     }
     // no-speech, aborted and network all just fall through to onend's restart
   };
@@ -1364,6 +1461,8 @@ function voiceStop() {
 
 // Each question resets the readout and says whether voice applies here.
 function voiceOnQuestion(p) {
+  heardBuf = '';
+  clearSettle();
   if (!voiceWant && !voiceDead) return;
   $('voiceHeard').textContent = '';
   $('voiceBar').classList.remove('miss');
@@ -1392,7 +1491,8 @@ function startGame() {
 
   TIMER_SECS = Number(cfg.timer);
   showScreen('gameScreen');
-  if (cfg.answers === 'voice' && voiceSupported) voiceStart(); else voiceStop();
+  voiceOnly = cfg.answers === 'voice' && voiceSupported;
+  if (voiceOnly) voiceStart(); else voiceStop();
   renderQuestion();
 }
 
@@ -1427,6 +1527,7 @@ function renderQuestion() {
                           `<div class="math-equation">${p.a} ${p.op} ${p.b} = ?</div>`;
 
   buildChoices(p);
+  layoutAnswers(p);
   voiceOnQuestion(p);
   startTimer(p);
 }
@@ -1450,12 +1551,27 @@ function buildChoices(p) {
   });
 }
 
+// Choices stay hidden while answering out loud. Fractions keep their buttons -
+// there is no sensible way to say "three fifths" into the recogniser.
+function layoutAnswers(p) {
+  const spoken = spokenOnly() && voiceAnswerable(p);
+  $('choicesGrid').style.display = spoken ? 'none' : '';
+  const box = $('voiceAnswer');
+  box.classList.toggle('show', spoken);
+  box.classList.remove('correct', 'wrong');
+  $('vaHeard').textContent = '…';
+  $('vaHeard').classList.remove('live');
+  $('vaHint').textContent = 'Say the answer out loud';
+  $('pausedNote').textContent = spoken ? 'Paused — timer stopped' : 'Paused — choices hidden';
+}
+
 // ═══════════════════════════════════════════════════
 //  CHOICE HANDLING
 // ═══════════════════════════════════════════════════
 function handleChoice(btn, p) {
   if (answered) return;
   answered = true;
+  clearSettle();
   stopTimer();
 
   const correct = btn.dataset.correct === '1';
@@ -1467,6 +1583,17 @@ function handleChoice(btn, p) {
   if (correct) {
     btn.classList.add('correct');
     btn.classList.remove('reveal');
+  } else {
+    btn.classList.add('wrong');
+  }
+
+  scoreAnswer(correct, p, correct ? '✓ Correct!' : '✗ Wrong!');
+}
+
+// Score, streak, log and the hop to the next question - shared by tapping,
+// answering out loud and running out of time.
+function scoreAnswer(correct, p, toast) {
+  if (correct) {
     streak++;
     if (cfg.mode === 'versus') {
       scores[currentPlayer]++;
@@ -1474,12 +1601,10 @@ function handleChoice(btn, p) {
     } else {
       $('soloScoreVal').textContent = parseInt($('soloScoreVal').textContent) + 1;
     }
-    showToast('✓ Correct!', 'correct');
   } else {
-    btn.classList.add('wrong');
     streak = 0;
-    showToast('✗ Wrong!', 'wrong');
   }
+  showToast(toast, correct ? 'correct' : 'wrong');
 
   $('streakDisplay').textContent = streak >= 3 ? `🔥 ${streak} streak!` : '';
   answeredLog.push({ p, correct, player: currentPlayer });
@@ -1556,19 +1681,13 @@ function updateTimerLabel(secs) {
 function timeOut(p) {
   if (answered) return;
   answered = true;
+  clearSettle();
   $('choicesGrid').querySelectorAll('.choice-btn').forEach(b => {
     b.disabled = true;
     if (b.dataset.correct === '1') b.classList.add('reveal');
   });
-  streak = 0;
-  showToast("⏰ Time's up!", 'wrong');
-  answeredLog.push({ p, correct: false, player: currentPlayer });
-  if (cfg.mode === 'versus') currentPlayer = currentPlayer === 'kyle' ? 'lindsey' : 'kyle';
-  setTimeout(() => {
-    qIdx++;
-    if (qIdx >= queue.length) showResults();
-    else renderQuestion();
-  }, 1400);
+  paintSpoken(null, false, p);
+  scoreAnswer(false, p, "⏰ Time's up!");
 }
 
 // ── Pause / Resume ──
