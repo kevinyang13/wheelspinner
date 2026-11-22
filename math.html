@@ -61,6 +61,10 @@
     .opt-btn small { display: block; font-size: 0.68rem; color: var(--muted); margin-top: 2px; font-weight: 500; }
     .opt-btn.selected small { color: #5aa9e6; }
     .sub-group { border-left: 3px solid rgba(61,158,255,0.35); padding-left: 14px; margin-top: -6px; }
+    /* 2s-9s share one row whatever the screen width; All sits across the top. */
+    .table-row { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; }
+    .table-row .opt-btn { min-width: 0; padding: 11px 2px; }
+    .table-row .opt-btn[data-val="all"] { grid-column: 1 / -1; padding: 11px 14px; }
     .opt-btn:hover { border-color: var(--sky); color: var(--ink); }
     .opt-btn.selected { border-color: var(--sky); background: rgba(61,158,255,0.15); color: var(--sky); }
 
@@ -476,7 +480,7 @@
 
     <div class="option-group sub-group" id="tableFocusGroup" style="width:100%; display:none">
       <div class="option-label">Which tables? — pick as many as you like, 2–9 facts only</div>
-      <div class="option-row" id="tableFocusRow">
+      <div class="option-row table-row" id="tableFocusRow">
         <button class="opt-btn selected" data-group="tfocus" data-val="all">🔀 All</button>
       </div>
     </div>
