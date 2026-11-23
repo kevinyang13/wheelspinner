@@ -206,6 +206,10 @@
     .arena-fleets .fleet { max-width: none; flex-direction: row; flex-wrap: wrap; gap: 4px 12px; }
     #tvBattle .arena-fleets .fleet:last-child { justify-content: flex-end; }
     .grid.mine { width: min(100%, 380px); aspect-ratio: 1.25 / 1; }
+    /* One player, one screen: the two boards stack instead of sitting side by side. */
+    .stack-view { width: 100%; flex-direction: column; align-items: center; gap: 8px; }
+    .stack-view .grid { width: min(100%, 460px); }
+    .stack-view .fleet { width: min(100%, 460px); }
 
     /* Fallback when WebGL is unavailable: plain emoji grid. */
     .grid.flat {
@@ -345,7 +349,7 @@
 <!-- ══════════════ ROLE PICKER ══════════════ -->
 <div class="screen active panel" id="roleScreen">
   <div class="title">🚢 Battleship
-    <small>TWO COMPUTERS · OR A TV WITH PHONES AS CONTROLLERS</small>
+    <small>TWO PLAYERS, A SCREEN EACH · OR A TV WITH PHONES</small>
   </div>
   <div class="row">
     <button class="big-btn" id="beTvBtn">
@@ -362,17 +366,17 @@
     <button class="ghost-btn" id="beCpuBtn">🤖 Play the computer on this device</button>
   </div>
   <div class="row">
-    <button class="ghost-btn" id="beHostPcBtn">💻 Two computers — start the game here</button>
-    <button class="ghost-btn" id="beTv2Btn">💻 Two computers — join with a code</button>
+    <button class="ghost-btn" id="beHostPcBtn">👥 Two players, a screen each — start here</button>
+    <button class="ghost-btn" id="beTv2Btn">👥 Join with a code</button>
   </div>
   <div class="row">
     <button class="ghost-btn" id="beDuelBtn">🤖 vs 👾 Watch two robots play</button>
   </div>
   <div class="note">
-    No TV? Two computers is the simplest game: one of you taps “start the game here” and reads
-    out the 4-letter code, the other taps “join with a code”. Each computer shows its own fleet
-    on the left and the enemy’s waters on the right — click a square, or use the arrow keys and Enter.
-    It works the same on two phones, a phone and a laptop, or across two rooms.
+    No TV? Two players with a screen each is the simplest game — any mix of phones, tablets and
+    computers. One of you taps “start here” and reads out the 4-letter code, the other taps
+    “join with a code”. Each screen shows your own fleet and the enemy’s waters: tap a square to
+    fire, or use the arrow keys and Enter. Your ships are always on show to you and never to them.
     <br>
     With a TV: open this page on the TV first, then each player joins from their own phone.
     Playing alone? Switch the TV to “vs Computer” — you can play from a phone <em>or</em> right on the TV.
@@ -407,7 +411,7 @@
   <div class="row" id="modeRow">
     <button class="ghost-btn on" id="modeTwo" type="button">👥 2 players</button>
     <button class="ghost-btn" id="modeCpu" type="button">🤖 vs Computer</button>
-    <button class="ghost-btn" id="modeTv2" type="button">💻 Two computers</button>
+    <button class="ghost-btn" id="modeTv2" type="button">📱💻 Two screens</button>
     <button class="ghost-btn" id="modeDuel" type="button">🤖 vs 👾 Robot duel</button>
   </div>
   <div class="row" id="cpuRow" style="display:none">
@@ -425,7 +429,7 @@
   <div class="turn-banner" id="turnBanner">—</div>
   <div class="shot-log" id="shotLog">&nbsp;</div>
   <button class="ghost-btn reveal-btn" type="button">🙈 Ships hidden on TV</button>
-  <div class="arena-wrap">
+  <div class="arena-wrap" id="arenaWrap">
     <div class="arena-hud">
       <div class="side kyle"><div class="board-name kyle">🟡 Kyle's fleet</div><div class="board-sub" id="kyleSub">fleet afloat</div></div>
       <div class="side lindsey"><div class="board-name lindsey"><span class="lemoji">🩵</span> <span class="lname">Lindsey</span>'s fleet</div><div class="board-sub" id="lindseySub">fleet afloat</div></div>
@@ -436,6 +440,18 @@
       <div class="fleet" id="fleetLindsey"></div>
     </div>
   </div>
+  <!-- Narrow screen (a phone, or a small window): enemy waters on top to fire at,
+       your own fleet below, both big enough to read. -->
+  <div class="stack-view" id="tvStack" style="display:none">
+    <div id="tvAimWrap" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:8px">
+      <div class="fleet" id="tvFoeFleet"></div>
+      <div class="board-sub" id="tvAimLabel">🎯 Enemy waters — tap to fire</div>
+      <div class="grid" id="tvAimGrid"></div>
+    </div>
+    <div class="board-sub" id="tvMineLabel">⚓ Your waters — your fleet</div>
+    <div class="grid mine" id="tvMineGrid"></div>
+  </div>
+
   <div class="row" id="tvActions">
     <button class="go-btn" id="tvAgainBtn" type="button" style="display:none">🔁 Play again</button>
     <button class="ghost-btn" id="botPauseBtn" type="button" style="display:none">⏸ Pause</button>
@@ -444,7 +460,7 @@
     <button class="ghost-btn" id="tvShuffleBtn" type="button" style="display:none">🎲 Shuffle my fleet</button>
     <button class="go-btn" id="tvReadyBtn" type="button" style="display:none">✅ Ready</button>
   </div>
-  <div class="note" id="tvHint" style="display:none">Tap or click a square on the enemy’s waters (right) — or use the arrow keys + Enter.</div>
+  <div class="note" id="tvHint" style="display:none">Tap or click a square on the enemy’s waters — or use the arrow keys + Enter.</div>
   <div class="note" id="overNote" style="display:none">Tap “Play again” on both phones for a rematch.</div>
 </div>
 
@@ -1297,9 +1313,9 @@ function renderTv() {
     if (game.tv2) {
       $('slotKyle').classList.add('here');
       $('slotKyle').querySelector('.sstate').textContent = 'this TV';
-      $('slotLindsey').querySelector('.sstate').textContent = game.p.lindsey.here ? '💻 connected' : 'waiting for the other computer…';
-      $('slotKyle').querySelector('.sstate').textContent = 'this computer';
-      $('tvLobbyNote').textContent = 'Two computers: on the other one open this page, tap “Two computers — join with a code” and type the code above (or scan the square). Each side sees only its own fleet — click a square, or use the arrow keys and Enter. A TV or a phone can join the same way.';
+      $('slotLindsey').querySelector('.sstate').textContent = game.p.lindsey.here ? '📱 connected' : 'waiting for the other player…';
+      $('slotKyle').querySelector('.sstate').textContent = 'this screen';
+      $('tvLobbyNote').textContent = 'Two players, a screen each: on the other phone or computer open this page, tap “Join with a code” and type the code above (or scan the square). Each screen shows its own fleet and fires at the other — tap a square, or use the arrow keys and Enter.';
     }
     return;
   }
@@ -1382,10 +1398,36 @@ function renderTvPlayer(v) {
   $('tvHint').style.display = canAim ? '' : 'none';
 
   const previewShips = place && !v.ready && tvPreview ? tvPreview.map(f => ({ k: f.k, cells: f.cells, sunk: false })) : null;
+  const myShips  = previewShips || v.myShips;
+  const foeShips = over ? (v.foeAllShips || v.foeSunkShips) : v.foeSunkShips;
+
+  // On a phone-sized screen the side-by-side arena leaves both boards too small to
+  // read, so the two stack: the enemy's waters to fire at, your own fleet underneath.
+  const stacked = stackedView();
+  $('arenaWrap').style.display = stacked ? 'none' : '';
+  $('tvStack').style.display   = stacked ? 'flex' : 'none';
+  if (stacked) {
+    $('tvAimWrap').style.display = place ? 'none' : 'flex';
+    $('tvMineLabel').textContent = place
+      ? (v.ready ? '⚓ Your waters — fleet locked in' : '⚓ Your waters — the fleet you are placing')
+      : `⚓ Your waters — ${v.myFleet.filter(x => !x.sunk).length} of ${SHIPS.length} afloat`;
+    if (!place) {
+      $('tvAimLabel').textContent = over
+        ? `${EMOJI[foe]} ${NAMES[foe]}'s fleet`
+        : canAim ? `🎯 ${NAMES[foe]}'s waters — tap to fire`
+                 : `⏳ ${NAMES[foe]}'s waters`;
+      renderFleet($('tvFoeFleet'), v.foeFleet);
+      renderGrid($('tvAimGrid'), v.theirs, { ships: foeShips, aim: canAim, onCell: canAim ? tvHumanFire : null });
+      if (window.BS3D && BS3D.supported) BS3D.setCursor($('tvAimGrid'), canAim ? 0 : -1, tvCur.r, tvCur.c);
+    }
+    renderGrid($('tvMineGrid'), v.mine, { ships: myShips });
+    playClientShotSound(v);
+    return;
+  }
+
   const data = {
-    kyle:    { marks: v.mine, opts: { ships: previewShips || v.myShips } },
-    lindsey: { marks: v.theirs, opts: { ships: over ? (v.foeAllShips || v.foeSunkShips) : v.foeSunkShips,
-                                        aim: canAim, onCell: canAim ? tvHumanFire : null } },
+    kyle:    { marks: v.mine, opts: { ships: myShips } },
+    lindsey: { marks: v.theirs, opts: { ships: foeShips, aim: canAim, onCell: canAim ? tvHumanFire : null } },
     turn: place || over ? null : (v.turn === me ? 'kyle' : 'lindsey'),
     winner: over ? (v.winner === me ? 'kyle' : 'lindsey') : null,
   };
@@ -1395,10 +1437,25 @@ function renderTvPlayer(v) {
   renderFleet($('fleetLindsey'), v.foeFleet);
   $('kyleSub').textContent = `${v.myFleet.filter(x => !x.sunk).length} of ${SHIPS.length} afloat`;
   $('lindseySub').textContent = `${v.foeFleet.filter(x => !x.sunk).length} of ${SHIPS.length} afloat`;
-  if (tvRole === 'client' && v.log && v.log !== lastSoundLog) {      // the host TV already plays the shot sounds
-    lastSoundLog = v.log;
-    if (/whole fleet/.test(v.log)) sndWin(); else if (/sank/.test(v.log)) sndSunk(); else if (/hit/.test(v.log)) sndHit(); else if (/miss/.test(v.log)) sndMiss();
-  }
+  playClientShotSound(v);
+}
+
+// Phones and small windows get the stacked boards; a laptop or a TV keeps the arena.
+const stackedView = () => window.matchMedia('(max-width: 820px)').matches;
+let stackTimer = 0;
+window.addEventListener('resize', () => {
+  clearTimeout(stackTimer);
+  stackTimer = setTimeout(refreshTvPlayer, 200);
+});
+
+// The host already played the shot sounds as it fired; a joined screen has not.
+function playClientShotSound(v) {
+  if (tvRole !== 'client' || !v.log || v.log === lastSoundLog) return;
+  lastSoundLog = v.log;
+  if (/whole fleet/.test(v.log)) sndWin();
+  else if (/sank/.test(v.log)) sndSunk();
+  else if (/hit/.test(v.log)) sndHit();
+  else sndMiss();
 }
 
 // Shots fired at `who`, with their ships hidden unless sunk.
@@ -1462,7 +1519,7 @@ $('joinBtn').addEventListener('click', () => {
     });
     conn.on('data', msg => onHostMsg(msg));
     conn.on('close', () => {
-      if (joinAs === 'tv') { $('turnBanner').className = 'turn-banner'; $('turnBanner').textContent = 'Lost the other computer — reload this page to rejoin.'; return; }
+      if (joinAs === 'tv') { $('turnBanner').className = 'turn-banner'; $('turnBanner').textContent = 'Lost the other player — reload this page to rejoin.'; return; }
       $('pStatus').className = 'status err'; $('pStatus').textContent = 'Lost the host. Reload to rejoin.';
     });
     setTimeout(() => {
@@ -1487,7 +1544,7 @@ function enterTvClient() {
   document.body.classList.add('tvclient');
   showScreen('tvBattle');
   $('turnBanner').className = 'turn-banner';
-  $('turnBanner').textContent = 'Connected — waiting for the other computer…';
+  $('turnBanner').textContent = 'Connected — waiting for the other player…';
   $('shotLog').textContent = ' ';
 }
 $('beTv2Btn').addEventListener('click', () => {
@@ -1495,7 +1552,7 @@ $('beTv2Btn').addEventListener('click', () => {
   showScreen('phoneScreen');
   $('pickRow').style.display = 'none';
   $('pJoin').querySelector('.title').innerHTML =
-    '💻 Join the other computer<small>TYPE THE CODE IT IS SHOWING</small>';
+    '👥 Join the other player<small>TYPE THE CODE ON THEIR SCREEN</small>';
   $('codeInput').focus();
 });
 
