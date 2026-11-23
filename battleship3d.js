@@ -339,9 +339,10 @@
   }
 
   // ───────────────────────── water ─────────────────────────
-  function waveH(x, z, t) {
-    const edge = Math.max(Math.abs(x), Math.abs(z));
-    const a = .35 + .65 * smooth(6, 14, edge);
+  // `hx`/`hz`: half-size of the calm region (the battlefield(s)); waves swell up only outside it.
+  function waveH(x, z, t, hx, hz) {
+    const dx = Math.max(0, Math.abs(x) - hx), dz = Math.max(0, Math.abs(z) - hz);
+    const a = .3 + .7 * smooth(0, 9, Math.hypot(dx, dz));
     return a * (.10 * Math.sin(x * .42 + t * 1.0) + .07 * Math.sin(z * .55 - t * .8 + x * .15) +
                 .04 * Math.sin((x + z) * 1.1 + t * 1.6));
   }
@@ -675,6 +676,7 @@
       this.now = 0; this.flames = 0; this.shake = 0; this.fireT = 0;
       this.opts = {}; this.hover = null; this.needSize = true;
       this.fx = []; this.sprites = []; this.timers = []; this.over = false;
+      this.calmX = (mode === 'arena' ? ARENA_OX : 0) + 5.8; this.calmZ = 5.8;       // calm water over the whole battlefield
       this.compact = mode === 'phone' || mode === 'mine' || window.innerWidth < 800;   // small screens: bolder grid, calmer water
 
       const canvas = document.createElement('canvas');
@@ -924,7 +926,7 @@
     // — per frame —
     bobRig(rig, t) {
       const x = rig.cx, z = rig.cz, ph = rig.phase;
-      let y = waveH(x, z, t) + rig.baseY + Math.sin(t * 1.3 + ph) * .012;
+      let y = waveH(x, z, t, this.calmX, this.calmZ) + rig.baseY + Math.sin(t * 1.3 + ph) * .012;
       let roll = Math.sin(t * .9 + ph) * .022, pitch = Math.cos(t * .7 + ph) * .014;
       if (rig.sunk) {
         const p = rig.animate ? Math.min(1, (t - rig.sinkAt) / 4.2) : 1, e = p * p * (3 - 2 * p);
@@ -948,7 +950,7 @@
 
       // water
       const pos = this.water.geometry.attributes.position, base = this.waterBase;
-      for (let i = 0; i < pos.count; i++) pos.array[i * 3 + 1] = waveH(base[i * 3], base[i * 3 + 2], t);
+      for (let i = 0; i < pos.count; i++) pos.array[i * 3 + 1] = waveH(base[i * 3], base[i * 3 + 2], t, this.calmX, this.calmZ);
       pos.needsUpdate = true; this.water.geometry.computeVertexNormals();
       this.bump.offset.set(t * .006, t * .004);
 
