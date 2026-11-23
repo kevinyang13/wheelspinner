@@ -345,7 +345,7 @@
 <!-- ══════════════ ROLE PICKER ══════════════ -->
 <div class="screen active panel" id="roleScreen">
   <div class="title">🚢 Battleship
-    <small>PHONES ARE THE CONTROLLERS · THE TV IS THE BOARD</small>
+    <small>TWO COMPUTERS · OR A TV WITH PHONES AS CONTROLLERS</small>
   </div>
   <div class="row">
     <button class="big-btn" id="beTvBtn">
@@ -362,15 +362,21 @@
     <button class="ghost-btn" id="beCpuBtn">🤖 Play the computer on this device</button>
   </div>
   <div class="row">
-    <button class="ghost-btn" id="beDuelBtn">🤖 vs 👾 Watch two computers play</button>
-    <button class="ghost-btn" id="beTv2Btn">📺 I'm the second TV (two-TV game)</button>
+    <button class="ghost-btn" id="beHostPcBtn">💻 Two computers — start the game here</button>
+    <button class="ghost-btn" id="beTv2Btn">💻 Two computers — join with a code</button>
+  </div>
+  <div class="row">
+    <button class="ghost-btn" id="beDuelBtn">🤖 vs 👾 Watch two robots play</button>
   </div>
   <div class="note">
-    Open this page on the TV first. It shows a 4-letter code; each player opens the same
-    page on their own phone and types the code in. Ships stay secret on the phones.
+    No TV? Two computers is the simplest game: one of you taps “start the game here” and reads
+    out the 4-letter code, the other taps “join with a code”. Each computer shows its own fleet
+    on the left and the enemy’s waters on the right — click a square, or use the arrow keys and Enter.
+    It works the same on two phones, a phone and a laptop, or across two rooms.
+    <br>
+    With a TV: open this page on the TV first, then each player joins from their own phone.
     Playing alone? Switch the TV to “vs Computer” — you can play from a phone <em>or</em> right on the TV.
-    Two players in different rooms? Switch the first TV to “Two TVs”, then open this page on the other TV and tap “I'm the second TV”.
-    Nobody to play? Let two computers fight it out and just watch.
+    Nobody to play? Let two robots fight it out and just watch.
   </div>
 </div>
 
@@ -401,8 +407,8 @@
   <div class="row" id="modeRow">
     <button class="ghost-btn on" id="modeTwo" type="button">👥 2 players</button>
     <button class="ghost-btn" id="modeCpu" type="button">🤖 vs Computer</button>
-    <button class="ghost-btn" id="modeTv2" type="button">📺📺 Two TVs</button>
-    <button class="ghost-btn" id="modeDuel" type="button">🤖 vs 👾 Two computers</button>
+    <button class="ghost-btn" id="modeTv2" type="button">💻 Two computers</button>
+    <button class="ghost-btn" id="modeDuel" type="button">🤖 vs 👾 Robot duel</button>
   </div>
   <div class="row" id="cpuRow" style="display:none">
     <button class="ghost-btn" id="lvlEasy" type="button">Easy</button>
@@ -1054,7 +1060,7 @@ function handlePhoneMsg(conn, msg) {
 
   if (msg.t === 'hello') {
     if (game.duel) {
-      conn.send({ t: 'err', m: 'The TV is watching two computers play — switch it back to 2 players.' });
+      conn.send({ t: 'err', m: 'The host is watching two robots play — switch it back to 2 players.' });
       return;
     }
     const who = !game.solo && msg.name === 'lindsey' ? 'lindsey' : 'kyle';   // vs computer: the phone is always Kyle
@@ -1117,7 +1123,7 @@ function setMode(mode) {                         // 'two' | 'solo' | 'tv2' | 'du
     // Two computers: there is nothing for a phone to do, so every one is let go.
     game.p.kyle.here = game.p.lindsey.here = true;
     for (const w of ['kyle', 'lindsey']) {
-      conns[w].forEach(c => c.send({ t: 'err', m: 'The TV switched to computer vs computer.' }));
+      conns[w].forEach(c => c.send({ t: 'err', m: 'The host switched to a robot duel.' }));
       conns[w] = [];
     }
   } else if (solo) {
@@ -1291,8 +1297,9 @@ function renderTv() {
     if (game.tv2) {
       $('slotKyle').classList.add('here');
       $('slotKyle').querySelector('.sstate').textContent = 'this TV';
-      $('slotLindsey').querySelector('.sstate').textContent = game.p.lindsey.here ? '📺 connected' : 'waiting for the other TV…';
-      $('tvLobbyNote').textContent = 'Two TVs: on the other TV open this page, tap “I’m the second TV” and type the code. Each player plays on their own TV (tap the board, or arrow keys + Enter) — phones can join too.';
+      $('slotLindsey').querySelector('.sstate').textContent = game.p.lindsey.here ? '💻 connected' : 'waiting for the other computer…';
+      $('slotKyle').querySelector('.sstate').textContent = 'this computer';
+      $('tvLobbyNote').textContent = 'Two computers: on the other one open this page, tap “Two computers — join with a code” and type the code above (or scan the square). Each side sees only its own fleet — click a square, or use the arrow keys and Enter. A TV or a phone can join the same way.';
     }
     return;
   }
@@ -1455,11 +1462,11 @@ $('joinBtn').addEventListener('click', () => {
     });
     conn.on('data', msg => onHostMsg(msg));
     conn.on('close', () => {
-      if (joinAs === 'tv') { $('turnBanner').className = 'turn-banner'; $('turnBanner').textContent = 'Lost the host TV — reload this page to rejoin.'; return; }
-      $('pStatus').className = 'status err'; $('pStatus').textContent = 'Lost the TV. Reload to rejoin.';
+      if (joinAs === 'tv') { $('turnBanner').className = 'turn-banner'; $('turnBanner').textContent = 'Lost the other computer — reload this page to rejoin.'; return; }
+      $('pStatus').className = 'status err'; $('pStatus').textContent = 'Lost the host. Reload to rejoin.';
     });
     setTimeout(() => {
-      if (!myConn) $('joinStatus').textContent = 'No game with that code. Check the TV screen.';
+      if (!myConn) $('joinStatus').textContent = 'No game with that code — check the letters on the other screen.';
     }, 6000);
   });
   peer.on('error', () => { $('joinStatus').textContent = 'Could not connect. Check the code and the internet.'; });
@@ -1480,14 +1487,15 @@ function enterTvClient() {
   document.body.classList.add('tvclient');
   showScreen('tvBattle');
   $('turnBanner').className = 'turn-banner';
-  $('turnBanner').textContent = 'Connected — waiting for the host TV…';
+  $('turnBanner').textContent = 'Connected — waiting for the other computer…';
   $('shotLog').textContent = ' ';
 }
 $('beTv2Btn').addEventListener('click', () => {
   joinAs = 'tv';
   showScreen('phoneScreen');
   $('pickRow').style.display = 'none';
-  $('pJoin').querySelector('.title').innerHTML = '📺 Second TV<small>TYPE THE CODE SHOWN ON THE FIRST TV</small>';
+  $('pJoin').querySelector('.title').innerHTML =
+    '💻 Join the other computer<small>TYPE THE CODE IT IS SHOWING</small>';
   $('codeInput').focus();
 });
 
@@ -1798,6 +1806,15 @@ $('bePhoneBtn').addEventListener('click', () => {
 $('beLocalBtn').addEventListener('click', startLocal);
 $('beCpuBtn').addEventListener('click', startLocalCpu);
 $('beDuelBtn').addEventListener('click', startDuelHere);
+$('beHostPcBtn').addEventListener('click', startTwoPc);
+
+// Two computers, no TV in the middle: this one hosts and plays as Kyle, the
+// other joins with the code and plays as Lindsey. Same engine as the two-TV
+// game — only the wording differs.
+function startTwoPc() {
+  startTv();
+  setMode('tv2');
+}
 
 // Watch mode straight off the front screen: the arena, two robots, no networking.
 function startDuelHere() {
